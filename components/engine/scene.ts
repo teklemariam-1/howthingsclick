@@ -22,6 +22,7 @@ import {
 } from '@/lib/engine/mechanics';
 import { sampleTour, type TourVariant } from '@/lib/engine/tour';
 import { createVehicleContext } from './vehicle';
+import { VEHICLE_GROUND_Y } from '@/lib/engine/vehicle-dimensions';
 
 export type SceneOptions = {
   playing: boolean;
@@ -60,7 +61,7 @@ export function createEngineScene(
 ) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color('#10171e');
-  scene.fog = new THREE.Fog('#10171e', 48, 130);
+  scene.fog = new THREE.Fog('#10171e', 100, 300);
   const renderer = new THREE.WebGLRenderer({
     antialias: true,
     alpha: false,
@@ -78,7 +79,7 @@ export function createEngineScene(
   );
   renderer.domElement.setAttribute('role', 'img');
   host.appendChild(renderer.domElement);
-  const camera = new THREE.PerspectiveCamera(34, 1, 0.05, 180);
+  const camera = new THREE.PerspectiveCamera(34, 1, 0.05, 400);
   let cameraGoal: THREE.Vector3 | null = null,
     targetGoal: THREE.Vector3 | null = null,
     autoFrame = false;
@@ -89,7 +90,7 @@ export function createEngineScene(
   orbit.enableDamping = true;
   orbit.dampingFactor = 0.075;
   orbit.minDistance = 3;
-  orbit.maxDistance = 110;
+  orbit.maxDistance = 240;
   orbit.maxPolarAngle = Math.PI * 0.84;
   const pmrem = new THREE.PMREMGenerator(renderer);
   const environment = new RoomEnvironment();
@@ -118,7 +119,7 @@ export function createEngineScene(
   fill.position.set(1, 3, -8);
   scene.add(fill);
   const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(150, 150),
+    new THREE.PlaneGeometry(500, 500),
     new THREE.MeshStandardMaterial({
       color: '#080d13',
       roughness: 0.83,
@@ -1713,17 +1714,19 @@ export function createEngineScene(
             'sump',
             'timing-cover',
           ]
-        : options.system === 'oil'
-          ? ['oil-pump', 'oil-filter', 'sump']
-          : options.system === 'cooling'
-            ? ['water-pump', 'radiator', 'thermostat']
-            : options.system === 'combustion'
-              ? ['airbox', 'throttle', 'rail']
-              : options.system === 'timing'
-                ? ['cam-intake', 'timing']
-                : options.cutaway
-                  ? ['piston-1', 'crank']
-                  : ['cover', 'timing-cover'];
+        : options.carContext && options.system === 'all'
+          ? ['block']
+          : options.system === 'oil'
+            ? ['oil-pump', 'oil-filter', 'sump']
+            : options.system === 'cooling'
+              ? ['water-pump', 'radiator', 'thermostat']
+              : options.system === 'combustion'
+                ? ['airbox', 'throttle', 'rail']
+                : options.system === 'timing'
+                  ? ['cam-intake', 'timing']
+                  : options.cutaway
+                    ? ['piston-1', 'crank']
+                    : ['cover', 'timing-cover'];
   function rebuildLabels() {
     labelRoot.replaceChildren();
     labelNodes.clear();
@@ -1734,7 +1737,13 @@ export function createEngineScene(
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'model-label';
-      b.textContent = part.name;
+      b.textContent =
+        options.carContext &&
+        options.system === 'all' &&
+        !options.selected &&
+        options.explode === 0
+          ? 'Inline-four engine'
+          : part.name;
       b.addEventListener('click', () => onSelect(id));
       labelRoot.appendChild(b);
       labelNodes.set(id, b);
@@ -1912,7 +1921,12 @@ export function createEngineScene(
     stream: MediaStream;
   } | null = null;
   const cameraDirection = new THREE.Vector3(1, 0.52, -1.28).normalize();
-  function frameAssembly(vehicleView = false, direction = cameraDirection) {
+  function frameAssembly(
+    vehicleView = false,
+    direction = vehicleView
+      ? new THREE.Vector3(-1, 0.65, -1.25).normalize()
+      : cameraDirection,
+  ) {
     const subject = vehicleView ? vehicle.group : root;
     subject.updateMatrixWorld(true);
     bounds.setFromObject(subject);
@@ -2066,7 +2080,7 @@ export function createEngineScene(
       if (carVisible)
         frameAssembly(
           true,
-          new THREE.Vector3(Math.cos(a), 0.41, Math.sin(a)).normalize(),
+          new THREE.Vector3(-Math.cos(a), 0.41, Math.sin(a)).normalize(),
         );
     } else if (
       options.playing &&
@@ -2124,7 +2138,9 @@ export function createEngineScene(
       whole.visible = !options.cutaway || separated;
       cut.visible = options.cutaway && !separated;
     });
-    floor.position.y = -1.48 - maxAmount * 4.6;
+    floor.position.y =
+      THREE.MathUtils.lerp(-1.48, VEHICLE_GROUND_Y, vehicleOpacity) -
+      maxAmount * 4.6;
     const expanded = options.explode > 0.01 || options.removed.length > 0;
     if (options.tourTime === null && expanded && autoFrame) {
       frameAssembly();
@@ -2242,7 +2258,15 @@ export function createEngineScene(
         targetGoal = null;
       }
       if (
-        ['selected', 'isolated', 'labels', 'system', 'cutaway', 'colors'].some(
+        [
+          'selected',
+          'isolated',
+          'labels',
+          'system',
+          'cutaway',
+          'colors',
+          'carContext',
+        ].some(
           (k) =>
             prev[k as keyof SceneOptions] !== next[k as keyof SceneOptions],
         ) ||
@@ -2338,12 +2362,15 @@ export function createEngineScene(
           .multiplyScalar(aspectScale())
           .add(orbit.target);
         if (options.explode > 0) frameAssembly();
-        else if (
-          options.carContext &&
-          options.system === 'all' &&
-          preset === 'home'
-        )
-          frameAssembly(true);
+        else if (options.carContext && options.system === 'all')
+          frameAssembly(
+            true,
+            preset === 'front'
+              ? new THREE.Vector3(0, 0.12, -1).normalize()
+              : preset === 'top'
+                ? new THREE.Vector3(0.001, 1, 0).normalize()
+                : undefined,
+          );
       }
       orbit.update();
     },
@@ -2385,6 +2412,7 @@ export function createEngineScene(
       mats.forEach((m) => m.dispose());
       Object.values(materials).forEach((m) => m.dispose());
       grain.dispose();
+      vehicle.dispose();
       env.dispose();
       renderer.dispose();
       renderer.domElement.remove();

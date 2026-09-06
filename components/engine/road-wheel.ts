@@ -1,0 +1,256 @@
+import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import {
+  TIRE_RADIUS,
+  VEHICLE_DIMENSIONS as D,
+} from '../../lib/engine/vehicle-dimensions';
+
+// Local Z is the axle. The caliper stays fixed as the tire, rim and disc turn.
+export function createRoadWheel() {
+  const group = new THREE.Group(),
+    spin = new THREE.Group();
+  spin.name = 'wheel-rotor';
+  group.add(spin);
+  const rubber = new THREE.MeshStandardMaterial({
+    color: '#141619',
+    roughness: 0.88,
+    metalness: 0,
+  });
+  const treadRubber = new THREE.MeshStandardMaterial({
+    color: '#111315',
+    roughness: 0.94,
+    metalness: 0,
+  });
+  const alloy = new THREE.MeshStandardMaterial({
+    color: '#a3aab0',
+    roughness: 0.26,
+    metalness: 0.95,
+  });
+  const polished = new THREE.MeshStandardMaterial({
+    color: '#d3d9dd',
+    roughness: 0.19,
+    metalness: 1,
+  });
+  const graphite = new THREE.MeshStandardMaterial({
+    color: '#333940',
+    roughness: 0.38,
+    metalness: 0.75,
+  });
+  const rotorSteel = new THREE.MeshStandardMaterial({
+    color: '#737b82',
+    roughness: 0.43,
+    metalness: 0.9,
+  });
+  const materials = [
+    rubber,
+    treadRubber,
+    alloy,
+    polished,
+    graphite,
+    rotorSteel,
+  ];
+  const grainData = new Uint8Array(128 * 128 * 4);
+  let seed = 1731;
+  for (let i = 0; i < grainData.length; i += 4) {
+    seed = (1664525 * seed + 1013904223) >>> 0;
+    grainData[i] = grainData[i + 1] = grainData[i + 2] = 215 + (seed % 40);
+    grainData[i + 3] = 255;
+  }
+  const grain = new THREE.DataTexture(grainData, 128, 128);
+  grain.wrapS = grain.wrapT = THREE.RepeatWrapping;
+  grain.repeat.set(12, 3);
+  grain.needsUpdate = true;
+  for (const material of [rubber, treadRubber]) {
+    material.bumpMap = grain;
+    material.bumpScale = 0.00012;
+    material.roughnessMap = grain;
+  }
+  function mesh(
+    geometry: THREE.BufferGeometry,
+    material: THREE.MeshStandardMaterial,
+    z = 0,
+    parent = spin,
+  ) {
+    const m = new THREE.Mesh(geometry, material);
+    m.position.z = z;
+    m.castShadow = true;
+    m.receiveShadow = true;
+    parent.add(m);
+    return m;
+  }
+  function lathe(profile: number[][], material: THREE.MeshStandardMaterial) {
+    const geometry = new THREE.LatheGeometry(
+      profile.map(([r, z]) => new THREE.Vector2(r, z)),
+      96,
+    );
+    geometry.rotateX(Math.PI / 2);
+    return mesh(geometry, material);
+  }
+  function ring(radius: number, tube: number, z: number, material = polished) {
+    return mesh(new THREE.TorusGeometry(radius, tube, 8, 96), material, z);
+  }
+  function disk(
+    radius: number,
+    depth: number,
+    z: number,
+    material: THREE.MeshStandardMaterial,
+    segments = 64,
+  ) {
+    const g = new THREE.CylinderGeometry(radius, radius, depth, segments);
+    g.rotateX(Math.PI / 2);
+    return mesh(g, material, z);
+  }
+  // Flattened crown with curved sidewalls, not a torus-shaped tire.
+  const carcass = lathe(
+    [
+      [0.208, -0.09],
+      [0.218, -0.102],
+      [0.24, -0.111],
+      [0.276, -0.1125],
+      [0.299, -0.101],
+      [0.309, -0.087],
+      [0.309, 0.087],
+      [0.299, 0.101],
+      [0.276, 0.1125],
+      [0.24, 0.111],
+      [0.218, 0.102],
+      [0.208, 0.09],
+      [0.208, -0.09],
+    ],
+    rubber,
+  );
+  carcass.name = 'tire-carcass';
+  // Recess four longitudinal channels and swept lateral grooves into the crown.
+  const positions: number[] = [],
+    uvs: number[] = [],
+    indices: number[] = [];
+  const radialSteps = 512,
+    widthSteps = 72,
+    crownWidth = 0.174;
+  for (let i = 0; i <= radialSteps; i++) {
+    const angle = (i / radialSteps) * Math.PI * 2;
+    for (let j = 0; j <= widthSteps; j++) {
+      const z = (j / widthSteps - 0.5) * crownWidth;
+      let radius =
+        TIRE_RADIUS - 0.005 * Math.pow(Math.abs(z) / (0.5 * crownWidth), 6);
+      for (const channel of [-0.057, -0.019, 0.019, 0.057])
+        radius -=
+          0.006 *
+          (1 -
+            THREE.MathUtils.smoothstep(Math.abs(z - channel), 0.0018, 0.0042));
+      const phase =
+        ((i / radialSteps) * 64 + Math.abs(z) * 22 + (z < 0 ? 0.5 : 0)) % 1;
+      radius -=
+        0.0045 *
+        (1 -
+          THREE.MathUtils.smoothstep(Math.min(phase, 1 - phase), 0.025, 0.1));
+      positions.push(Math.cos(angle) * radius, Math.sin(angle) * radius, z);
+      uvs.push(i / radialSteps, j / widthSteps);
+      if (i < radialSteps && j < widthSteps) {
+        const a = i * (widthSteps + 1) + j,
+          b = a + widthSteps + 1;
+        indices.push(a, b, a + 1, b, b + 1, a + 1);
+      }
+    }
+  }
+  const tread = new THREE.BufferGeometry();
+  tread.setAttribute(
+    'position',
+    new THREE.Float32BufferAttribute(positions, 3),
+  );
+  tread.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  tread.setIndex(indices);
+  tread.computeVertexNormals();
+  mesh(tread, treadRubber);
+  for (const side of [-1, 1]) {
+    ring(0.222, 0.0015, side * 0.106, rubber);
+    ring(0.279, 0.0012, side * 0.112, rubber);
+    ring(0.294, 0.0012, side * 0.105, rubber);
+    ring(D.rimDiameter / 2, 0.0045, side * 0.092);
+  }
+  lathe(
+    [
+      [0.213, -0.095],
+      [0.216, -0.085],
+      [0.202, -0.065],
+      [0.199, 0.067],
+      [0.213, 0.088],
+      [0.216, 0.095],
+    ],
+    graphite,
+  );
+  ring(0.204, 0.003, 0.092);
+  disk(0.171, 0.005, 0.053, rotorSteel);
+  disk(0.171, 0.005, 0.041, rotorSteel);
+  disk(0.072, 0.032, 0.056, graphite);
+  const ventGeometries: THREE.BufferGeometry[] = [];
+  for (let i = 0; i < 48; i++) {
+    const g = new THREE.BoxGeometry(0.023, 0.002, 0.008),
+      a = (i / 48) * Math.PI * 2;
+    g.rotateZ(a);
+    g.translate(Math.cos(a) * 0.153, Math.sin(a) * 0.153, 0.047);
+    ventGeometries.push(g);
+  }
+  const vents = mergeGeometries(ventGeometries);
+  ventGeometries.forEach((g) => g.dispose());
+  if (vents) mesh(vents, graphite);
+  ring(0.145, 0.00065, 0.056, graphite);
+  ring(0.163, 0.00065, 0.056, graphite);
+  const spokes: THREE.BufferGeometry[] = [];
+  for (let i = 0; i < 5; i++)
+    for (const branch of [-1, 1]) {
+      const shape = new THREE.Shape();
+      shape.moveTo(0.037, branch * 0.004);
+      shape.lineTo(0.086, branch * 0.018);
+      shape.lineTo(0.176, branch * 0.029);
+      shape.lineTo(0.207, branch * 0.019);
+      shape.lineTo(0.207, branch * 0.036);
+      shape.lineTo(0.174, branch * 0.046);
+      shape.lineTo(0.08, branch * 0.033);
+      shape.lineTo(0.034, branch * 0.014);
+      shape.closePath();
+      const g = new THREE.ExtrudeGeometry(shape, {
+        depth: 0.013,
+        bevelEnabled: true,
+        bevelSegments: 2,
+        steps: 1,
+        bevelSize: 0.002,
+        bevelThickness: 0.002,
+        curveSegments: 2,
+      });
+      g.rotateZ((i * Math.PI * 2) / 5);
+      g.translate(0, 0, 0.079);
+      spokes.push(g);
+    }
+  const spokeGeometry = mergeGeometries(spokes);
+  spokes.forEach((g) => g.dispose());
+  if (spokeGeometry) mesh(spokeGeometry, alloy);
+  disk(0.052, 0.016, 0.085, alloy);
+  disk(0.027, 0.005, 0.097, graphite);
+  ring(0.025, 0.0013, 0.1);
+  for (let i = 0; i < 5; i++) {
+    const a = (i * Math.PI * 2) / 5,
+      bolt = disk(0.0065, 0.009, 0.098, polished, 6);
+    bolt.position.x = Math.cos(a) * 0.04;
+    bolt.position.y = Math.sin(a) * 0.04;
+  }
+  const valve = disk(0.0035, 0.021, 0.104, rubber, 8);
+  valve.position.set(0.181, 0, 0.104);
+  valve.rotation.y = 0.2;
+  const caliper = mesh(
+    new RoundedBoxGeometry(0.057, 0.112, 0.051, 3, 0.009),
+    graphite,
+    0.046,
+    group,
+  );
+  caliper.position.x = -0.146;
+  const bridge = mesh(
+    new RoundedBoxGeometry(0.038, 0.071, 0.016, 2, 0.005),
+    alloy,
+    0.078,
+    group,
+  );
+  bridge.position.x = -0.153;
+  return { group, materials, textures: [grain] };
+}
