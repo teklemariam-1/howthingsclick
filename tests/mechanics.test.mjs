@@ -8,6 +8,7 @@ import {
   assemblyOffset,
   stagedSeparation,
   flowGate,
+  frameDeltaSeconds,
   CRANK_RADIUS,
   ROD_LENGTH,
 } from '../lib/engine/mechanics.ts';
@@ -82,6 +83,20 @@ test('clock advance is time-step independent and wraps safely', () => {
   assert.ok(Math.abs(direct - stepped) < 1e-8);
   assert.equal(advanceCycle(10, -1, 0.32), 10);
 });
+
+test('an older first RAF timestamp cannot rewind flow clocks or produce negative curve samples', () => {
+  let clock = 0,
+    previous = 1012;
+  for (const now of [1000, 1016, 1032, 8000]) {
+    const dt = frameDeltaSeconds(now, previous);
+    assert.ok(dt >= 0 && dt <= 0.06);
+    clock += dt;
+    for (let i = 0; i < 12; i++) assert.ok((i / 12 + clock * 0.2) % 1 >= 0);
+    previous = now;
+  }
+  assert.equal(frameDeltaSeconds(1000, 1012), 0);
+  assert.equal(frameDeltaSeconds(2000, 1000), 0.06);
+});
 test('assembly transforms clamp and restore without accumulated error', () => {
   assert.deepEqual(assemblyOffset([2, 3, -4], 0), [0, 0, -0]);
   assert.deepEqual(assemblyOffset([2, 3, -4], 1), [2, 3, -4]);
@@ -93,7 +108,7 @@ test('each named part has a unique ID, description and system', () => {
   for (const p of PARTS) {
     assert.ok(p.name && p.description && p.material && p.system && p.assembly);
   }
-  assert.equal(PARTS.length, 82);
+  assert.equal(PARTS.length, 86);
 });
 
 test('staged disassembly exposes covers first and exactly restores every assembly', () => {
@@ -133,4 +148,17 @@ test('both tours have continuous shot boundaries and an explicit interactive end
     assert.ok(!srt.includes('NaN'));
   }
   assert.ok(tourDuration('teaser') < tourDuration('full'));
+});
+
+test('direct injection is confined to the illustrative intake/compression window', () => {
+  for (let phase = 0; phase < 720; phase++) {
+    assert.equal(flowGate('direct-fuel', phase), phase > 410 && phase < 665);
+    assert.equal(
+      flowGate('direct-fuel', phase + 720),
+      flowGate('direct-fuel', phase),
+    );
+    if (phase < 360) assert.equal(flowGate('direct-fuel', phase), false);
+  }
+  assert.equal(flowGate('fuel', 600), false);
+  assert.equal(flowGate('direct-fuel', 600), true);
 });

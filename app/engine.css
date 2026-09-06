@@ -294,6 +294,39 @@ a:focus-visible {
   height: 100%;
   touch-action: none;
 }
+.vehicle-view-controls {
+  position: absolute;
+  top: 20px;
+  right: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  max-width: calc(100% - 95px);
+  padding: 4px;
+  background: #152127ee;
+  border: 1px solid #40565d;
+  border-radius: 7px;
+}
+.vehicle-view-controls button {
+  font-size: 12px;
+  height: 32px;
+  padding: 0 10px;
+  color: #c0d0d7;
+}
+.vehicle-view-controls button[aria-pressed='true'] {
+  background: #34534f;
+  color: #e4fff5;
+}
+@media (max-width: 700px) {
+  .vehicle-view-controls {
+    top: 47px;
+    right: 10px;
+  }
+  .vehicle-view-controls button {
+    font-size: 11px;
+    padding: 0 7px;
+  }
+}
 .stage-context {
   pointer-events: none;
   position: absolute;

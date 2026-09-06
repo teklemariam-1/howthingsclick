@@ -76,6 +76,8 @@ const initial: SceneOptions = {
   tourTime: null,
   tourVariant: 'full',
   carContext: true,
+  vehicleView: 'bay',
+  hoodOpen: true,
 };
 const systemIcons = [
   Box,
@@ -511,7 +513,7 @@ export default function EngineExhibit() {
         <section className="workspace">
           <div className="exhibit-heading">
             <div>
-              <p className="eyebrow">ANATOMY OF AN INLINE-FOUR</p>
+              <p className="eyebrow">2025 COROLLA · INLINE-FOUR STUDY</p>
               <h1>
                 Inside the engine<span>.</span>
               </h1>
@@ -647,7 +649,7 @@ export default function EngineExhibit() {
                   aria-pressed={
                     controls.carContext && controls.system === 'all'
                   }
-                  title="Show the engine inside a light car outline"
+                  title="Explore the engine bay, chassis and exterior"
                   onClick={() =>
                     update({
                       carContext: !(
@@ -723,6 +725,48 @@ export default function EngineExhibit() {
                 )}
               </div>
             )}
+            {effective.carContext &&
+              effective.system === 'all' &&
+              !blocked &&
+              !touring && (
+                <div
+                  className="vehicle-view-controls"
+                  aria-label="Vehicle views"
+                >
+                  {(
+                    [
+                      ['bay', 'Engine bay'],
+                      ['chassis', 'Chassis'],
+                      ['body', 'Exterior'],
+                    ] as const
+                  ).map(([view, label]) => (
+                    <Button
+                      key={view}
+                      variant="ghost"
+                      aria-pressed={controls.vehicleView === view}
+                      onClick={() =>
+                        update({
+                          vehicleView: view,
+                          hoodOpen: view === 'bay',
+                          cutaway: false,
+                          flows: false,
+                          selected: null,
+                        })
+                      }
+                    >
+                      {label}
+                    </Button>
+                  ))}
+                  {controls.vehicleView === 'body' && (
+                    <Button
+                      variant="ghost"
+                      onClick={() => update({ hoodOpen: !controls.hoodOpen })}
+                    >
+                      {controls.hoodOpen ? 'Close hood' : 'Open hood'}
+                    </Button>
+                  )}
+                </div>
+              )}
             <div className="stage-footnote">
               <span>
                 Drag to rotate <span>·</span> Scroll or pinch to zoom
@@ -732,7 +776,12 @@ export default function EngineExhibit() {
                   ? 'Exploded assembly'
                   : effective.cutaway
                     ? 'Cutaway view'
-                    : 'Complete exterior'}{' '}
+                    : effective.carContext &&
+                        effective.vehicleView === 'chassis'
+                      ? 'Chassis & powertrain'
+                      : effective.carContext && effective.vehicleView === 'bay'
+                        ? 'Under the hood'
+                        : 'Complete exterior'}{' '}
                 <span>·</span>{' '}
                 {effective.carContext &&
                 effective.system === 'all' &&
@@ -809,9 +858,9 @@ export default function EngineExhibit() {
                 </div>
                 <h2>A representative petrol engine.</h2>
                 <p>
-                  A naturally aspirated inline-four with two camshafts, 16
-                  valves and port fuel injection. All {PARTS.length} named
-                  assemblies are modeled, including the covers and sealing
+                  A modern transverse inline-four with two camshafts, 16 valves,
+                  a timing chain and dual fuel injection. All {PARTS.length}{' '}
+                  named assemblies are modeled, including the covers and sealing
                   layers.
                 </p>
                 <p>
@@ -819,8 +868,10 @@ export default function EngineExhibit() {
                   flow paths and throttle response are educational
                   illustrations, not pressure, power or temperature
                   calculations. Disassembly explains structure, not a workshop
-                  procedure. The transmission and vehicle fuel tank are outside
-                  this exhibit.
+                  procedure. The exterior, chassis and engine bay use the 2025
+                  Toyota Corolla SE as a reference. This is an original
+                  educational model, not Toyota CAD. The transaxle housing is
+                  shown; internal transmission operation is simplified.
                 </p>
                 <p>
                   Recording is silent. Download the narration script and

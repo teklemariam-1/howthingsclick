@@ -7,6 +7,9 @@ export const CYLINDER_Z = [-1.965, -0.655, 0.655, 1.965];
 export const FIRING_PHASE = [0, 540, 180, 360];
 export const normalize = (value: number, period = 720) =>
   ((value % period) + period) % period;
+// A RAF timestamp may precede initialization in the same browser frame.
+export const frameDeltaSeconds = (now: number, previous: number) =>
+  Math.max(0, Math.min((now - previous) / 1000, 0.06));
 export function cylinderPose(degrees: number, cylinder: number) {
   const phase = normalize(degrees - FIRING_PHASE[cylinder]);
   const theta = (phase * Math.PI) / 180;
@@ -75,8 +78,12 @@ export function stagedSeparation(id: string, progress: number) {
   const start = assemblyStage(id) * 0.11;
   return Math.max(0, Math.min(1, (progress - start) / 0.45));
 }
-export function flowGate(kind: 'air' | 'fuel' | 'exhaust', phase: number) {
+export function flowGate(
+  kind: 'air' | 'fuel' | 'direct-fuel' | 'exhaust',
+  phase: number,
+) {
   const angle = normalize(phase);
   if (kind === 'exhaust') return angle > 180 && angle < 360;
+  if (kind === 'direct-fuel') return angle > 410 && angle < 665;
   return angle > 360 && angle < 540;
 }

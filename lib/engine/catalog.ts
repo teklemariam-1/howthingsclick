@@ -90,7 +90,7 @@ const structure: Part[] = [
     name: 'Cam cover',
     system: 'timing',
     assembly: 'Cylinder head',
-    material: 'Coated aluminium',
+    material: 'Moulded composite / aluminium',
     description:
       'This cover encloses the camshafts and keeps lubricating oil inside the cylinder head.',
     removable: true,
@@ -147,12 +147,12 @@ const structure: Part[] = [
   },
   {
     id: 'timing',
-    name: 'Timing belt & pulleys',
+    name: 'Timing chain & guides',
     system: 'timing',
     assembly: 'Valve train',
-    material: 'Reinforced rubber / steel',
+    material: 'Hardened steel / polymer guides',
     description:
-      'The toothed belt maintains the crank-to-cam phase relationship. The model uses fixed timing and simplified valve events.',
+      'The chain maintains the crank-to-cam relationship inside a sealed cover. Guides and a tensioner support the chain; valve timing is simplified in this model.',
     removable: true,
   },
   {
@@ -328,15 +328,15 @@ const extras: [string, string, SystemId, string, string, string][] = [
     'mechanics',
     'Structure',
     'Cast aluminium',
-    'The rear housing surrounds the flywheel. The transmission would mount to this face; a transmission is not included in this engine exhibit.',
+    'This housing joins the crankshaft side of the engine to the compact transverse transmission case.',
   ],
   [
     'timing-cover',
-    'Timing belt cover',
+    'Timing chain cover',
     'timing',
     'Covers & seals',
-    'Moulded polymer',
-    'The protective front cover keeps debris away from the toothed timing drive.',
+    'Cast aluminium',
+    'The sealed front cover encloses the lubricated timing chain and integrates the front seals and mounting bosses.',
   ],
   [
     'head-gasket',
@@ -531,6 +531,48 @@ for (let n = 1; n <= 5; n++)
     assembly: 'Rotating assembly',
     removable: true,
   });
+PARTS.push(
+  {
+    id: 'acoustic-cover',
+    name: 'Moulded acoustic engine cover',
+    system: 'mechanics',
+    assembly: 'Covers & seals',
+    material: 'Textured composite / rubber mounts',
+    description:
+      'A compact, shaped upper cover reduces radiated mechanical noise and conceals the coil wiring. Lift it to inspect the cam cover and ignition hardware.',
+    removable: true,
+  },
+  {
+    id: 'transaxle',
+    name: 'Compact transaxle housing',
+    system: 'mechanics',
+    assembly: 'Powertrain',
+    material: 'Cast aluminium',
+    description:
+      'The transverse transmission and differential sit beside the engine and deliver drive to the front half-shafts. This exhibit models the housing; internal gear selection is not simulated.',
+    removable: true,
+  },
+  {
+    id: 'direct-injection',
+    name: 'Direct-injection rail & injectors',
+    system: 'combustion',
+    assembly: 'Air & fuel',
+    material: 'Stainless steel / injector solenoids',
+    description:
+      'The high-pressure rail supplies injectors that deliver fuel directly to the chambers. These supplement the port injectors; the displayed injection windows are illustrative.',
+    removable: true,
+  },
+  {
+    id: 'fuel-pump',
+    name: 'High-pressure fuel pump',
+    system: 'combustion',
+    assembly: 'Air & fuel',
+    material: 'Aluminium / steel',
+    description:
+      'A mechanically driven pump raises fuel pressure for the direct-injection rail. The external housing and metal feed pipe are shown.',
+    removable: true,
+  },
+);
 export const SYSTEM_COLORS: Record<SystemId, string> = {
   all: '#c6d2d8',
   mechanics: '#98b5c9',

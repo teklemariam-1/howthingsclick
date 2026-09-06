@@ -1,5 +1,8 @@
 import * as THREE from 'three';
 import { createRoadWheel } from './road-wheel';
+import { createVehicleChassis } from './vehicle-chassis';
+import { createVehicleBody } from './vehicle-body';
+import { createEngineBay } from './engine-bay';
 import {
   VEHICLE_DIMENSIONS as D,
   VEHICLE_GROUND_Y,
@@ -15,6 +18,14 @@ export function createVehicleContext() {
   group.position.y = VEHICLE_GROUND_Y;
   // Transverse engine: crankshaft across the car, radiator ahead of it.
   group.rotation.y = Math.PI / 2;
+  const chassis = createVehicleChassis(),
+    bodywork = createVehicleBody(),
+    bay = createEngineBay();
+  group.add(chassis.group, bodywork.group, bay.group);
+  let view: 'bay' | 'chassis' | 'body' = 'bay',
+    hoodAmount = 1,
+    hoodTarget = 1;
+  bodywork.setHood(1);
   const outline = new THREE.LineBasicMaterial({
     color: '#a0c6d3',
     transparent: true,
@@ -213,6 +224,16 @@ export function createVehicleContext() {
     group.add(new THREE.LineSegments(geometry, material));
   }
   const template = createRoadWheel();
+  const solidMaterials = [
+    ...template.materials,
+    ...chassis.materials,
+    ...bodywork.materials,
+    ...bay.materials,
+  ];
+  solidMaterials.forEach((m) => {
+    m.userData.vehicleOpacity = m.opacity;
+    m.userData.vehicleTransparent = m.transparent;
+  });
   const wheels: { spin: THREE.Object3D; side: number }[] = [];
   for (const side of [-1, 1])
     for (const z of [0, D.wheelbase]) {
@@ -242,26 +263,39 @@ export function createVehicleContext() {
     }
   return {
     group,
+    setView(next: 'bay' | 'chassis' | 'body', hoodOpen: boolean) {
+      view = next;
+      hoodTarget = next === 'bay' || hoodOpen ? 1 : 0;
+      bodywork.group.visible = view !== 'chassis';
+    },
+    update(dt: number) {
+      hoodAmount = THREE.MathUtils.damp(hoodAmount, hoodTarget, 5, dt);
+      bodywork.setHood(hoodAmount);
+      return Math.abs(hoodAmount - hoodTarget) > 0.002;
+    },
     dispose() {
       template.textures.forEach((texture) => texture.dispose());
     },
     setOpacity(amount: number) {
-      outline.opacity = 0.3 * amount;
-      detail.opacity = 0.15 * amount;
+      outline.opacity = (view === 'chassis' ? 0.23 : 0) * amount;
+      detail.opacity = (view === 'chassis' ? 0.09 : 0) * amount;
       contactMaterial.uniforms.opacity.value = 0.3 * amount;
-      for (const material of template.materials) {
-        const transparent = amount < 0.995;
+      for (const material of solidMaterials) {
+        const transparent =
+          amount < 0.995 || material.userData.vehicleTransparent;
         if (material.transparent !== transparent) {
           material.transparent = transparent;
           material.needsUpdate = true;
         }
-        material.opacity = transparent ? amount : 1;
+        material.opacity =
+          material.userData.vehicleOpacity * (amount < 0.995 ? amount : 1);
         material.depthWrite = !transparent;
       }
       group.visible = amount > 0.005;
     },
     setWheelAngle(angle: number) {
       wheels.forEach(({ spin, side }) => (spin.rotation.z = angle * side));
+      chassis.setWheelAngle(angle);
     },
   };
 }

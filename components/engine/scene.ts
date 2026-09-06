@@ -19,6 +19,7 @@ import {
   assemblyOffset,
   stagedSeparation,
   flowGate,
+  frameDeltaSeconds,
 } from '@/lib/engine/mechanics';
 import { sampleTour, type TourVariant } from '@/lib/engine/tour';
 import { createVehicleContext } from './vehicle';
@@ -43,6 +44,8 @@ export type SceneOptions = {
   tourTime: number | null;
   tourVariant: TourVariant;
   carContext: boolean;
+  vehicleView: 'bay' | 'chassis' | 'body';
+  hoodOpen: boolean;
 };
 type V3 = [number, number, number];
 type Assembly = {
@@ -161,9 +164,9 @@ export function createEngineScene(
       roughness: 0.48,
     }),
     cover: new THREE.MeshStandardMaterial({
-      color: '#233b44',
-      metalness: 0.68,
-      roughness: 0.3,
+      color: '#24282c',
+      metalness: 0.06,
+      roughness: 0.62,
     }),
     brass: new THREE.MeshStandardMaterial({
       color: '#b99761',
@@ -238,6 +241,8 @@ export function createEngineScene(
     tourTime: null,
     tourVariant: 'full',
     carContext: false,
+    vehicleView: 'bay',
+    hoodOpen: true,
   };
   let cycle = 28,
     flowClock = 0,
@@ -435,14 +440,15 @@ export function createEngineScene(
   [-0.69, 0.69].forEach((x) => {
     const wall = box(block, [0.19, 1.62, 5.75], [x, 1.55, 0]);
     if (x > 0) cutObjects.push(wall);
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < 5; i++) {
       const rib = box(
         block,
-        [0.25, 1.38, 0.08],
-        [x, 1.52, -2.57 + i * 0.64],
+        [0.23, 1.16, 0.08],
+        [x, 1.52, -2.52 + i * 1.26],
         materials.cast,
         0.014,
       );
+      rib.rotation.x = i % 2 ? 0.19 : -0.19;
       if (x > 0) cutObjects.push(rib);
     }
   });
@@ -549,8 +555,7 @@ export function createEngineScene(
   const crankGear = gear(timing, 0.18, [0, 0, -3.15], 24);
   for (const x of [-0.39, 0.39])
     camGears.push(gear(timing, 0.36, [x, 3.38, -3.15], 48));
-  tube(
-    timing,
+  const chainCurve = new THREE.CatmullRomCurve3(
     [
       [-0.57, 3.72, -3.16],
       [-0.76, 3.35, -3.16],
@@ -560,12 +565,42 @@ export function createEngineScene(
       [0.76, 3.35, -3.16],
       [0.57, 3.72, -3.16],
       [0, 3.76, -3.16],
-      [-0.57, 3.72, -3.16],
-    ],
-    0.031,
-    materials.rubber,
+    ].map((p) => new THREE.Vector3(...(p as V3))),
+    true,
+    'centripetal',
   );
-  gear(timing, 0.16, [0.62, 1.9, -3.15], 16);
+  const chainCount = Math.round(chainCurve.getLength() / 0.067);
+  const chainMaterial = materials.steel.clone();
+  chainMaterial.userData.originalColor = chainMaterial.color.clone();
+  const chainLinks = new THREE.InstancedMesh(
+    new RoundedBoxGeometry(0.083, 0.045, 0.072, 1, 0.011),
+    chainMaterial,
+    chainCount,
+  );
+  chainLinks.userData.partId = 'timing';
+  chainLinks.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  chainLinks.frustumCulled = false;
+  timing.add(chainLinks);
+  const chainPose = new THREE.Object3D();
+  for (const side of [-1, 1])
+    tube(
+      timing,
+      [
+        [side * 0.69, 3.12, -3.16],
+        [side * 0.54, 2.06, -3.16],
+        [side * 0.3, 0.52, -3.16],
+      ],
+      0.047,
+      materials.black,
+    );
+  cylinder(timing, 0.105, 0.25, [0.69, 1.9, -3.02], materials.cast, 'x');
+  for (const camGear of camGears) {
+    cylinder(camGear, 0.31, 0.12, [0, 0, -0.1], materials.cast, 'z');
+    for (let j = 0; j < 5; j++) {
+      const a = (j / 5) * Math.PI * 2;
+      bolt(camGear, [Math.cos(a) * 0.23, Math.sin(a) * 0.23, -0.18], 'z', 0.6);
+    }
+  }
   for (const type of ['intake', 'exhaust'] as const) {
     const g = makeAssembly(`cam-${type}`, [type === 'intake' ? -1 : 1, 2.5, 0]);
     const shaft = new THREE.Group();
@@ -744,7 +779,7 @@ export function createEngineScene(
   const intake = makeAssembly('intake', [-2.8, 0.4, 0]);
   const exhaust = makeAssembly('exhaust', [2.8, 0.4, 0]);
   const rail = makeAssembly('rail', [-2.2, 1.6, 0]);
-  cylinder(intake, 0.28, 4.7, [-1.57, 2.15, 0], materials.black, 'z');
+  box(intake, [0.66, 0.59, 4.75], [-1.59, 2.13, 0], materials.cover, 0.21);
   CYLINDER_Z.forEach((z) => {
     tube(
       intake,
@@ -754,8 +789,8 @@ export function createEngineScene(
         [-1.67, 2.45, z],
         [-1.57, 2.12, z],
       ],
-      0.155,
-      materials.black,
+      0.19,
+      materials.cover,
     );
     box(intake, [0.1, 0.38, 0.42], [-0.8, 2.71, z], materials.machined);
     tube(
@@ -1047,9 +1082,22 @@ export function createEngineScene(
     bevelSegments: 3,
     steps: 1,
   });
-  mesh(tc, tcGeo, materials.black, [0, 0, -3.48]);
-  for (const x of [-0.39, 0.39])
-    ring(tc, 0.39, 0.026, [x, 3.38, -3.535], materials.dark);
+  mesh(tc, tcGeo, materials.cast, [0, 0, -3.48]);
+  for (const x of [-0.39, 0.39]) {
+    cylinder(tc, 0.34, 0.055, [x, 3.38, -3.54], materials.cast, 'z');
+    ring(tc, 0.34, 0.018, [x, 3.38, -3.579], materials.cast);
+  }
+  for (const y of [0.5, 1.05, 1.6, 2.15, 2.7])
+    tube(
+      tc,
+      [
+        [-0.55, y + 0.2, -3.57],
+        [0, y, -3.58],
+        [0.51, y + 0.12, -3.57],
+      ],
+      0.038,
+      materials.cast,
+    );
   tube(
     tc,
     [
@@ -1058,7 +1106,7 @@ export function createEngineScene(
       [-0.2, 0.4, -3.54],
     ],
     0.027,
-    materials.dark,
+    materials.cast,
   );
   for (const [x, y] of [
     [-0.77, 3.66],
@@ -1090,9 +1138,9 @@ export function createEngineScene(
   }
   const shield = makeAssembly('exhaust-shield', [4.3, 0.6, 0]);
   const sg = new THREE.CylinderGeometry(
-    1.5,
-    1.5,
-    4.9,
+    0.65,
+    0.65,
+    4.65,
     28,
     1,
     true,
@@ -1100,10 +1148,10 @@ export function createEngineScene(
     Math.PI * 0.55,
   );
   sg.rotateX(Math.PI / 2);
-  mesh(shield, sg, materials.machined, [0.83, 2.03, 0]);
+  mesh(shield, sg, materials.cast, [1.13, 2.38, 0]);
   for (const z of [-1.8, 0, 1.8]) {
-    box(shield, [0.23, 0.065, 0.3], [1.69, 3.21, z], materials.dark);
-    bolt(shield, [1.69, 3.26, z]);
+    box(shield, [0.23, 0.065, 0.3], [1.62, 2.69, z], materials.cast);
+    bolt(shield, [1.62, 2.74, z]);
   }
   const airbox = makeAssembly('airbox', [-4.4, 0, -1.1]);
   box(airbox, [1.08, 0.09, 1.42], [-2.65, 1.4, -3.65], materials.black, 0.05);
@@ -1281,9 +1329,20 @@ export function createEngineScene(
   cylinder(alternator, 0.26, 0.06, [1.38, 0.4, -2.57], materials.brass, 'z');
   box(alternator, [0.2, 0.2, 0.27], [1.71, 0.56, -2.7], materials.black);
   const accessory = makeAssembly('accessory-belt', [1.25, 0, -4.2]);
-  const accessoryCrank = gear(accessory, 0.32, [0, 0, -3.65], 24);
-  const altPulley = gear(accessory, 0.17, [1.38, 0.4, -3.65], 18);
-  const pumpPulley = gear(accessory, 0.24, [-0.58, 1.2, -3.65], 24);
+  function pulley(radius: number, p: V3) {
+    const g = new THREE.Group();
+    g.position.set(...p);
+    accessory.add(g);
+    cylinder(g, radius, 0.15, [0, 0, 0], materials.dark, 'z');
+    for (const z of [-0.065, -0.025, 0.025, 0.065])
+      ring(g, radius, 0.009, [0, 0, z], materials.black);
+    cylinder(g, radius * 0.78, 0.025, [0, 0, -0.087], materials.steel, 'z');
+    bolt(g, [0, 0, -0.112], 'z', 0.9);
+    return g;
+  }
+  const accessoryCrank = pulley(0.32, [0, 0, -3.65]);
+  const altPulley = pulley(0.17, [1.38, 0.4, -3.65]);
+  const pumpPulley = pulley(0.24, [-0.58, 1.2, -3.65]);
   tube(
     accessory,
     [
@@ -1322,7 +1381,129 @@ export function createEngineScene(
     ),
   );
 
+  // Modern compact external packaging, with serviceable covers and transaxle.
+  const acoustic = makeAssembly('acoustic-cover', [0, 7.6, 0]);
+  const acousticShape = new THREE.Shape();
+  acousticShape.moveTo(-1.26, -2.86);
+  acousticShape.quadraticCurveTo(-1.6, -2.68, -1.49, -1.72);
+  acousticShape.lineTo(-1.44, 1.93);
+  acousticShape.quadraticCurveTo(-1.43, 2.88, -0.73, 2.91);
+  acousticShape.lineTo(0.78, 2.84);
+  acousticShape.quadraticCurveTo(1.1, 2.6, 1.02, 1.97);
+  acousticShape.lineTo(0.91, -2.4);
+  acousticShape.quadraticCurveTo(0.75, -2.93, -1.26, -2.86);
+  const oilAccess = new THREE.Path();
+  oilAccess.absarc(-0.4, 2.22, 0.27, 0, Math.PI * 2, true);
+  acousticShape.holes.push(oilAccess);
+  const ag = new THREE.ExtrudeGeometry(acousticShape, {
+    depth: 0.26,
+    bevelEnabled: true,
+    bevelSize: 0.12,
+    bevelThickness: 0.09,
+    bevelSegments: 4,
+    curveSegments: 30,
+  });
+  ag.rotateX(-Math.PI / 2);
+  const coverPositions = ag.getAttribute('position');
+  for (let i = 0; i < coverPositions.count; i++) {
+    const x = coverPositions.getX(i),
+      z = coverPositions.getZ(i);
+    const crown =
+      0.13 * Math.max(0, 1 - (x / 1.6) ** 2) + 0.035 * Math.cos(z * 0.8);
+    coverPositions.setY(i, coverPositions.getY(i) + crown);
+  }
+  ag.computeVertexNormals();
+  mesh(acoustic, ag, materials.cover, [0, 4.015, 0]);
+  for (let j = 0; j < 4; j++)
+    box(
+      acoustic,
+      [0.56, 0.035, 0.18],
+      [-0.94, 4.391, -1.55 + j * 0.83],
+      materials.black,
+      0.025,
+    ).rotation.y = -0.28;
+  box(acoustic, [0.76, 0.028, 2.42], [0.25, 4.483, 0.2], materials.dark, 0.075);
+  const badgeCanvas = document.createElement('canvas');
+  badgeCanvas.width = 512;
+  badgeCanvas.height = 160;
+  const badgeContext = badgeCanvas.getContext('2d')!;
+  badgeContext.fillStyle = '#252c30';
+  badgeContext.fillRect(0, 0, 512, 160);
+  badgeContext.fillStyle = '#d4dbde';
+  badgeContext.font = '600 43px Arial';
+  badgeContext.fillText('DUAL INJECTION', 22, 65);
+  badgeContext.fillStyle = '#93a5ad';
+  badgeContext.font = '26px Arial';
+  badgeContext.fillText('DOHC  /  16 VALVE', 24, 113);
+  const badgeTexture = new THREE.CanvasTexture(badgeCanvas);
+  badgeTexture.colorSpace = THREE.SRGBColorSpace;
+  const badgeMaterial = new THREE.MeshStandardMaterial({
+    map: badgeTexture,
+    color: '#ffffff',
+    metalness: 0.2,
+    roughness: 0.51,
+  });
+  mesh(
+    acoustic,
+    new THREE.PlaneGeometry(2.25, 0.64),
+    badgeMaterial,
+    [0.25, 4.504, 0.2],
+    [-Math.PI / 2, 0, Math.PI / 2],
+  );
+  for (const z of [-1.9, 1.9])
+    for (const x of [-0.9, 0.7])
+      cylinder(acoustic, 0.07, 0.19, [x, 4.15, z], materials.rubber);
+  const transaxle = makeAssembly('transaxle', [0.4, -0.25, 5.9]);
+  box(transaxle, [1.65, 1.49, 1.7], [0.72, -0.05, 4.46], materials.cast, 0.24);
+  cylinder(transaxle, 0.68, 0.12, [0.72, -0.05, 5.34], materials.cast, 'z');
+  for (let j = 0; j < 8; j++) {
+    const a = (j / 8) * Math.PI * 2;
+    bolt(
+      transaxle,
+      [0.72 + Math.cos(a) * 0.56, -0.05 + Math.sin(a) * 0.56, 5.43],
+      'z',
+    );
+  }
+  for (const z of [3.85, 4.15, 4.45, 4.75, 5.05])
+    box(transaxle, [1.47, 0.08, 0.06], [0.69, 0.716, z], materials.cast, 0.017);
+  cylinder(transaxle, 0.185, 0.33, [0.55, -0.15, 5.4], materials.steel, 'z');
+  const direct = makeAssembly('direct-injection', [-1.4, 2.8, 0]);
+  cylinder(direct, 0.071, 4.69, [-0.82, 2.95, 0], materials.machined, 'z');
+  CYLINDER_Z.forEach((z) => {
+    tube(
+      direct,
+      [
+        [-0.82, 2.95, z],
+        [-0.64, 2.78, z],
+        [-0.39, 2.5, z],
+      ],
+      0.052,
+      materials.steel,
+    );
+    box(direct, [0.11, 0.15, 0.18], [-0.78, 2.96, z], materials.black, 0.019);
+  });
+  const pressurePump = makeAssembly('fuel-pump', [-1.8, 4.35, 2.2]);
+  cylinder(pressurePump, 0.18, 0.3, [-0.9, 3.5, 2.3], materials.cast);
+  box(
+    pressurePump,
+    [0.24, 0.18, 0.29],
+    [-0.9, 3.71, 2.3],
+    materials.black,
+    0.06,
+  );
+  tube(
+    pressurePump,
+    [
+      [-0.9, 3.55, 2.3],
+      [-1.12, 3.38, 2.44],
+      [-1.07, 3.05, 2.15],
+      [-0.82, 2.95, 2.15],
+    ],
+    0.033,
+    materials.steel,
+  );
   const shellIds = new Set([
+    'acoustic-cover',
     'cover',
     'timing-cover',
     'exhaust-shield',
@@ -1381,6 +1562,7 @@ export function createEngineScene(
     for (const child of [...parent.children]) {
       if (
         !(child instanceof THREE.Mesh) ||
+        child instanceof THREE.InstancedMesh ||
         variantSet.has(child) ||
         Array.isArray(child.material)
       )
@@ -1397,6 +1579,7 @@ export function createEngineScene(
         mat.roughness,
         mat.bumpScale,
         mat.bumpMap?.uuid,
+        mat.map?.uuid,
         cutSet.has(m),
       ].join(':');
       const list = buckets.get(key) ?? [];
@@ -1448,7 +1631,7 @@ export function createEngineScene(
   root.add(processRoot);
   type Flow = {
     system: 'oil' | 'cooling' | 'combustion';
-    kind: 'oil' | 'cooling' | 'air' | 'fuel' | 'exhaust';
+    kind: 'oil' | 'cooling' | 'air' | 'fuel' | 'direct-fuel' | 'exhaust';
     curve: THREE.CatmullRomCurve3;
     root: THREE.Group;
     dots: THREE.Mesh[];
@@ -1617,6 +1800,18 @@ export function createEngineScene(
     '#f17ac5',
   );
   CYLINDER_Z.forEach((z, n) => {
+    flow(
+      'direct-fuel',
+      [
+        [-0.82, 2.95, z],
+        [-0.64, 2.78, z],
+        [-0.39, 2.5, z],
+        [0, 2.22, z],
+      ],
+      '#f17ac5',
+      'all',
+      n,
+    );
     flow(
       'air',
       [
@@ -1791,6 +1986,15 @@ export function createEngineScene(
     rebuildLabels();
   }
   function updatePose() {
+    for (let i = 0; i < chainCount; i++) {
+      const t = (i / chainCount + ((cycle / 360) * 24) / chainCount) % 1;
+      chainPose.position.copy(chainCurve.getPointAt(t));
+      const tangent = chainCurve.getTangentAt(t);
+      chainPose.rotation.set(0, 0, Math.atan2(tangent.y, tangent.x));
+      chainPose.updateMatrix();
+      chainLinks.setMatrixAt(i, chainPose.matrix);
+    }
+    chainLinks.instanceMatrix.needsUpdate = true;
     crank.rotation.z = (-cycle * Math.PI) / 180;
     flywheel.rotation.z = (-cycle * Math.PI) / 180;
     crankGear.rotation.z = crank.rotation.z;
@@ -1920,13 +2124,26 @@ export function createEngineScene(
     ctx: CanvasRenderingContext2D;
     stream: MediaStream;
   } | null = null;
-  const cameraDirection = new THREE.Vector3(1, 0.52, -1.28).normalize();
+  const cameraDirection = new THREE.Vector3(-1.2, 0.85, -1.15).normalize();
   function frameAssembly(
     vehicleView = false,
     direction = vehicleView
-      ? new THREE.Vector3(-1, 0.65, -1.25).normalize()
+      ? (options.vehicleView === 'bay'
+          ? new THREE.Vector3(-1, 1.25, -0.94)
+          : new THREE.Vector3(-1, 0.65, -1.25)
+        ).normalize()
       : cameraDirection,
   ) {
+    if (vehicleView && options.vehicleView === 'bay') {
+      targetGoal = new THREE.Vector3(-0.4, 1.35, 0);
+      cameraGoal = targetGoal.clone().add(
+        direction
+          .clone()
+          .normalize()
+          .multiplyScalar(36 * aspectScale()),
+      );
+      return;
+    }
     const subject = vehicleView ? vehicle.group : root;
     subject.updateMatrixWorld(true);
     bounds.setFromObject(subject);
@@ -1957,7 +2174,7 @@ export function createEngineScene(
       .add(
         direction
           .clone()
-          .multiplyScalar(Math.max(12, distance * (vehicleView ? 1.16 : 1.06))),
+          .multiplyScalar(Math.max(12, distance * (vehicleView ? 1.04 : 1.06))),
       );
   }
   const stopCamera = () => {
@@ -2025,9 +2242,11 @@ export function createEngineScene(
   function animate(now: number) {
     if (disposed) return;
     frameId = requestAnimationFrame(animate);
-    const dt = Math.min((now - last) / 1000, 0.06);
+    const dt = frameDeltaSeconds(now, last);
     last = now;
     if (document.hidden) return;
+    vehicle.setView(options.vehicleView, options.hoodOpen);
+    const hoodMoving = vehicle.update(dt);
     const returned = [...assemblies.values()].every((a) => a.amount < 0.001);
     const carVisible =
       options.carContext &&
@@ -2043,6 +2262,13 @@ export function createEngineScene(
       dt,
     );
     vehicle.setOpacity(vehicleOpacity);
+    if (
+      carVisible &&
+      hoodMoving &&
+      options.vehicleView === 'body' &&
+      options.tourTime === null
+    )
+      frameAssembly(true);
     if (options.tourTime !== null) {
       const s = sampleTour(options.tourTime, options.tourVariant);
       cycle = options.explode > 0.01 ? 28 : (options.tourTime * 174) % 720;
@@ -2170,7 +2396,7 @@ export function createEngineScene(
           f.cylinder === undefined ? 0 : cylinderPose(cycle, f.cylinder).phase;
         const enabled =
           f.cylinder === undefined ||
-          flowGate(f.kind as 'air' | 'fuel' | 'exhaust', phase);
+          flowGate(f.kind as 'air' | 'fuel' | 'direct-fuel' | 'exhaust', phase);
         f.dots.forEach((d, i) => {
           d.visible = enabled;
           const speed =
@@ -2243,6 +2469,7 @@ export function createEngineScene(
       );
       renderer.domElement.dataset.carVisible = String(carVisible);
       renderer.domElement.dataset.wheelAngle = wheelAngle.toFixed(4);
+      renderer.domElement.dataset.vehicleView = options.vehicleView;
       reported = now;
     }
   }
@@ -2251,6 +2478,7 @@ export function createEngineScene(
     setOptions(next: SceneOptions) {
       const prev = options;
       options = { ...next };
+      vehicle.setView(next.vehicleView, next.hoodOpen);
       const removalChanged = prev.removed.join() !== next.removed.join();
       if (prev.explode !== next.explode || removalChanged) autoFrame = true;
       if (prev.tourTime !== null && next.tourTime === null) {
@@ -2299,7 +2527,10 @@ export function createEngineScene(
         );
       if (
         next.tourTime === null &&
-        (prev.carContext !== next.carContext || prev.system !== next.system)
+        (prev.carContext !== next.carContext ||
+          prev.system !== next.system ||
+          prev.vehicleView !== next.vehicleView ||
+          prev.hoodOpen !== next.hoodOpen)
       ) {
         if (
           next.carContext &&
@@ -2310,7 +2541,7 @@ export function createEngineScene(
           frameAssembly(true);
         else if (prev.carContext !== next.carContext && next.explode === 0) {
           targetGoal = new THREE.Vector3(-0.5, 1.2, 0);
-          cameraGoal = new THREE.Vector3(10.4, 7, -12.8)
+          cameraGoal = new THREE.Vector3(-12, 9, -12.8)
             .sub(targetGoal)
             .multiplyScalar(aspectScale())
             .add(targetGoal);
@@ -2355,7 +2586,7 @@ export function createEngineScene(
             ? [16, 4, 0]
             : preset === 'top'
               ? [0.01, 20, 0.01]
-              : [10.4, 7, -12.8]) as V3),
+              : [-12, 9, -12.8]) as V3),
         );
         camera.position
           .sub(orbit.target)
@@ -2369,7 +2600,9 @@ export function createEngineScene(
               ? new THREE.Vector3(0, 0.12, -1).normalize()
               : preset === 'top'
                 ? new THREE.Vector3(0.001, 1, 0).normalize()
-                : undefined,
+                : options.vehicleView === 'bay'
+                  ? new THREE.Vector3(-1, 1.25, -0.94).normalize()
+                  : undefined,
           );
       }
       orbit.update();
@@ -2412,6 +2645,8 @@ export function createEngineScene(
       mats.forEach((m) => m.dispose());
       Object.values(materials).forEach((m) => m.dispose());
       grain.dispose();
+      badgeTexture.dispose();
+      badgeMaterial.dispose();
       vehicle.dispose();
       env.dispose();
       renderer.dispose();

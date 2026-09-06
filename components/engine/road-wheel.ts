@@ -8,6 +8,15 @@ import {
 
 // Local Z is the axle. The caliper stays fixed as the tire, rim and disc turn.
 export function createRoadWheel() {
+  const rimScale = D.rimDiameter / (17 * 0.0254);
+  const sidewallRadius = (r: number) =>
+    THREE.MathUtils.mapLinear(
+      r,
+      0.208,
+      0.309,
+      0.208 * rimScale,
+      TIRE_RADIUS - 0.00815,
+    );
   const group = new THREE.Group(),
     spin = new THREE.Group();
   spin.name = 'wheel-rotor';
@@ -81,7 +90,13 @@ export function createRoadWheel() {
   }
   function lathe(profile: number[][], material: THREE.MeshStandardMaterial) {
     const geometry = new THREE.LatheGeometry(
-      profile.map(([r, z]) => new THREE.Vector2(r, z)),
+      profile.map(
+        ([r, z]) =>
+          new THREE.Vector2(
+            material === rubber ? sidewallRadius(r) : r * rimScale,
+            z,
+          ),
+      ),
       96,
     );
     geometry.rotateX(Math.PI / 2);
@@ -164,9 +179,9 @@ export function createRoadWheel() {
   tread.computeVertexNormals();
   mesh(tread, treadRubber);
   for (const side of [-1, 1]) {
-    ring(0.222, 0.0015, side * 0.106, rubber);
-    ring(0.279, 0.0012, side * 0.112, rubber);
-    ring(0.294, 0.0012, side * 0.105, rubber);
+    ring(sidewallRadius(0.222), 0.0015, side * 0.106, rubber);
+    ring(sidewallRadius(0.279), 0.0012, side * 0.112, rubber);
+    ring(sidewallRadius(0.294), 0.0012, side * 0.105, rubber);
     ring(D.rimDiameter / 2, 0.0045, side * 0.092);
   }
   lathe(
@@ -180,7 +195,7 @@ export function createRoadWheel() {
     ],
     graphite,
   );
-  ring(0.204, 0.003, 0.092);
+  ring(0.204 * rimScale, 0.003, 0.092);
   disk(0.171, 0.005, 0.053, rotorSteel);
   disk(0.171, 0.005, 0.041, rotorSteel);
   disk(0.072, 0.032, 0.056, graphite);
@@ -219,6 +234,7 @@ export function createRoadWheel() {
         bevelThickness: 0.002,
         curveSegments: 2,
       });
+      g.scale(rimScale, rimScale, 1);
       g.rotateZ((i * Math.PI * 2) / 5);
       g.translate(0, 0, 0.079);
       spokes.push(g);
@@ -236,7 +252,7 @@ export function createRoadWheel() {
     bolt.position.y = Math.sin(a) * 0.04;
   }
   const valve = disk(0.0035, 0.021, 0.104, rubber, 8);
-  valve.position.set(0.181, 0, 0.104);
+  valve.position.set(0.181 * rimScale, 0, 0.104);
   valve.rotation.y = 0.2;
   const caliper = mesh(
     new RoundedBoxGeometry(0.057, 0.112, 0.051, 3, 0.009),

@@ -37,7 +37,7 @@ export const ENGINE_TOUR: TourShot[] = [
     part: null,
     view: 'peel',
     narration:
-      'The cam cover seals the top. The timing cover protects the belt. Below, the crankcase and sump enclose the crankshaft and its oil reservoir.',
+      'Lift the acoustic cover to reveal the ignition coils and cam cover. The aluminium front cover encloses the timing chain. Below, the crankcase and sump surround the crankshaft.',
   },
   {
     id: 'explode',
@@ -77,7 +77,7 @@ export const ENGINE_TOUR: TourShot[] = [
     part: 'throttle',
     view: 'air',
     narration:
-      'Air passes through the filter and throttle. Pink fuel pulses enter before the inlet valves. Compression prepares the mixture, a spark starts combustion, and the exhaust valves release the spent gases.',
+      'Air passes through the filter and throttle. Pink fuel paths show port and direct injection. Compression prepares the mixture, a spark starts combustion, and the exhaust valves release the spent gases.',
   },
   {
     id: 'oil',
