@@ -37,7 +37,7 @@ export const ENGINE_TOUR: TourShot[] = [
     part: null,
     view: 'peel',
     narration:
-      'Lift the acoustic cover to reveal the ignition coils and cam cover. The aluminium front cover encloses the timing chain. Below, the crankcase and sump surround the crankshaft.',
+      'Lift the cam cover to reveal the camshafts. The exposed coils and small fuel-pump insulator sit above the head. A sealed front cover encloses the timing chain; the sump closes the crankcase below.',
   },
   {
     id: 'explode',

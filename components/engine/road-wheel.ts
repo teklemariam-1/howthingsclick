@@ -21,6 +21,7 @@ export function createRoadWheel() {
     spin = new THREE.Group();
   spin.name = 'wheel-rotor';
   group.add(spin);
+  group.scale.z = D.tireWidth / 0.225;
   const rubber = new THREE.MeshStandardMaterial({
     color: '#141619',
     roughness: 0.88,
@@ -33,8 +34,8 @@ export function createRoadWheel() {
   });
   const alloy = new THREE.MeshStandardMaterial({
     color: '#a3aab0',
-    roughness: 0.26,
-    metalness: 0.95,
+    roughness: 0.3,
+    metalness: 0.65,
   });
   const polished = new THREE.MeshStandardMaterial({
     color: '#d3d9dd',
@@ -217,12 +218,11 @@ export function createRoadWheel() {
     for (const branch of [-1, 1]) {
       const shape = new THREE.Shape();
       shape.moveTo(0.037, branch * 0.004);
-      shape.lineTo(0.086, branch * 0.018);
-      shape.lineTo(0.176, branch * 0.029);
-      shape.lineTo(0.207, branch * 0.019);
-      shape.lineTo(0.207, branch * 0.036);
-      shape.lineTo(0.174, branch * 0.046);
-      shape.lineTo(0.08, branch * 0.033);
+      shape.quadraticCurveTo(0.12, branch * 0.014, 0.174, branch * 0.024);
+      shape.quadraticCurveTo(0.195, branch * 0.021, 0.209, branch * 0.009);
+      shape.lineTo(0.209, branch * 0.053);
+      shape.quadraticCurveTo(0.166, branch * 0.069, 0.09, branch * 0.046);
+      shape.lineTo(0.065, branch * 0.039);
       shape.lineTo(0.034, branch * 0.014);
       shape.closePath();
       const g = new THREE.ExtrudeGeometry(shape, {

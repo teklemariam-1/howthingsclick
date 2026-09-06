@@ -534,12 +534,12 @@ for (let n = 1; n <= 5; n++)
 PARTS.push(
   {
     id: 'acoustic-cover',
-    name: 'Moulded acoustic engine cover',
+    name: 'Fuel pump acoustic insulator',
     system: 'mechanics',
     assembly: 'Covers & seals',
     material: 'Textured composite / rubber mounts',
     description:
-      'A compact, shaped upper cover reduces radiated mechanical noise and conceals the coil wiring. Lift it to inspect the cam cover and ignition hardware.',
+      'A small moulded insulator surrounds the high-pressure fuel pump to reduce ticking noise. The Corolla reference leaves the ignition coils and cam-cover wiring exposed.',
     removable: true,
   },
   {

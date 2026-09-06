@@ -152,7 +152,46 @@ export function createEngineBay() {
   box(group, [0.64, 0.32, 0.018], [0, 0.465, -0.464], steel, 0.006);
   for (let y = 0.325; y < 0.61; y += 0.013)
     box(group, [0.612, 0.003, 0.023], [0, y, -0.478], alloy, 0.001);
-  box(group, [1.23, 0.056, 0.093], [0, 0.663, -0.653], black, 0.012);
+  box(group, [1.36, 0.056, 0.21], [0, 0.682, -0.61], black, 0.032);
+  // The production bay has a broad intake snorkel crossing the radiator support.
+  // Its outlet meets the right-hand airbox, leaving the coil rail unobstructed.
+  tube(
+    group,
+    [
+      [-0.365, 0.554, -0.318],
+      [-0.43, 0.603, -0.44],
+      [-0.34, 0.684, -0.535],
+      [0.06, 0.709, -0.561],
+      [0.28, 0.696, -0.548],
+    ],
+    0.046,
+    black,
+  );
+  box(group, [0.2, 0.047, 0.14], [0.3, 0.693, -0.545], black, 0.025);
+  // Airbox inlet resonator and the moulded plenum next to the battery.
+  box(group, [0.13, 0.065, 0.14], [-0.39, 0.592, -0.235], black, 0.025);
+  box(group, [0.045, 0.03, 0.05], [-0.41, 0.72, 0.405], black, 0.007);
+  tube(
+    group,
+    [
+      [-0.41, 0.723, 0.405],
+      [-0.55, 0.699, 0.383],
+      [-0.61, 0.57, 0.3],
+    ],
+    0.007,
+    black,
+  );
+  // Small battery label, retaining clamp and service marks add readable scale.
+  box(group, [0.12, 0.002, 0.082], [-0.33, 0.708, 0.413], reservoir, 0.004);
+  for (let j = 0; j < 5; j++)
+    box(
+      group,
+      [0.072, 0.003, 0.003],
+      [-0.33, 0.711, 0.386 + j * 0.013],
+      black,
+      0.001,
+    );
+  box(group, [0.014, 0.013, 0.214], [-0.31, 0.713, 0.405], steel, 0.003);
   box(group, [0.08, 0.064, 0.049], [0, 0.65, -0.685], steel, 0.008);
   for (const x of [-0.495, 0.495])
     box(group, [0.07, 0.07, 0.06], [x, 0.645, -0.648], rubber, 0.012);

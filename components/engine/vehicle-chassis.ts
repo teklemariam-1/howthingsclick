@@ -174,10 +174,10 @@ export function createVehicleChassis() {
         );
   }
   // Battery, tank, catalytic converter and underfloor exhaust complete the package.
-  box(group, [0.245, 0.2, 0.185], [0.51, 0.49, 0.405], black, 0.018);
-  box(group, [0.265, 0.025, 0.2], [0.51, 0.593, 0.405], rubber, 0.012);
-  for (const x of [0.44, 0.58])
-    box(group, [0.018, 0.024, 0.028], [x, 0.618, 0.405], alloy, 0.005);
+  box(group, [0.245, 0.2, 0.185], [-0.34, 0.59, 0.405], black, 0.018);
+  box(group, [0.265, 0.025, 0.2], [-0.34, 0.693, 0.405], rubber, 0.012);
+  for (const x of [-0.41, -0.27])
+    box(group, [0.018, 0.024, 0.028], [x, 0.718, 0.405], alloy, 0.005);
   box(group, [0.62, 0.17, 0.57], [-0.33, 0.305, 2.23], black, 0.055);
   for (const z of [2.04, 2.42])
     box(group, [0.64, 0.014, 0.025], [-0.33, 0.219, z], steel, 0.006);

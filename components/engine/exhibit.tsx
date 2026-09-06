@@ -513,7 +513,7 @@ export default function EngineExhibit() {
         <section className="workspace">
           <div className="exhibit-heading">
             <div>
-              <p className="eyebrow">2025 COROLLA · INLINE-FOUR STUDY</p>
+              <p className="eyebrow">COROLLA LE · INLINE-FOUR STUDY</p>
               <h1>
                 Inside the engine<span>.</span>
               </h1>
@@ -868,8 +868,8 @@ export default function EngineExhibit() {
                   flow paths and throttle response are educational
                   illustrations, not pressure, power or temperature
                   calculations. Disassembly explains structure, not a workshop
-                  procedure. The exterior, chassis and engine bay use the 2025
-                  Toyota Corolla SE as a reference. This is an original
+                  procedure. The exterior, chassis and engine bay use the Toyota
+                  Corolla LE as a visual reference. This is an original
                   educational model, not Toyota CAD. The transaxle housing is
                   shown; internal transmission operation is simplified.
                 </p>

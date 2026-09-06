@@ -810,8 +810,8 @@ export function createEngineScene(
   });
   cylinder(rail, 0.055, 4.75, [-1.03, 3.11, 0], materials.machined, 'z');
   cylinder(exhaust, 0.22, 2.4, [1.76, 1.51, 0], materials.steel, 'z');
-  cylinder(intake, 0.28, 0.75, [-1.57, 2.15, -2.8], materials.machined, 'z');
-  ring(intake, 0.29, 0.034, [-1.57, 2.15, -3.1]);
+  cylinder(intake, 0.28, 0.75, [-1.57, 2.15, 2.8], materials.machined, 'z');
+  ring(intake, 0.29, 0.034, [-1.57, 2.15, 3.1]);
   const oilpump = makeAssembly('oil-pump', [1.5, -0.7, -1.7]);
   box(oilpump, [0.61, 0.57, 0.23], [0.25, -0.22, -2.5], materials.cast);
   gear(oilpump, 0.16, [0.25, -0.22, -2.67], 8);
@@ -1204,7 +1204,10 @@ export function createEngineScene(
   );
   for (let j = 0; j < 5; j++)
     ring(airbox, 0.276, 0.021, [-1.57, 2.15, -3.3 - j * 0.055], materials.dark);
+  airbox.scale.z = -1;
+  box(airbox, [0.5, 0.29, 0.72], [-2.0, 2.38, -3.83], materials.black, 0.09);
   const throttleAssembly = makeAssembly('throttle', [-3.1, 0.65, -2.4]);
+  throttleAssembly.scale.z = -1;
   const throttleWhole = mesh(
     throttleAssembly,
     new THREE.CylinderGeometry(0.305, 0.305, 0.4, 48, 1, true),
@@ -1381,78 +1384,66 @@ export function createEngineScene(
     ),
   );
 
-  // Modern compact external packaging, with serviceable covers and transaxle.
-  const acoustic = makeAssembly('acoustic-cover', [0, 7.6, 0]);
-  const acousticShape = new THREE.Shape();
-  acousticShape.moveTo(-1.26, -2.86);
-  acousticShape.quadraticCurveTo(-1.6, -2.68, -1.49, -1.72);
-  acousticShape.lineTo(-1.44, 1.93);
-  acousticShape.quadraticCurveTo(-1.43, 2.88, -0.73, 2.91);
-  acousticShape.lineTo(0.78, 2.84);
-  acousticShape.quadraticCurveTo(1.1, 2.6, 1.02, 1.97);
-  acousticShape.lineTo(0.91, -2.4);
-  acousticShape.quadraticCurveTo(0.75, -2.93, -1.26, -2.86);
-  const oilAccess = new THREE.Path();
-  oilAccess.absarc(-0.4, 2.22, 0.27, 0, Math.PI * 2, true);
-  acousticShape.holes.push(oilAccess);
-  const ag = new THREE.ExtrudeGeometry(acousticShape, {
-    depth: 0.26,
-    bevelEnabled: true,
-    bevelSize: 0.12,
-    bevelThickness: 0.09,
-    bevelSegments: 4,
-    curveSegments: 30,
-  });
-  ag.rotateX(-Math.PI / 2);
-  const coverPositions = ag.getAttribute('position');
-  for (let i = 0; i < coverPositions.count; i++) {
-    const x = coverPositions.getX(i),
-      z = coverPositions.getZ(i);
-    const crown =
-      0.13 * Math.max(0, 1 - (x / 1.6) ** 2) + 0.035 * Math.cos(z * 0.8);
-    coverPositions.setY(i, coverPositions.getY(i) + crown);
-  }
-  ag.computeVertexNormals();
-  mesh(acoustic, ag, materials.cover, [0, 4.015, 0]);
-  for (let j = 0; j < 4; j++)
+  // Corolla LE reference: the coil rail is exposed. Only the high-pressure
+  // fuel pump receives a small acoustic insulator, not a full beauty cover.
+  const acoustic = makeAssembly('acoustic-cover', [-1.3, 5.6, 2.2]);
+  cutObjects.push(
     box(
       acoustic,
-      [0.56, 0.035, 0.18],
-      [-0.94, 4.391, -1.55 + j * 0.83],
-      materials.black,
-      0.025,
-    ).rotation.y = -0.28;
-  box(acoustic, [0.76, 0.028, 2.42], [0.25, 4.483, 0.2], materials.dark, 0.075);
-  const badgeCanvas = document.createElement('canvas');
-  badgeCanvas.width = 512;
-  badgeCanvas.height = 160;
-  const badgeContext = badgeCanvas.getContext('2d')!;
-  badgeContext.fillStyle = '#252c30';
-  badgeContext.fillRect(0, 0, 512, 160);
-  badgeContext.fillStyle = '#d4dbde';
-  badgeContext.font = '600 43px Arial';
-  badgeContext.fillText('DUAL INJECTION', 22, 65);
-  badgeContext.fillStyle = '#93a5ad';
-  badgeContext.font = '26px Arial';
-  badgeContext.fillText('DOHC  /  16 VALVE', 24, 113);
-  const badgeTexture = new THREE.CanvasTexture(badgeCanvas);
-  badgeTexture.colorSpace = THREE.SRGBColorSpace;
-  const badgeMaterial = new THREE.MeshStandardMaterial({
-    map: badgeTexture,
-    color: '#ffffff',
-    metalness: 0.2,
-    roughness: 0.51,
-  });
-  mesh(
-    acoustic,
-    new THREE.PlaneGeometry(2.25, 0.64),
-    badgeMaterial,
-    [0.25, 4.504, 0.2],
-    [-Math.PI / 2, 0, Math.PI / 2],
+      [0.58, 0.08, 0.66],
+      [-0.91, 3.91, 2.29],
+      materials.cover,
+      0.07,
+    ),
   );
-  for (const z of [-1.9, 1.9])
-    for (const x of [-0.9, 0.7])
-      cylinder(acoustic, 0.07, 0.19, [x, 4.15, z], materials.rubber);
+  for (const x of [-1.17, -0.65])
+    cutObjects.push(
+      box(
+        acoustic,
+        [0.065, 0.33, 0.65],
+        [x, 3.72, 2.29],
+        materials.cover,
+        0.025,
+      ),
+    );
+  for (const z of [1.997, 2.58])
+    cutObjects.push(
+      box(
+        acoustic,
+        [0.54, 0.33, 0.06],
+        [-0.91, 3.72, z],
+        materials.cover,
+        0.025,
+      ),
+    );
+  // Ribbed cam-cover shoulders, connector locks and cable clips remain visible.
+  for (let j = 0; j < 11; j++)
+    box(
+      cover,
+      [0.22, 0.046, 0.04],
+      [0.5, 3.958, -2.3 + j * 0.43],
+      materials.cover,
+      0.012,
+    );
+  CYLINDER_Z.forEach((z, n) => {
+    const coil = assemblies.get(`coil-${n + 1}`)!.group;
+    box(coil, [0.08, 0.055, 0.15], [0.285, 4.105, z], materials.steel, 0.012);
+    for (let j = 0; j < 3; j++)
+      box(
+        coil,
+        [0.026, 0.018, 0.25],
+        [-0.075 + j * 0.075, 4.184, z],
+        materials.black,
+        0.005,
+      );
+    box(
+      cover,
+      [0.1, 0.09, 0.075],
+      [-0.42, 4.063, z + 0.27],
+      materials.black,
+      0.014,
+    );
+  });
   const transaxle = makeAssembly('transaxle', [0.4, -0.25, 5.9]);
   box(transaxle, [1.65, 1.49, 1.7], [0.72, -0.05, 4.46], materials.cast, 0.24);
   cylinder(transaxle, 0.68, 0.12, [0.72, -0.05, 5.34], materials.cast, 'z');
@@ -1782,11 +1773,11 @@ export function createEngineScene(
   flow(
     'air',
     [
-      [-3, 1.86, -3.65],
-      [-2.55, 1.95, -3.65],
-      [-1.6, 2.15, -3.5],
-      [-1.57, 2.15, -2.75],
-      [-1.57, 2.15, 2.35],
+      [-3, 1.86, 3.65],
+      [-2.55, 1.95, 3.65],
+      [-1.6, 2.15, 3.5],
+      [-1.57, 2.15, 2.75],
+      [-1.57, 2.15, -2.35],
     ],
     '#61e5dc',
   );
@@ -2130,7 +2121,7 @@ export function createEngineScene(
     direction = vehicleView
       ? (options.vehicleView === 'bay'
           ? new THREE.Vector3(-1, 1.25, -0.94)
-          : new THREE.Vector3(-1, 0.65, -1.25)
+          : new THREE.Vector3(-1, 0.39, -1.55)
         ).normalize()
       : cameraDirection,
   ) {
@@ -2645,8 +2636,6 @@ export function createEngineScene(
       mats.forEach((m) => m.dispose());
       Object.values(materials).forEach((m) => m.dispose());
       grain.dispose();
-      badgeTexture.dispose();
-      badgeMaterial.dispose();
       vehicle.dispose();
       env.dispose();
       renderer.dispose();
