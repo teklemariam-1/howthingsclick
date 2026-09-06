@@ -8,7 +8,7 @@ export function createVehicleChassis() {
   // Stamped passenger floor with a central exhaust tunnel and seat crossmembers.
   for (const side of [-1, 1]) {
     box(group, [0.63, 0.035, 2.02], [side * 0.365, 0.21, 1.69], steel, 0.016);
-    box(group, [0.105, 0.115, 2.12], [side * 0.772, 0.245, 1.66], steel, 0.02);
+    box(group, [0.095, 0.105, 2.12], [side * 0.74, 0.245, 1.66], steel, 0.02);
     for (const z of [0.86, 1.4, 2.05, 2.55])
       box(group, [0.69, 0.065, 0.09], [side * 0.385, 0.256, z], alloy, 0.014);
     for (let x = 0.12; x < 0.65; x += 0.105)
@@ -32,7 +32,7 @@ export function createVehicleChassis() {
       0.047,
       steel,
     );
-    box(group, [0.075, 0.08, 0.52], [side * 0.67, 0.34, -0.48], steel, 0.015);
+    box(group, [0.075, 0.08, 0.34], [side * 0.67, 0.34, -0.39], steel, 0.015);
     // An open front subframe leaves clearance underneath the wet sump.
     tube(
       group,
@@ -131,8 +131,8 @@ export function createVehicleChassis() {
   box(group, [0.15, 0.085, 1.92], [0, 0.265, 1.61], steel, 0.024);
   box(group, [0.88, 0.065, 0.075], [0, 0.175, 0.36], steel, 0.01);
   box(group, [1.22, 0.07, 0.095], [0, 0.285, 2.73], steel, 0.015);
-  box(group, [1.26, 0.065, 0.095], [0, 0.355, -0.73], alloy, 0.017);
-  box(group, [1.38, 0.08, 0.11], [0, 0.3, 3.43], alloy, 0.02);
+  box(group, [1.26, 0.065, 0.095], [0, 0.355, -0.56], alloy, 0.017);
+  box(group, [1.38, 0.08, 0.11], [0, 0.32, 3.34], alloy, 0.02);
   // Firewall is a formed panel, rather than a heavy ladder frame.
   box(group, [1.35, 0.27, 0.028], [0, 0.415, 0.685], steel, 0.013);
   for (const side of [-1, 1])
@@ -201,8 +201,8 @@ export function createVehicleChassis() {
     group,
     [
       [0.48, 0.23, 3.18],
-      [0.57, 0.23, 3.48],
-      [0.57, 0.24, 3.66],
+      [0.57, 0.23, 3.39],
+      [0.57, 0.195, 3.51],
     ],
     0.028,
     alloy,

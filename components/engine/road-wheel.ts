@@ -232,7 +232,7 @@ export function createRoadWheel() {
         steps: 1,
         bevelSize: 0.002,
         bevelThickness: 0.002,
-        curveSegments: 2,
+        curveSegments: 8,
       });
       g.scale(rimScale, rimScale, 1);
       g.rotateZ((i * Math.PI * 2) / 5);

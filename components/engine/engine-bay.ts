@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { modelKit, batchVehicleModel, type P3 } from './vehicle-model';
+import { modelKit, batchVehicleModel } from './vehicle-model';
 export function createEngineBay() {
   const group = new THREE.Group();
   group.name = 'engine-bay-equipment';
@@ -18,18 +18,16 @@ export function createEngineBay() {
   // Inner wings and strut towers around the complete powertrain.
   for (const side of [-1, 1]) {
     box(group, [0.07, 0.27, 1.05], [side * 0.733, 0.48, -0.03], steel, 0.027);
-    const tower = mesh(
-      group,
-      new THREE.CylinderGeometry(0.112, 0.156, 0.23, 36),
-      steel,
-      [side * 0.59, 0.622, 0.06],
-    );
-    const top = mesh(
-      group,
-      new THREE.CylinderGeometry(0.058, 0.064, 0.025, 24),
-      black,
-      [side * 0.59, 0.75, 0.06],
-    );
+    mesh(group, new THREE.CylinderGeometry(0.112, 0.156, 0.23, 36), steel, [
+      side * 0.59,
+      0.622,
+      0.06,
+    ]);
+    mesh(group, new THREE.CylinderGeometry(0.058, 0.064, 0.025, 24), black, [
+      side * 0.59,
+      0.75,
+      0.06,
+    ]);
     for (let j = 0; j < 3; j++) {
       const a = (j / 3) * Math.PI * 2;
       box(
@@ -51,13 +49,16 @@ export function createEngineBay() {
       black,
     );
   }
+  const cowl = new THREE.Group();
+  cowl.position.set(0, 0.105, -0.282);
+  group.add(cowl);
   // Cowl, cabin intake grille, wiper mechanism and firewall heat insulation.
-  box(group, [1.39, 0.075, 0.14], [0, 0.807, 0.596], black, 0.012);
+  box(cowl, [1.39, 0.075, 0.14], [0, 0.807, 0.596], black, 0.012);
   for (let x = -0.64; x <= 0.64; x += 0.035)
-    box(group, [0.008, 0.007, 0.1], [x, 0.848, 0.6], steel, 0.002);
+    box(cowl, [0.008, 0.007, 0.1], [x, 0.848, 0.6], steel, 0.002);
   for (const x of [-0.44, 0.26])
     tube(
-      group,
+      cowl,
       [
         [x, 0.862, 0.62],
         [x + 0.1, 0.874, 0.66],

@@ -35,11 +35,6 @@ export function createVehicleBody() {
   steering.rotation.x = -0.5;
   bar(group, [-0.47, 0.84, 0.98], [-0.27, 0.84, 0.98], 0.009, alloy);
   batchVehicleModel(group);
-  // Large painted panels should not receive the engine's tightly cropped shadow map.
-  group.traverse((object) => {
-    if (object instanceof THREE.Mesh && object.material === k.paint)
-      object.receiveShadow = false;
-  });
   return {
     group,
     hood: shell.hood,

@@ -106,7 +106,7 @@ export function createEngineScene(
   const key = new THREE.DirectionalLight('#fff1dd', 3.1);
   key.position.set(5, 10, -4);
   key.castShadow = true;
-  key.shadow.mapSize.set(1024, 1024);
+  key.shadow.mapSize.set(2048, 2048);
   key.shadow.camera.left = -11;
   key.shadow.camera.right = 11;
   key.shadow.camera.top = 11;
@@ -115,6 +115,7 @@ export function createEngineScene(
   key.shadow.normalBias = 0.025;
   key.shadow.bias = -0.0001;
   scene.add(key);
+  scene.add(key.target);
   const rim = new THREE.DirectionalLight('#c0e8ff', 3);
   rim.position.set(-6, 6, -4);
   scene.add(rim);
@@ -1550,7 +1551,7 @@ export function createEngineScene(
       string,
       THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>[]
     >();
-    for (const child of [...parent.children]) {
+    for (const child of parent.children) {
       if (
         !(child instanceof THREE.Mesh) ||
         child instanceof THREE.InstancedMesh ||
@@ -1887,32 +1888,39 @@ export function createEngineScene(
   host.appendChild(labelRoot);
   const labelNodes = new Map<string, HTMLButtonElement>();
   const activeLabels = () =>
-    options.selected
-      ? [options.selected]
-      : options.explode > 0.1
-        ? [
-            'cover',
-            'head',
-            'head-gasket',
-            'block',
-            'piston-1',
-            'crank',
-            'sump',
-            'timing-cover',
-          ]
-        : options.carContext && options.system === 'all'
-          ? ['block']
-          : options.system === 'oil'
-            ? ['oil-pump', 'oil-filter', 'sump']
-            : options.system === 'cooling'
-              ? ['water-pump', 'radiator', 'thermostat']
-              : options.system === 'combustion'
-                ? ['airbox', 'throttle', 'rail']
-                : options.system === 'timing'
-                  ? ['cam-intake', 'timing']
-                  : options.cutaway
-                    ? ['piston-1', 'crank']
-                    : ['cover', 'timing-cover'];
+    options.carContext &&
+    options.vehicleView === 'body' &&
+    !options.hoodOpen &&
+    options.system === 'all' &&
+    options.explode === 0 &&
+    !options.selected
+      ? []
+      : options.selected
+        ? [options.selected]
+        : options.explode > 0.1
+          ? [
+              'cover',
+              'head',
+              'head-gasket',
+              'block',
+              'piston-1',
+              'crank',
+              'sump',
+              'timing-cover',
+            ]
+          : options.carContext && options.system === 'all'
+            ? ['block']
+            : options.system === 'oil'
+              ? ['oil-pump', 'oil-filter', 'sump']
+              : options.system === 'cooling'
+                ? ['water-pump', 'radiator', 'thermostat']
+                : options.system === 'combustion'
+                  ? ['airbox', 'throttle', 'rail']
+                  : options.system === 'timing'
+                    ? ['cam-intake', 'timing']
+                    : options.cutaway
+                      ? ['piston-1', 'crank']
+                      : ['cover', 'timing-cover'];
   function rebuildLabels() {
     labelRoot.replaceChildren();
     labelNodes.clear();
@@ -2206,8 +2214,8 @@ export function createEngineScene(
       ctx.fillStyle = '#e6eef2';
       ctx.font = '24px Arial';
       const words = sample.shot.narration.split(' ');
-      let line = '',
-        lines: string[] = [];
+      let line = '';
+      const lines: string[] = [];
       for (const word of words) {
         if (ctx.measureText(line + word).width > canvas.width - 84) {
           lines.push(line.trim());
@@ -2429,8 +2437,8 @@ export function createEngineScene(
         x > rect.width - 15 ||
         y < 35 ||
         y > rect.height - 30;
-      let left = Math.max(10, Math.min(rect.width - 210, x + 24)),
-        top = Math.max(45, y - 30);
+      const left = Math.max(10, Math.min(rect.width - 210, x + 24));
+      let top = Math.max(45, y - 30);
       for (
         let i = 0;
         i < 8 &&
@@ -2470,6 +2478,24 @@ export function createEngineScene(
       const prev = options;
       options = { ...next };
       vehicle.setView(next.vehicleView, next.hoodOpen);
+      // Frame the directional shadow around the car in vehicle views, avoiding
+      // clipped shadows and keeping the focused engine map sharp at close range.
+      const litVehicle =
+        next.carContext && next.system === 'all' && next.explode === 0;
+      key.target.position.set(litVehicle ? 13 : 0, litVehicle ? 2 : 0, 0);
+      key.position.set(...((litVehicle ? [38, 65, -40] : [5, 10, -4]) as V3));
+      const span = litVehicle ? 34 : 11;
+      Object.assign(key.shadow.camera, {
+        left: -span,
+        right: span,
+        top: span,
+        bottom: -span,
+        far: litVehicle ? 150 : 40,
+      });
+      key.shadow.camera.updateProjectionMatrix();
+      renderer.toneMappingExposure =
+        litVehicle && next.vehicleView === 'body' ? 0.84 : 1.02;
+
       const removalChanged = prev.removed.join() !== next.removed.join();
       if (prev.explode !== next.explode || removalChanged) autoFrame = true;
       if (prev.tourTime !== null && next.tourTime === null) {
@@ -2485,6 +2511,8 @@ export function createEngineScene(
           'cutaway',
           'colors',
           'carContext',
+          'vehicleView',
+          'hoodOpen',
         ].some(
           (k) =>
             prev[k as keyof SceneOptions] !== next[k as keyof SceneOptions],
