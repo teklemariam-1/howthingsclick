@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   ArrowUpRight,
   Box,
+  CarFront,
   ChevronRight,
   CircleHelp,
   Crosshair,
@@ -74,6 +75,7 @@ const initial: SceneOptions = {
   peel: 0,
   tourTime: null,
   tourVariant: 'full',
+  carContext: true,
 };
 const systemIcons = [
   Box,
@@ -417,7 +419,8 @@ export default function EngineExhibit() {
   const legend = FLOW_LEGEND.filter(
     (f) =>
       effective.system === 'all' ||
-      (effective.system === 'mechanics' && !['cooling', 'oil'].includes(f.id)) ||
+      (effective.system === 'mechanics' &&
+        !['cooling', 'oil'].includes(f.id)) ||
       effective.system === f.id ||
       (effective.system === 'combustion' &&
         ['air', 'fuel', 'burn', 'exhaust'].includes(f.id)),
@@ -639,6 +642,33 @@ export default function EngineExhibit() {
               <div className="camera-tools" aria-label="Camera controls">
                 <Button
                   variant="ghost"
+                  className="camera-text"
+                  aria-label="Car context"
+                  aria-pressed={
+                    controls.carContext && controls.system === 'all'
+                  }
+                  title="Show the engine inside a light car outline"
+                  onClick={() =>
+                    update({
+                      carContext: !(
+                        controls.carContext && controls.system === 'all'
+                      ),
+                      system: 'all',
+                      selected: null,
+                      isolated: false,
+                      explode: 0,
+                      removed: [],
+                      peel: 0,
+                      cutaway: false,
+                      flows: false,
+                    })
+                  }
+                >
+                  <CarFront size={17} /> Car
+                </Button>
+                <span />
+                <Button
+                  variant="ghost"
                   size="icon"
                   aria-label="Reset camera"
                   onClick={() => api.current?.camera('home')}
@@ -703,7 +733,13 @@ export default function EngineExhibit() {
                   : effective.cutaway
                     ? 'Cutaway view'
                     : 'Complete exterior'}{' '}
-                <span>·</span> Metallic materials
+                <span>·</span>{' '}
+                {effective.carContext &&
+                effective.system === 'all' &&
+                !blocked &&
+                !effective.peel
+                  ? 'Illustrative wheel motion'
+                  : 'Metallic materials'}
               </span>
             </div>
             {selected && (

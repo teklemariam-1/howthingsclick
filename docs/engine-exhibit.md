@@ -4,6 +4,7 @@ The exhibit is a representative inline-four petrol engine: two camshafts, 16 val
 
 ## Explore
 
+- **Car** shows a faint sedan outline with four rotating wheels, placing the detailed engine in its front compartment. Toggle it for an engine close-up; system views hide the outline automatically. Wheels pause with the engine and during disassembly. This is contextual motion, not a transmission or road-speed simulation.
 - **Assemble** restores the complete exterior. **Disassemble** stages the separation of the assemblies; the slider lets visitors inspect intermediate positions. This is an exploded-view explanation, not a service procedure.
 - **Moving parts** focuses on the synchronized mechanism, intake air, fuel, combustion and exhaust. Oil paths are kept in their dedicated section to reduce visual clutter. The colors are explanatory: cyan air, pink fuel, orange combustion, violet exhaust, gold oil and blue coolant.
 - **Air, fuel & spark**, **Oil circulation** and **Cooling circuit** isolate the corresponding systems visually. Cold/warm cooling changes the bypass/radiator routes.

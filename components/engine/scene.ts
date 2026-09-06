@@ -21,6 +21,7 @@ import {
   flowGate,
 } from '@/lib/engine/mechanics';
 import { sampleTour, type TourVariant } from '@/lib/engine/tour';
+import { createVehicleContext } from './vehicle';
 
 export type SceneOptions = {
   playing: boolean;
@@ -40,6 +41,7 @@ export type SceneOptions = {
   peel: number;
   tourTime: number | null;
   tourVariant: TourVariant;
+  carContext: boolean;
 };
 type V3 = [number, number, number];
 type Assembly = {
@@ -76,7 +78,7 @@ export function createEngineScene(
   );
   renderer.domElement.setAttribute('role', 'img');
   host.appendChild(renderer.domElement);
-  const camera = new THREE.PerspectiveCamera(34, 1, 0.05, 100);
+  const camera = new THREE.PerspectiveCamera(34, 1, 0.05, 180);
   let cameraGoal: THREE.Vector3 | null = null,
     targetGoal: THREE.Vector3 | null = null,
     autoFrame = false;
@@ -87,7 +89,7 @@ export function createEngineScene(
   orbit.enableDamping = true;
   orbit.dampingFactor = 0.075;
   orbit.minDistance = 3;
-  orbit.maxDistance = 52;
+  orbit.maxDistance = 110;
   orbit.maxPolarAngle = Math.PI * 0.84;
   const pmrem = new THREE.PMREMGenerator(renderer);
   const environment = new RoomEnvironment();
@@ -127,6 +129,10 @@ export function createEngineScene(
   floor.position.y = -1.48;
   floor.receiveShadow = true;
   scene.add(floor);
+  const vehicle = createVehicleContext();
+  scene.add(vehicle.group);
+  let vehicleOpacity = 0,
+    wheelAngle = 0;
   const materials = {
     cast: new THREE.MeshStandardMaterial({
       color: '#727b80',
@@ -230,6 +236,7 @@ export function createEngineScene(
     peel: 0,
     tourTime: null,
     tourVariant: 'full',
+    carContext: false,
   };
   let cycle = 28,
     flowClock = 0,
@@ -1842,6 +1849,13 @@ export function createEngineScene(
     if (cameraGoal && targetGoal)
       cameraGoal.sub(targetGoal).multiplyScalar(factor).add(targetGoal);
     camera.updateProjectionMatrix();
+    if (
+      options.carContext &&
+      options.system === 'all' &&
+      options.explode === 0 &&
+      options.removed.length === 0
+    )
+      frameAssembly(true);
   }
   const resizeObserver = new ResizeObserver(resize);
   resizeObserver.observe(host);
@@ -1898,14 +1912,15 @@ export function createEngineScene(
     stream: MediaStream;
   } | null = null;
   const cameraDirection = new THREE.Vector3(1, 0.52, -1.28).normalize();
-  function frameAssembly() {
-    root.updateMatrixWorld(true);
-    bounds.setFromObject(root);
+  function frameAssembly(vehicleView = false, direction = cameraDirection) {
+    const subject = vehicleView ? vehicle.group : root;
+    subject.updateMatrixWorld(true);
+    bounds.setFromObject(subject);
     const center = bounds.getCenter(new THREE.Vector3());
     const right = new THREE.Vector3()
-        .crossVectors(new THREE.Vector3(0, 1, 0), cameraDirection)
+        .crossVectors(new THREE.Vector3(0, 1, 0), direction)
         .normalize(),
-      up = new THREE.Vector3().crossVectors(cameraDirection, right).normalize();
+      up = new THREE.Vector3().crossVectors(direction, right).normalize();
     const tanV = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)),
       tanH = tanV * camera.aspect;
     let distance = 0;
@@ -1915,7 +1930,7 @@ export function createEngineScene(
           const corner = new THREE.Vector3(x, y, z).sub(center);
           distance = Math.max(
             distance,
-            corner.dot(cameraDirection) +
+            corner.dot(direction) +
               Math.max(
                 Math.abs(corner.dot(up)) / tanV,
                 Math.abs(corner.dot(right)) / tanH,
@@ -1926,7 +1941,9 @@ export function createEngineScene(
     cameraGoal = center
       .clone()
       .add(
-        cameraDirection.clone().multiplyScalar(Math.max(12, distance * 1.06)),
+        direction
+          .clone()
+          .multiplyScalar(Math.max(12, distance * (vehicleView ? 1.16 : 1.06))),
       );
   }
   const stopCamera = () => {
@@ -1998,6 +2015,20 @@ export function createEngineScene(
     last = now;
     if (document.hidden) return;
     const returned = [...assemblies.values()].every((a) => a.amount < 0.001);
+    const carVisible =
+      options.carContext &&
+      options.system === 'all' &&
+      options.explode === 0 &&
+      options.removed.length === 0 &&
+      !options.isolated &&
+      options.peel === 0;
+    vehicleOpacity = THREE.MathUtils.damp(
+      vehicleOpacity,
+      carVisible ? 1 : 0,
+      5,
+      dt,
+    );
+    vehicle.setOpacity(vehicleOpacity);
     if (options.tourTime !== null) {
       const s = sampleTour(options.tourTime, options.tourVariant);
       cycle = options.explode > 0.01 ? 28 : (options.tourTime * 174) % 720;
@@ -2032,6 +2063,11 @@ export function createEngineScene(
             Math.sin(a) * radius,
           ),
         );
+      if (carVisible)
+        frameAssembly(
+          true,
+          new THREE.Vector3(Math.cos(a), 0.41, Math.sin(a)).normalize(),
+        );
     } else if (
       options.playing &&
       options.explode === 0 &&
@@ -2040,7 +2076,11 @@ export function createEngineScene(
     ) {
       cycle = advanceCycle(cycle, dt, options.speed);
       flowClock += dt;
+      wheelAngle -= dt * options.speed * (1.8 + options.throttle * 2.4);
     }
+    vehicle.setWheelAngle(
+      options.tourTime === null ? wheelAngle : -options.tourTime * 0.8,
+    );
     updatePose();
     if (reduced.matches || options.tourTime !== null)
       disassemblyProgress = options.explode;
@@ -2095,6 +2135,7 @@ export function createEngineScene(
         .sub(targetGoal)
         .multiplyScalar(aspectScale())
         .add(targetGoal);
+      if (carVisible) frameAssembly(true);
     }
     lastExpand = expanded;
     for (const f of flows) {
@@ -2102,8 +2143,7 @@ export function createEngineScene(
         options.flows &&
         (options.system === f.system ||
           options.system === 'all' ||
-          (options.system === 'mechanics' &&
-            f.system === 'combustion')) &&
+          (options.system === 'mechanics' && f.system === 'combustion')) &&
         options.explode < 0.01 &&
         maxAmount < 0.01 &&
         options.removed.length === 0 &&
@@ -2185,6 +2225,8 @@ export function createEngineScene(
       renderer.domElement.dataset.drawCalls = String(
         renderer.info.render.calls,
       );
+      renderer.domElement.dataset.carVisible = String(carVisible);
+      renderer.domElement.dataset.wheelAngle = wheelAngle.toFixed(4);
       reported = now;
     }
   }
@@ -2231,6 +2273,25 @@ export function createEngineScene(
         renderer.setPixelRatio(
           Math.min(window.devicePixelRatio, next.quality === 'high' ? 2 : 1.5),
         );
+      if (
+        next.tourTime === null &&
+        (prev.carContext !== next.carContext || prev.system !== next.system)
+      ) {
+        if (
+          next.carContext &&
+          next.system === 'all' &&
+          next.explode === 0 &&
+          next.removed.length === 0
+        )
+          frameAssembly(true);
+        else if (prev.carContext !== next.carContext && next.explode === 0) {
+          targetGoal = new THREE.Vector3(-0.5, 1.2, 0);
+          cameraGoal = new THREE.Vector3(10.4, 7, -12.8)
+            .sub(targetGoal)
+            .multiplyScalar(aspectScale())
+            .add(targetGoal);
+        }
+      }
       orbit.enabled = next.tourTime === null;
     },
     seek(value: number) {
@@ -2277,6 +2338,12 @@ export function createEngineScene(
           .multiplyScalar(aspectScale())
           .add(orbit.target);
         if (options.explode > 0) frameAssembly();
+        else if (
+          options.carContext &&
+          options.system === 'all' &&
+          preset === 'home'
+        )
+          frameAssembly(true);
       }
       orbit.update();
     },
@@ -2307,7 +2374,7 @@ export function createEngineScene(
       const geometries = new Set<THREE.BufferGeometry>();
       const mats = new Set<THREE.Material>();
       scene.traverse((obj) => {
-        if (obj instanceof THREE.Mesh) {
+        if (obj instanceof THREE.Mesh || obj instanceof THREE.Line) {
           geometries.add(obj.geometry);
           (Array.isArray(obj.material) ? obj.material : [obj.material]).forEach(
             (m) => mats.add(m),

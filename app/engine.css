@@ -345,6 +345,16 @@ a:focus-visible {
   font-size: 11px;
   padding: 0 !important;
 }
+.camera-tools button[aria-label='Car context'] {
+  flex-direction: column;
+  gap: 1px;
+  height: 43px;
+  font-size: 9px;
+}
+.camera-tools button[aria-pressed='true'] {
+  background: #24423f;
+  color: #b9f5e5;
+}
 .stage-footnote {
   pointer-events: none;
   position: absolute;
