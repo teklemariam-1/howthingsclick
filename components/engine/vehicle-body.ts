@@ -24,6 +24,7 @@ export function createVehicleBody() {
     box(group, [0.43, 0.43, 0.12], [side * 0.37, 0.69, 2.45], black, 0.045);
     box(group, [0.2, 0.14, 0.09], [side * 0.37, 0.955, 2.46], black, 0.04);
   }
+  box(group, [1.32, 0.043, 0.42], [0, 0.925, 2.745], black, 0.022);
   box(group, [1.36, 0.185, 0.285], [0, 0.79, 0.83], black, 0.04);
   box(group, [0.17, 0.023, 0.13], [0, 0.91, 0.845], black, 0.015);
   const steering = mesh(

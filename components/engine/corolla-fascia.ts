@@ -1,8 +1,9 @@
 import * as THREE from 'three';
 import type { ModelKit, P3 } from './vehicle-model';
+import { bodyOutline, bodyPatch } from './body-surface';
 
-// The fascia, lamp recesses and grille share one curved surface. All dimensions
-// are in metres; u moves around the bumper from centre front to either fender.
+// US Corolla LE fascia reconstructed from the exact EchoPark front and corner
+// photographs: broad horizontal slats, hooked lamps, and folded bumper cheeks.
 export function createCorollaFascia(
   k: ModelKit,
   parent: THREE.Group,
@@ -11,89 +12,71 @@ export function createCorollaFascia(
 ) {
   const { mesh, tube, surface, paint, black, alloy } = k;
   const reach = 0.56;
-  const height = (u: number) => 0.734 + 0.083 * Math.abs(u) ** 2;
+  const height = (u: number) => 0.742 + 0.075 * Math.abs(u) ** 2;
   const toe = (y: number) =>
     0.105 * (1 - THREE.MathUtils.smoothstep(y, 0.22, 0.54));
+  const angleAtZ = (z: number) =>
+    Math.acos(
+      1 - THREE.MathUtils.clamp((z - front) / reach, 0, 1) ** (1 / 1.8),
+    ) /
+    (Math.PI / 2);
   const face = (u: number, y: number, offset = 0): P3 => {
     const side = Math.sign(u) || 1,
-      a = (Math.abs(u) * Math.PI) / 2;
+      a = Math.abs(u),
+      angle = (a * Math.PI) / 2;
     const edge = sidePoint(front + reach, y, side);
+    const cheek =
+      0.033 *
+      Math.exp(-(((a - 0.75) / 0.11) ** 2)) *
+      Math.exp(-(((y - 0.46) / 0.082) ** 2));
+    const foldY = 0.337 + (a - 0.69) * 0.3;
+    const fold =
+      0.015 *
+      Math.exp(-(((y - foldY) / 0.014) ** 2)) *
+      THREE.MathUtils.smoothstep(a, 0.68, 0.78) *
+      (1 - THREE.MathUtils.smoothstep(a, 0.94, 1));
     return [
-      Math.sin(a) * (Math.abs(edge[0]) + offset) * side,
+      side * Math.sin(angle) * (Math.abs(edge[0]) + offset),
       y,
-      front + reach * (1 - Math.cos(a)) + toe(y) - Math.cos(a) * offset,
+      front +
+        reach * (1 - Math.cos(angle)) ** 1.8 +
+        toe(y) -
+        cheek +
+        fold -
+        Math.cos(angle) * offset,
     ];
   };
-  function mapped(shape: THREE.Shape, material: THREE.Material, offset = 0) {
-    // Subdivide triangles before curving them; a single ear-clipped triangle
-    // across the bumper would otherwise create large, flat facets.
-    const initial = new THREE.ShapeGeometry(shape, 32).toNonIndexed();
-    let triangles = Array.from(initial.getAttribute('position').array);
-    initial.dispose();
-    for (let level = 0; level < 4; level++) {
-      const next: number[] = [];
-      for (let i = 0; i < triangles.length; i += 9) {
-        const a = triangles.slice(i, i + 3),
-          b = triangles.slice(i + 3, i + 6),
-          c = triangles.slice(i + 6, i + 9);
-        const ab = a.map((v, j) => (v + b[j]) / 2),
-          bc = b.map((v, j) => (v + c[j]) / 2),
-          ca = c.map((v, j) => (v + a[j]) / 2);
-        next.push(
-          ...a,
-          ...ab,
-          ...ca,
-          ...ab,
-          ...b,
-          ...bc,
-          ...ca,
-          ...bc,
-          ...c,
-          ...ab,
-          ...bc,
-          ...ca,
-        );
-      }
-      triangles = next;
-    }
-    const positions: number[] = [],
-      normals: number[] = [];
-    for (let i = 0; i < triangles.length; i += 3) {
-      const u = triangles[i],
-        y = triangles[i + 1],
-        e = 0.0001;
-      positions.push(...face(u, y, offset));
-      const du = new THREE.Vector3(...face(u + e, y, offset)).sub(
-        new THREE.Vector3(...face(u - e, y, offset)),
-      );
-      const dy = new THREE.Vector3(...face(u, y + e, offset)).sub(
-        new THREE.Vector3(...face(u, y - e, offset)),
-      );
-      const n = du.cross(dy).normalize();
-      // ShapeGeometry is CCW in (u,y), so these normals follow its winding.
-      normals.push(n.x, n.y, n.z);
-    }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    g.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
-    g.setAttribute(
-      'uv',
-      new THREE.Float32BufferAttribute(
-        positions.flatMap((_, i) =>
-          i % 3 === 0 ? [positions[i], positions[i + 1]] : [],
-        ),
-        2,
-      ),
+  const mapped = (
+    shape: THREE.Shape,
+    mat: THREE.Material,
+    offset = 0,
+    subdivisions = 3,
+  ) =>
+    bodyPatch(
+      k,
+      parent,
+      shape,
+      mat,
+      (u, y) => face(u, y, offset),
+      subdivisions,
     );
-    return mesh(parent, g, material);
-  }
-  function polygon(points: number[][]) {
-    const p = new THREE.Shape();
-    p.moveTo(points[0][0], points[0][1]);
-    points.slice(1).forEach(([x, y]) => p.lineTo(x, y));
-    p.closePath();
-    return p;
-  }
+  const material = (color: string, metalness: number, roughness: number) => {
+    const m = new THREE.MeshPhysicalMaterial({
+      color,
+      metalness,
+      roughness,
+      clearcoat: 0.7,
+      side: THREE.DoubleSide,
+    });
+    k.materials.push(m);
+    return m;
+  };
+  const trim = material('#181e22', 0.12, 0.4),
+    slats = material('#2a3033', 0.2, 0.32);
+  const lens = material('#12191d', 0.35, 0.16),
+    chrome = material('#cbd3d5', 0.88, 0.17),
+    reflector = material('#5c6c72', 0.75, 0.24);
+  const amber = material('#ba6c13', 0.24, 0.28);
   const outer = new THREE.Shape();
   outer.moveTo(-1, 0.224);
   outer.lineTo(1, 0.224);
@@ -103,164 +86,241 @@ export function createCorollaFascia(
     outer.lineTo(u, height(u));
   }
   outer.closePath();
-  const lampOutline = [
-    [0.265, 0.708],
-    [0.5, 0.724],
-    [0.735, 0.773],
-    [0.983, 0.811],
-    [0.73, 0.616],
-    [0.62, 0.65],
-    [0.46, 0.669],
-    [0.27, 0.681],
+  const lampPoints = [
+    [0.263, 0.703],
+    [0.45, 0.725],
+    [0.66, 0.765],
+    [0.98, 0.809],
+    [0.962, 0.671],
+    [0.708, 0.61],
+    [0.694, 0.674],
+    [0.48, 0.676],
+    [0.273, 0.669],
   ];
   const lamps = [-1, 1].map((side) =>
-    polygon(lampOutline.map(([u, y]) => [u * side, y])),
+    bodyOutline(lampPoints.map(([u, y]) => [side * u, y])),
   );
   const grille = new THREE.Shape();
-  grille.moveTo(-0.35, 0.605);
-  grille.quadraticCurveTo(0, 0.617, 0.35, 0.605);
-  grille.bezierCurveTo(0.385, 0.573, 0.42, 0.405, 0.522, 0.275);
-  grille.quadraticCurveTo(0.533, 0.25, 0.49, 0.244);
-  grille.lineTo(-0.49, 0.244);
-  grille.quadraticCurveTo(-0.533, 0.25, -0.522, 0.275);
-  grille.bezierCurveTo(-0.42, 0.405, -0.385, 0.573, -0.35, 0.605);
+  grille.moveTo(-0.423, 0.601);
+  grille.quadraticCurveTo(0, 0.598, 0.423, 0.601);
+  grille.bezierCurveTo(0.485, 0.597, 0.585, 0.38, 0.68, 0.28);
+  grille.quadraticCurveTo(0.711, 0.241, 0.63, 0.234);
+  grille.quadraticCurveTo(0, 0.218, -0.63, 0.234);
+  grille.quadraticCurveTo(-0.711, 0.241, -0.68, 0.28);
+  grille.bezierCurveTo(-0.585, 0.38, -0.485, 0.597, -0.423, 0.601);
   grille.closePath();
-  outer.holes.push(...lamps, grille);
+  const upper = bodyOutline([
+    [-0.268, 0.704],
+    [-0.18, 0.714],
+    [0, 0.716],
+    [0.18, 0.714],
+    [0.268, 0.704],
+    [0.249, 0.661],
+    [0.084, 0.655],
+    [0.062, 0.6],
+    [-0.062, 0.6],
+    [-0.084, 0.655],
+    [-0.249, 0.661],
+  ]);
+  const corners = [-1, 1].map((side) => {
+    const s = new THREE.Shape();
+    s.moveTo(side * 0.987, 0.407);
+    s.bezierCurveTo(
+      side * 0.9,
+      0.422,
+      side * 0.789,
+      0.317,
+      side * 0.785,
+      0.247,
+    );
+    s.lineTo(side * 0.807, 0.256);
+    s.bezierCurveTo(side * 0.822, 0.307, side * 0.94, 0.39, side * 0.997, 0.38);
+    s.closePath();
+    return s;
+  });
+  outer.holes.push(...lamps, grille, upper, ...corners);
   mapped(outer, paint);
-  mapped(grille, black, -0.007);
-  for (let j = 0; j < 8; j++) {
-    const y = 0.274 + j * 0.043,
-      width = 0.485 - (y - 0.274) * 0.43;
-    const p: P3[] = [];
-    for (let i = 0; i <= 48; i++)
-      p.push(face(THREE.MathUtils.lerp(-width, width, i / 48), y, 0.001));
-    tube(parent, p, 0.0035, black);
-  }
-  const lens = new THREE.MeshPhysicalMaterial({
-    color: '#151c20',
-    metalness: 0.35,
-    roughness: 0.18,
-    clearcoat: 1,
-    side: THREE.DoubleSide,
-  });
-  const amber = new THREE.MeshStandardMaterial({
-    color: '#b9650d',
-    metalness: 0.22,
-    roughness: 0.32,
-    side: THREE.DoubleSide,
-  });
-  const reflector = new THREE.MeshStandardMaterial({
-    color: '#a7b5b9',
-    metalness: 0.86,
-    roughness: 0.24,
-    side: THREE.DoubleSide,
-  });
-  k.materials.push(lens, amber, reflector);
-  for (const [i, side] of [-1, 1].entries()) {
-    mapped(lamps[i], lens, 0.0015);
-    tube(
-      parent,
-      lamps[i].getPoints(32).map((p) => face(p.x, p.y, 0.004)),
-      0.003,
-      black,
-    );
-    // Low-profile rectangular LED reflector modules, set inside the lamp lens.
-    for (const u of [0.38, 0.52, 0.65]) {
-      const top = 0.705 + Math.max(0, u - 0.4) * 0.17,
-        bottom = top - 0.035;
-      mapped(
-        polygon([
-          [side * (u - 0.046), bottom],
-          [side * (u + 0.046), bottom + 0.007],
-          [side * (u + 0.044), top],
-          [side * (u - 0.045), top - 0.003],
-        ]),
-        reflector,
-        0.005,
-      );
-      mapped(
-        polygon([
-          [side * (u - 0.032), bottom + 0.009],
-          [side * (u + 0.028), bottom + 0.015],
-          [side * (u + 0.03), top - 0.01],
-          [side * (u - 0.03), top - 0.012],
-        ]),
-        lens,
-        0.006,
-      );
-    }
-    const brow: P3[] = [];
-    for (let j = 0; j <= 40; j++) {
-      const u = THREE.MathUtils.lerp(0.276, 0.77, j / 40);
-      brow.push(
-        face(side * u, 0.695 + 0.095 * ((u - 0.276) / 0.494) ** 1.7, 0.008),
-      );
-    }
-    tube(parent, brow, 0.004, alloy);
-    mapped(
-      polygon([
-        [side * 0.92, 0.79],
-        [side * 0.955, 0.799],
-        [side * 0.752, 0.636],
-        [side * 0.753, 0.674],
-      ]),
-      amber,
-      0.006,
-    );
-    // Pressed bumper cheek folds from the lamp heel into the low corner return.
-    const crease: P3[] = [];
-    for (const [u, y] of [
-      [0.73, 0.612],
-      [0.69, 0.515],
-      [0.66, 0.449],
-      [0.62, 0.347],
-      [0.64, 0.257],
-    ])
-      crease.push(face(side * u, y, 0.002));
-    tube(parent, crease, 0.0018, k.steel);
+  mapped(grille, black, -0.027);
+  tube(
+    parent,
+    grille.getPoints(40).map((p) => face(p.x, p.y, 0.002)),
+    0.006,
+    trim,
+  );
+  // Slat sections catch highlights; the radiator remains recessed behind them.
+  for (let j = 0; j < 9; j++) {
+    const y = 0.272 + j * 0.033,
+      half = 0.664 - (y - 0.272) * 0.7;
     surface(
       parent,
       (u, v) => {
-        const q = face(
-          side * THREE.MathUtils.lerp(0.55, 0.99, u),
-          0.242,
-          0.001,
+        const x = THREE.MathUtils.lerp(-half, half, u),
+          bow = 0.012 * (1 - (x / half) ** 2);
+        return face(
+          x,
+          y + bow + 0.012 * (v - 0.5),
+          -0.009 + 0.004 * Math.sin(Math.PI * v),
         );
-        return [q[0], q[1] + 0.013 * Math.sin(v * Math.PI), q[2] + v * 0.058];
+      },
+      slats,
+      72,
+      6,
+    );
+  }
+  surface(
+    parent,
+    (u, v) =>
+      face(THREE.MathUtils.lerp(-0.467, 0.467, u), 0.546 + v * 0.025, -0.012),
+    trim,
+    64,
+    5,
+  );
+  mapped(upper, trim, 0.001);
+  for (const side of [-1, 1])
+    for (let row = 0; row < 2; row++)
+      for (let j = 0; j < 8; j++) {
+        const u = side * (0.091 + j * 0.02),
+          y = 0.678 + row * 0.017;
+        const p: P3[] = [];
+        for (let i = 0; i <= 6; i++) {
+          const a = (i * Math.PI) / 3;
+          p.push(face(u + 0.011 * Math.cos(a), y + 0.006 * Math.sin(a), 0.003));
+        }
+        tube(parent, p, 0.0013, slats);
+      }
+  for (const [i, side] of [-1, 1].entries()) {
+    mapped(lamps[i], lens, -0.003);
+    tube(
+      parent,
+      lamps[i].getPoints().map((p) => face(p.x, p.y, 0.002)),
+      0.0023,
+      black,
+    );
+    const inner = bodyOutline(
+      [
+        [0.277, 0.698],
+        [0.47, 0.719],
+        [0.675, 0.757],
+        [0.627, 0.703],
+        [0.49, 0.686],
+        [0.297, 0.679],
+      ].map(([u, y]) => [side * u, y]),
+    );
+    mapped(inner, chrome, 0.001);
+    const innerDark = bodyOutline(
+      [
+        [0.302, 0.697],
+        [0.47, 0.713],
+        [0.645, 0.745],
+        [0.612, 0.709],
+        [0.484, 0.692],
+        [0.32, 0.685],
+      ].map(([u, y]) => [side * u, y]),
+    );
+    mapped(innerDark, reflector, 0.002);
+    for (let j = 0; j < 24; j++) {
+      const u = 0.32 + j * 0.012;
+      const y = 0.692 + (u - 0.32) * 0.136;
+      tube(
+        parent,
+        [
+          face(side * u, y, 0.0035),
+          face(side * (u + 0.008), y + 0.009, 0.0035),
+        ],
+        0.0008,
+        chrome,
+      );
+    }
+    const projector = new THREE.Shape();
+    projector.absellipse(
+      side * 0.759,
+      0.731,
+      0.055,
+      0.026,
+      0,
+      Math.PI * 2,
+      false,
+      0,
+    );
+    mapped(projector, chrome, 0.002, 2);
+    const glass = new THREE.Shape();
+    glass.absellipse(
+      side * 0.759,
+      0.731,
+      0.05,
+      0.023,
+      0,
+      Math.PI * 2,
+      false,
+      0,
+    );
+    mapped(glass, lens, 0.004, 2);
+    const sheen = new THREE.Shape();
+    sheen.absellipse(
+      side * 0.759,
+      0.742,
+      0.042,
+      0.005,
+      0,
+      Math.PI * 2,
+      false,
+      0,
+    );
+    mapped(sheen, reflector, 0.005, 2);
+    const hook = bodyOutline(
+      [
+        [0.967, 0.786],
+        [0.944, 0.752],
+        [0.905, 0.71],
+        [0.755, 0.634],
+        [0.73, 0.642],
+        [0.871, 0.711],
+        [0.934, 0.781],
+      ].map(([u, y]) => [side * u, y]),
+    );
+    mapped(hook, chrome, 0.004);
+    const marker = bodyOutline(
+      [
+        [0.965, 0.777],
+        [0.946, 0.736],
+        [0.911, 0.698],
+        [0.753, 0.626],
+        [0.755, 0.643],
+        [0.894, 0.704],
+        [0.95, 0.779],
+      ].map(([u, y]) => [side * u, y]),
+    );
+    mapped(marker, amber, 0.006);
+    mapped(corners[i], trim, -0.003);
+    surface(
+      parent,
+      (u, v) => {
+        const p = face(side * THREE.MathUtils.lerp(0.718, 0.987, u), 0.242);
+        return [p[0], p[1] + 0.024 * Math.sin(Math.PI * v), p[2] + v * 0.048];
       },
       paint,
       48,
       8,
     );
   }
-  const upper: P3[] = [];
-  for (let i = 0; i <= 50; i++)
-    upper.push(
-      face(
-        THREE.MathUtils.lerp(-0.28, 0.28, i / 50),
-        0.686 - 0.009 * Math.sin((i / 50) * Math.PI),
-        0.005,
-      ),
-    );
-  tube(parent, upper, 0.01, black);
-  const logoBack = mesh(parent, new THREE.SphereGeometry(1, 32, 16), black, [
+  const badgeBack = mesh(parent, new THREE.SphereGeometry(1, 36, 20), trim, [
     0,
-    0.683,
-    front - 0.008,
+    0.655,
+    front - 0.007,
   ]);
-  logoBack.scale.set(0.045, 0.031, 0.009);
+  badgeBack.scale.set(0.085, 0.065, 0.009);
   for (const [r, sx, sy, y, z] of [
-    [0.027, 1.45, 1, 0.683, front - 0.019],
-    [0.021, 0.55, 1, 0.683, front - 0.023],
-    [0.021, 1.42, 0.45, 0.69, front - 0.025],
+    [0.049, 1.23, 0.91, 0.655, front - 0.019],
+    [0.034, 0.48, 1, 0.655, front - 0.023],
+    [0.033, 1.52, 0.39, 0.666, front - 0.025],
   ]) {
     const badge = mesh(
       parent,
-      new THREE.TorusGeometry(r, 0.003, 8, 48),
+      new THREE.TorusGeometry(r, 0.0028, 8, 64),
       alloy,
       [0, y, z],
     );
     badge.scale.set(sx, sy, 1);
   }
-  return { face, edgeZ: front + reach, height, toe };
+  return { face, edgeZ: front + reach, height, toe, angleAtZ };
 }

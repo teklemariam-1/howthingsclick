@@ -2129,7 +2129,7 @@ export function createEngineScene(
     direction = vehicleView
       ? (options.vehicleView === 'bay'
           ? new THREE.Vector3(-1, 1.25, -0.94)
-          : new THREE.Vector3(-1, 0.39, -1.55)
+          : new THREE.Vector3(-1, 0.25, -1.55)
         ).normalize()
       : cameraDirection,
   ) {
@@ -2574,7 +2574,15 @@ export function createEngineScene(
       onTick(cycle);
     },
     camera(
-      preset: 'home' | 'front' | 'top' | 'focus' | 'zoom-in' | 'zoom-out',
+      preset:
+        | 'home'
+        | 'front'
+        | 'nose'
+        | 'rear'
+        | 'top'
+        | 'focus'
+        | 'zoom-in'
+        | 'zoom-out',
     ) {
       cameraGoal = null;
       targetGoal = null;
@@ -2616,12 +2624,16 @@ export function createEngineScene(
           frameAssembly(
             true,
             preset === 'front'
-              ? new THREE.Vector3(0, 0.12, -1).normalize()
-              : preset === 'top'
-                ? new THREE.Vector3(0.001, 1, 0).normalize()
-                : options.vehicleView === 'bay'
-                  ? new THREE.Vector3(-1, 1.25, -0.94).normalize()
-                  : undefined,
+              ? new THREE.Vector3(0, 0.045, 1).normalize()
+              : preset === 'nose'
+                ? new THREE.Vector3(-1, 0.15, 0).normalize()
+                : preset === 'rear'
+                  ? new THREE.Vector3(1, 0.085, 0).normalize()
+                  : preset === 'top'
+                    ? new THREE.Vector3(0.001, 1, 0).normalize()
+                    : options.vehicleView === 'bay'
+                      ? new THREE.Vector3(-1, 1.25, -0.94).normalize()
+                      : undefined,
           );
       }
       orbit.update();

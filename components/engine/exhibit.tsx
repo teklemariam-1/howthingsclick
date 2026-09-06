@@ -701,6 +701,26 @@ export default function EngineExhibit() {
                 >
                   Side
                 </Button>
+                {effective.carContext &&
+                  effective.system === 'all' &&
+                  effective.vehicleView === 'body' && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        className="camera-text"
+                        onClick={() => api.current?.camera('nose')}
+                      >
+                        Front
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        className="camera-text"
+                        onClick={() => api.current?.camera('rear')}
+                      >
+                        Rear
+                      </Button>
+                    </>
+                  )}
                 <Button
                   variant="ghost"
                   className="camera-text"

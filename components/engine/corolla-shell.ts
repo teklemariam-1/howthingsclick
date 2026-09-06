@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { modelKit, type P3 } from './vehicle-model';
 import { createCorollaFascia } from './corolla-fascia';
+import { createCorollaRear } from './corolla-rear';
+import { bodyPatch } from './body-surface';
 import { VEHICLE_DIMENSIONS as D } from '../../lib/engine/vehicle-dimensions';
 
 // Original lofted geometry, shaped from the supplied Corolla LE reference photos.
@@ -16,22 +18,14 @@ export function createCorollaShell(
   paint.clearcoatRoughness = 0.24;
   paint.side = THREE.DoubleSide;
   black.side = THREE.DoubleSide;
-  glass.color.set('#101b20');
-  glass.opacity = 0.96;
+  glass.color.set('#1d2925');
+  glass.opacity = 0.9;
   glass.roughness = 0.23;
   glass.clearcoat = 0.15;
   glass.envMapIntensity = 0.22;
   glass.metalness = 0.02;
   glass.specularIntensity = 0.18;
   glass.reflectivity = 0.15;
-  const tail = new THREE.MeshPhysicalMaterial({
-    color: '#a50812',
-    metalness: 0.15,
-    roughness: 0.18,
-    clearcoat: 1,
-    side: THREE.DoubleSide,
-  });
-  k.materials.push(tail);
   const front = -D.frontOverhang,
     rear = D.length - D.frontOverhang;
   const sideFront = front + 0.56,
@@ -80,8 +74,8 @@ export function createCorollaShell(
     const t = THREE.MathUtils.clamp((y - 0.2) / (shoulder(z) - 0.2), 0, 1);
     const sculpt =
       -0.063 * (1 - t) ** 2 +
-      0.016 * Math.sin(t * Math.PI) -
-      0.009 * Math.exp(-(((t - 0.31) / 0.12) ** 2)) +
+      0.026 * Math.sin(t * Math.PI) -
+      0.022 * Math.exp(-(((t - 0.27) / 0.095) ** 2)) +
       0.004 * Math.exp(-(((t - 0.76) / 0.1) ** 2));
     const toe = 0.105 * (1 - THREE.MathUtils.smoothstep(y, 0.22, 0.54));
     const frontReturn =
@@ -126,12 +120,15 @@ export function createCorollaShell(
   function hoodPoint(u: number, v: number): P3 {
     const s = v * 2 - 1,
       half = lerp(0.66, 0.793, u);
-    const z =
-      lerp(front + 0.018, 0.319, u) + 0.23 * Math.abs(s) ** 2 * (1 - u) ** 4;
+    const nose =
+      front +
+      0.56 * (1 - Math.sqrt(1 - ((0.66 * s) / 0.866) ** 2)) ** 1.8 +
+      0.009;
+    const z = lerp(nose, 0.319, u);
     const y =
-      lerp(0.731, 0.962, u) -
+      lerp(0.738, 0.962, u) -
       0.009 * s * s +
-      0.065 * s * s * (1 - u) ** 1.5 +
+      0.031 * s * s * (1 - u) ** 1.5 +
       0.018 * Math.sin(Math.PI * u) +
       0.006 *
         Math.exp(-(((Math.abs(s) - 0.62) / 0.08) ** 2)) *
@@ -233,7 +230,8 @@ export function createCorollaShell(
             r = 0.35 + 0.014 * v;
           const z = axle - Math.cos(a) * r,
             y = 0.316 + Math.sin(a) * r;
-          return [side * (bodyWidth(z) + 0.004 - 0.005 * v), y, z];
+          const p = sidePoint(z, y, side);
+          return [p[0] + side * 0.001, y, p[2]];
         },
         paint,
         90,
@@ -263,10 +261,8 @@ export function createCorollaShell(
           outer =
             h[2] < sideFront
               ? fascia.face(
-                  side * (Math.acos(1 - (h[2] - front) / 0.56) / (Math.PI / 2)),
-                  fascia.height(
-                    Math.acos(1 - (h[2] - front) / 0.56) / (Math.PI / 2),
-                  ),
+                  side * fascia.angleAtZ(h[2]),
+                  fascia.height(fascia.angleAtZ(h[2])),
                 )
               : sidePoint(h[2], shoulder(h[2]), side);
         return [
@@ -315,39 +311,69 @@ export function createCorollaShell(
         [1.58, 0.225],
       ],
     ];
-    seams.forEach((points) =>
+    seams.forEach((points) => {
+      const curve = new THREE.CatmullRomCurve3(
+        points.map(([z, y]) => new THREE.Vector3(z, y, 0)),
+      );
       tube(
         group,
-        points.map(([z, y]) => {
-          const p = sidePoint(z, y, side);
-          p[0] += side * 0.0015;
+        curve.getPoints(100).map((v) => {
+          const p = sidePoint(v.x, v.y, side);
+          p[0] += side * 0.003;
           return p;
         }),
-        0.0022,
-        black,
-      ),
-    );
+        0.0016,
+        k.steel,
+      );
+    });
     for (const [z, y] of [
       [1.39, 0.86],
       [2.31, 0.9],
     ]) {
       const p = sidePoint(z, y, side);
+      const pocket = mesh(group, new THREE.SphereGeometry(1, 32, 16), k.steel, [
+        p[0] - side * 0.001,
+        y - 0.008,
+        z,
+      ]);
+      pocket.scale.set(0.004, 0.019, 0.087);
       box(
         group,
-        [0.009, 0.027, 0.148],
-        [p[0] + side * 0.004, y - 0.004, z],
-        black,
-        0.012,
+        [0.023, 0.022, 0.159],
+        [p[0] + side * 0.015, y + 0.004, z],
+        paint,
+        0.008,
       );
       box(
         group,
-        [0.018, 0.025, 0.139],
-        [p[0] + side * 0.014, y + 0.004, z],
+        [0.027, 0.018, 0.018],
+        [p[0] + side * 0.014, y + 0.003, z + 0.064],
         paint,
-        0.011,
+        0.006,
       );
     }
   }
+  // The filler door is on the left rear quarter of the reference LE.
+  const filler = new THREE.Shape();
+  filler.moveTo(2.756, 0.996);
+  filler.lineTo(2.916, 0.996);
+  filler.quadraticCurveTo(2.94, 0.996, 2.94, 0.972);
+  filler.lineTo(2.94, 0.844);
+  filler.quadraticCurveTo(2.94, 0.822, 2.916, 0.822);
+  filler.lineTo(2.756, 0.822);
+  filler.quadraticCurveTo(2.732, 0.822, 2.732, 0.846);
+  filler.lineTo(2.732, 0.972);
+  filler.quadraticCurveTo(2.732, 0.996, 2.756, 0.996);
+  tube(
+    group,
+    filler.getPoints(12).map((p) => {
+      const q = sidePoint(p.x, p.y, -1);
+      q[0] -= 0.002;
+      return q;
+    }),
+    0.0016,
+    k.steel,
+  );
   // One flowing roof profile supplies the roof, glazing and broad painted pillars.
   const roofY = (z: number) =>
     profile(
@@ -437,16 +463,16 @@ export function createCorollaShell(
     const rearWindow = new THREE.Path();
     rearWindow.moveTo(1.68, 0.992);
     rearWindow.lineTo(1.73, 1.353);
-    rearWindow.quadraticCurveTo(1.99, 1.343, 2.221, 1.307);
-    rearWindow.lineTo(2.213, 1.017);
+    rearWindow.quadraticCurveTo(2.02, 1.341, 2.36, 1.266);
+    rearWindow.lineTo(2.335, 1.026);
     rearWindow.closePath();
     windows.push(rearWindow);
     windowPath([
-      [2.263, 1.018],
-      [2.27, 1.29],
-      [2.52, 1.176],
-      [2.755, 1.066],
-      [2.669, 1.038],
+      [2.383, 1.028],
+      [2.401, 1.242],
+      [2.548, 1.165],
+      [2.744, 1.069],
+      [2.67, 1.044],
     ]);
     outer.holes.push(...windows);
     const cabinPoint = (z: number, y: number, offset = 0): P3 => {
@@ -464,14 +490,14 @@ export function createCorollaShell(
       material: THREE.Material,
       offset = 0,
     ) {
-      const g = new THREE.ShapeGeometry(shape, 72),
-        p = g.getAttribute('position');
-      for (let i = 0; i < p.count; i++) {
-        const q = cabinPoint(p.getX(i), p.getY(i), offset);
-        p.setXYZ(i, ...q);
-      }
-      g.computeVertexNormals();
-      return mesh(group, g, material);
+      return bodyPatch(
+        k,
+        group,
+        shape,
+        material,
+        (z, y) => cabinPoint(z, y, offset),
+        2,
+      );
     }
     cabinGeometry(outer, paint);
     for (const outline of windows) {
@@ -500,14 +526,22 @@ export function createCorollaShell(
       0.014,
     );
     stem.rotation.z = -side * 0.21;
-    const cap = box(
+    surface(
       group,
-      [0.153, 0.085, 0.148],
-      [side * 0.922, 1.05, 0.595],
+      (u, v) => {
+        const a = u * Math.PI * 2,
+          t = v * 0.82,
+          r = Math.sqrt(Math.max(0, 1 - (t * 2 - 1) ** 2));
+        return [
+          side * 0.925 + Math.cos(a) * 0.087 * r,
+          1.046 + Math.sin(a) * 0.044 * r,
+          0.515 + t * 0.178,
+        ];
+      },
       paint,
-      0.035,
+      48,
+      22,
     );
-    cap.rotation.y = side * 0.16;
     const base = box(
       group,
       [0.149, 0.029, 0.144],
@@ -554,135 +588,7 @@ export function createCorollaShell(
       16,
     );
   }
-  for (const side of [-1, 1]) {
-    // Tail lamps wrap around the rear quarter, without emissive neon outlines.
-    surface(
-      group,
-      (u, v) => {
-        const x = lerp(0.42, 0.838, u),
-          z = rear + 0.008 - 0.17 * (x / 0.84) ** 3;
-        return [side * x, lerp(0.826 - u * 0.012, 0.933 - u * 0.015, v), z];
-      },
-      tail,
-      32,
-      10,
-    );
-    const sideLamp = new THREE.Shape();
-    sideLamp.moveTo(3.17, 0.923);
-    sideLamp.quadraticCurveTo(3.25, 0.957, 3.36, 0.951);
-    sideLamp.lineTo(sideRear, 0.924);
-    sideLamp.lineTo(sideRear, 0.847);
-    sideLamp.quadraticCurveTo(3.36, 0.871, 3.27, 0.888);
-    sideLamp.closePath();
-    const lg = new THREE.ShapeGeometry(sideLamp, 32),
-      lp = lg.getAttribute('position');
-    for (let j = 0; j < lp.count; j++) {
-      const p = sidePoint(lp.getX(j), lp.getY(j), side);
-      lp.setXYZ(j, p[0] + side * 0.004, p[1], p[2]);
-    }
-    lg.computeVertexNormals();
-    mesh(group, lg, tail);
-    // Clear lower segment and a dark internal divider give the lamp depth.
-    const lowerLamp = new THREE.Shape();
-    lowerLamp.moveTo(3.285, 0.895);
-    lowerLamp.quadraticCurveTo(3.39, 0.896, sideRear, 0.884);
-    lowerLamp.lineTo(sideRear, 0.853);
-    lowerLamp.quadraticCurveTo(3.36, 0.875, 3.285, 0.895);
-    lowerLamp.closePath();
-    const clearGeo = new THREE.ShapeGeometry(lowerLamp, 24);
-    const cp = clearGeo.getAttribute('position');
-    for (let j = 0; j < cp.count; j++) {
-      const p = sidePoint(cp.getX(j), cp.getY(j), side);
-      cp.setXYZ(j, p[0] + side * 0.005, p[1], p[2]);
-    }
-    clearGeo.computeVertexNormals();
-    mesh(group, clearGeo, k.steel);
-    const tailline: P3[] = [];
-    for (let i = 0; i <= 24; i++) {
-      const u = i / 24;
-      tailline.push([
-        side * lerp(0.46, 0.843, u),
-        0.892 - 0.012 * u,
-        rear + 0.014 - 0.17 * (lerp(0.46, 0.833, u) / 0.84) ** 3,
-      ]);
-    }
-    tube(group, tailline, 0.004, tail);
-  }
-  // Rear fascia, emblem and registration recess.
-  function emblem(z: number, y: number) {
-    const outer = mesh(
-      group,
-      new THREE.TorusGeometry(0.027, 0.0035, 8, 48),
-      alloy,
-      [0, y, z],
-    );
-    outer.scale.x = 1.47;
-    const vertical = mesh(
-      group,
-      new THREE.TorusGeometry(0.021, 0.0028, 8, 40),
-      alloy,
-      [0, y, z - 0.002],
-    );
-    vertical.scale.x = 0.55;
-    const cross = mesh(
-      group,
-      new THREE.TorusGeometry(0.021, 0.0025, 8, 40),
-      alloy,
-      [0, y + 0.008, z - 0.003],
-    );
-    cross.scale.set(1.42, 0.47, 1);
-  }
-  surface(
-    group,
-    (u, v) => {
-      const y = lerp(0.288, 0.941, u),
-        x = (v * 2 - 1) * (0.774 + 0.054 * Math.sin((u * Math.PI) / 2));
-      return [
-        x,
-        y,
-        rear - 0.17 * (Math.abs(x) / 0.84) ** 3 - 0.09 * (1 - u) ** 3,
-      ];
-    },
-    paint,
-    36,
-    70,
-  );
-  // Rounded rear-corner returns join the narrowed bumper to the quarter panels.
-  for (const side of [-1, 1])
-    surface(
-      group,
-      (u, v) => {
-        const y = lerp(0.3, 0.941, u),
-          x = 0.774 + 0.054 * Math.sin((u * Math.PI) / 2);
-        const p = sidePoint(sideRear, y, side),
-          z = rear - 0.17 * (x / 0.84) ** 3 - 0.09 * (1 - u) ** 3;
-        return [lerp(p[0], side * x, v), y, lerp(p[2], z, v)];
-      },
-      paint,
-      48,
-      16,
-    );
-  box(group, [0.38, 0.135, 0.015], [0, 0.705, rear + 0.003], black, 0.022);
-  box(group, [0.303, 0.102, 0.014], [0, 0.705, rear + 0.013], k.steel, 0.006);
-  emblem(rear + 0.01, 0.907);
-  for (const side of [-1, 1])
-    box(
-      group,
-      [0.14, 0.027, 0.017],
-      [side * 0.681, 0.32, rear - 0.168],
-      tail,
-      0.01,
-    );
-  const trunkSeam: P3[] = [];
-  for (let i = 0; i <= 50; i++) {
-    const x = lerp(-0.73, 0.73, i / 50);
-    trunkSeam.push([
-      x,
-      0.939,
-      rear - 0.019 - 0.037 * (Math.abs(x) / 0.73) ** 3,
-    ]);
-  }
-  tube(group, trunkSeam, 0.0025, black);
+  createCorollaRear(k, group, rear, sideRear, sidePoint);
   // A low shark-fin aerial follows the roof instead of floating above it.
   const aerialOutline = new THREE.Shape();
   aerialOutline.moveTo(-0.09, 0);

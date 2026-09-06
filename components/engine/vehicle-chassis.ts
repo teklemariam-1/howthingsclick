@@ -202,10 +202,10 @@ export function createVehicleChassis() {
     [
       [0.48, 0.23, 3.18],
       [0.57, 0.23, 3.39],
-      [0.57, 0.195, 3.51],
+      [0.57, 0.205, 3.46],
     ],
-    0.028,
-    alloy,
+    0.02,
+    steel,
   );
   batchVehicleModel(group);
   return {

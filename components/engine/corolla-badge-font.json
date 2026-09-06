@@ -1,0 +1,74 @@
+{
+  "glyphs": {
+    "C": {
+      "x_min": 0,
+      "x_max": 886,
+      "ha": 944,
+      "o": "m 886 379 q 760 87 886 201 q 455 -26 634 -26 q 112 136 236 -26 q 0 509 0 283 q 118 882 0 737 q 469 1041 245 1041 q 748 955 630 1041 q 879 708 879 859 l 745 708 q 649 862 724 805 q 473 920 573 920 q 219 791 312 920 q 136 509 136 675 q 217 229 136 344 q 470 99 311 99 q 672 179 591 99 q 753 379 753 259 l 886 379 "
+    },
+    "?": {
+      "x_min": 0,
+      "x_max": 607,
+      "ha": 704,
+      "o": "m 607 777 q 543 599 607 674 q 422 474 482 537 q 357 272 357 391 l 236 272 q 297 487 236 395 q 411 619 298 490 q 474 762 474 691 q 422 885 474 838 q 301 933 371 933 q 179 880 228 933 q 124 706 124 819 l 0 706 q 94 963 0 872 q 302 1044 177 1044 q 511 973 423 1044 q 607 777 607 895 m 370 0 l 230 0 l 230 151 l 370 151 l 370 0 "
+    },
+    "R": {
+      "x_min": 0,
+      "x_max": 781.953125,
+      "ha": 907,
+      "o": "m 781 0 l 623 0 q 587 242 590 52 q 407 433 585 433 l 138 433 l 138 0 l 0 0 l 0 1013 l 396 1013 q 636 946 539 1013 q 749 731 749 868 q 711 597 749 659 q 608 502 674 534 q 718 370 696 474 q 729 207 722 352 q 781 26 736 62 l 781 0 m 373 551 q 533 594 465 551 q 614 731 614 645 q 532 859 614 815 q 373 896 465 896 l 138 896 l 138 551 l 373 551 "
+    },
+    "E": {
+      "x_min": 0,
+      "x_max": 736.109375,
+      "ha": 789,
+      "o": "m 736 0 l 0 0 l 0 1013 l 725 1013 l 725 889 l 139 889 l 139 585 l 677 585 l 677 467 l 139 467 l 139 125 l 736 125 l 736 0 "
+    },
+    "L": {
+      "x_min": 0,
+      "x_max": 645.828125,
+      "ha": 696,
+      "o": "m 645 0 l 0 0 l 0 1013 l 140 1013 l 140 126 l 645 126 l 645 0 "
+    },
+    " ": { "x_min": 0, "x_max": 0, "ha": 375 },
+    "A": {
+      "x_min": 0.03125,
+      "x_max": 906.953125,
+      "ha": 1008,
+      "o": "m 906 0 l 756 0 l 648 303 l 251 303 l 142 0 l 0 0 l 376 1013 l 529 1013 l 906 0 m 610 421 l 452 867 l 293 421 l 610 421 "
+    },
+    "O": {
+      "x_min": 0,
+      "x_max": 958,
+      "ha": 1057,
+      "o": "m 485 1041 q 834 882 702 1041 q 958 512 958 734 q 834 136 958 287 q 481 -26 702 -26 q 126 130 261 -26 q 0 504 0 279 q 127 880 0 728 q 485 1041 263 1041 m 480 98 q 731 225 638 98 q 815 504 815 340 q 733 783 815 669 q 480 912 640 912 q 226 784 321 912 q 142 504 142 670 q 226 224 142 339 q 480 98 319 98 "
+    }
+  },
+  "cssFontWeight": "normal",
+  "ascender": 1189,
+  "underlinePosition": -100,
+  "cssFontStyle": "normal",
+  "boundingBox": { "yMin": -334, "xMin": -111, "yMax": 1189, "xMax": 1672 },
+  "resolution": 1000,
+  "original_font_information": {
+    "postscript_name": "Helvetiker-Regular",
+    "version_string": "Version 1.00 2004 initial release",
+    "vendor_url": "http://www.magenta.gr/",
+    "full_font_name": "Helvetiker",
+    "font_family_name": "Helvetiker",
+    "copyright": "Copyright (c) \u039cagenta ltd, 2004",
+    "description": "",
+    "trademark": "",
+    "designer": "",
+    "designer_url": "",
+    "unique_font_identifier": "\u039cagenta ltd:Helvetiker:22-10-104",
+    "license_url": "http://www.ellak.gr/fonts/MgOpen/license.html",
+    "license_description": "Copyright (c) 2004 by MAGENTA Ltd. All Rights Reserved.\r\n\r\nPermission is hereby granted, free of charge, to any person obtaining a copy of the fonts accompanying this license (\"Fonts\") and associated documentation files (the \"Font Software\"), to reproduce and distribute the Font Software, including without limitation the rights to use, copy, merge, publish, distribute, and/or sell copies of the Font Software, and to permit persons to whom the Font Software is furnished to do so, subject to the following conditions: \r\n\r\nThe above copyright and this permission notice shall be included in all copies of one or more of the Font Software typefaces.\r\n\r\nThe Font Software may be modified, altered, or added to, and in particular the designs of glyphs or characters in the Fonts may be modified and additional glyphs or characters may be added to the Fonts, only if the fonts are renamed to names not containing the word \"MgOpen\", or if the modifications are accepted for inclusion in the Font Software itself by the each appointed Administrator.\r\n\r\nThis License becomes null and void to the extent applicable to Fonts or Font Software that has been modified and is distributed under the \"MgOpen\" name.\r\n\r\nThe Font Software may be sold as part of a larger software package but no copy of one or more of the Font Software typefaces may be sold by itself. \r\n\r\nTHE FONT SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL MAGENTA OR PERSONS OR BODIES IN CHARGE OF ADMINISTRATION AND MAINTENANCE OF THE FONT SOFTWARE BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM OTHER DEALINGS IN THE FONT SOFTWARE.",
+    "manufacturer_name": "\u039cagenta ltd",
+    "font_sub_family_name": "Regular"
+  },
+  "descender": -334,
+  "familyName": "Exhibit Badge Sans",
+  "lineHeight": 1522,
+  "underlineThickness": 50
+}
