@@ -9,7 +9,12 @@ import { createDoorHardware } from './door-hardware';
 import { createWheelHouseLiner } from './wheel-house-liner';
 import { createExteriorMirror } from './exterior-mirror';
 import { clipPanelGeometry, splitPanelRegion } from './panel-clipping';
-import { rearBumperSideLine } from '../../lib/engine/corolla-panel-lines';
+import {
+  frontBumperSideLine,
+  frontDoorOutline,
+  rearDoorOutline,
+  rearBumperSideLine,
+} from '../../lib/engine/corolla-panel-lines';
 import { createLuggageCompartment } from './luggage-compartment';
 import { VEHICLE_DIMENSIONS as D } from '../../lib/engine/vehicle-dimensions';
 
@@ -299,23 +304,8 @@ export function createCorollaShell(
     );
     doors.set(`${side}-front`, frontDoor);
     doors.set(`${side}-rear`, rearDoor);
-    const frontShape = bodyOutline([
-      [0.51, 0.94],
-      [0.489, 0.82],
-      [0.5, 0.54],
-      [0.568, 0.282],
-      [0.685, 0.239],
-      [1.551, 0.237],
-      [1.578, 0.953],
-    ]);
-    const rearShape = bodyOutline([
-      [1.612, 0.959],
-      [2.65, 1.0],
-      [2.684, 0.942],
-      [2.478, 0.607],
-      [2.27, 0.264],
-      [1.601, 0.237],
-    ]);
+    const frontShape = frontDoorOutline();
+    const rearShape = rearDoorOutline();
     const outside = new THREE.Shape();
     outside.moveTo(sideFront, archBottom(sideFront));
     for (let i = 1; i <= 280; i++) {
@@ -366,6 +356,31 @@ export function createCorollaShell(
           0.0013,
           k.steel,
         );
+      } else if (target === fender) {
+        const seam = frontBumperSideLine().getPoints(16);
+        const region = [
+          new THREE.Vector2(-0.6, 0),
+          new THREE.Vector2(-0.141, 0),
+          ...seam.reverse(),
+          new THREE.Vector2(-0.6, 0.9),
+        ];
+        const split = splitPanelRegion(panel, region, [2, 1]);
+        mesh(fascia.bumper, split.inside, paint);
+        mesh(fender, split.outside, paint);
+        panel.dispose();
+        outlineTube(
+          k,
+          fascia.bumper,
+          frontBumperSideLine()
+            .getPoints(48)
+            .map((p) => {
+              const q = sidePoint(p.x, p.y, side);
+              q[0] += side * 0.0008;
+              return q;
+            }),
+          0.0011,
+          k.black,
+        );
       } else mesh(target, panel, paint);
     }
     frame.remove(skin);
@@ -398,7 +413,7 @@ export function createCorollaShell(
       outlineTube(
         k,
         target,
-        shape.getPoints(12).map((p) => {
+        shape.getSpacedPoints(240).map((p) => {
           const q = sidePoint(p.x, p.y, side);
           q[0] -= side * 0.018;
           return q;
@@ -410,21 +425,33 @@ export function createCorollaShell(
     for (const axle of [0, D.wheelbase]) {
       group = axle === 0 ? fender : quarter;
 
-      // Flush painted arch flange and a recessed black wheel-house liner.
-      surface(
-        group,
-        (u, v) => {
-          const a = lerp(-0.13, Math.PI + 0.13, u),
-            r = 0.35 + 0.014 * v;
-          const z = axle - Math.cos(a) * r,
-            y = 0.316 + Math.sin(a) * r;
-          const p = sidePoint(z, y, side);
-          return [p[0] + side * 0.001, y, p[2]];
-        },
-        paint,
-        90,
-        6,
-      );
+      // Each folded return belongs to the body panel bordering that arc.
+      const join = Math.acos(axle === 0 ? 0.141 / 0.35 : -0.24 / 0.35);
+      const segments: [THREE.Group, number, number][] =
+        axle === 0
+          ? [
+              [fascia.bumper, -0.13, join],
+              [fender, join, Math.PI + 0.13],
+            ]
+          : [
+              [quarter, -0.13, join],
+              [rearBumper, join, Math.PI + 0.13],
+            ];
+      for (const [owner, start, end] of segments)
+        surface(
+          owner,
+          (u, v) => {
+            const a = lerp(start, end, u),
+              r = 0.35 - 0.0018 * Math.sin(Math.PI * v);
+            const z = axle - Math.cos(a) * r,
+              y = 0.316 + Math.sin(a) * r;
+            const p = sidePoint(z, y, side);
+            return [p[0] - side * 0.026 * v, y, p[2]];
+          },
+          paint,
+          72,
+          8,
+        );
       createWheelHouseLiner(k, root, side, axle, sidePoint, linerMaterial);
     }
     group = fender;
@@ -451,58 +478,32 @@ export function createCorollaShell(
       20,
     );
     group = frame;
-    // Beltline, stamped door character line and gently rising rocker.
-    const belt: P3[] = [],
-      rocker: P3[] = [];
+    // Window belt seals sit above the door; the painted rocker is already
+    // part of the body surface and needs no overlapping decorative tube.
+    const belt: P3[] = [];
     for (let i = 0; i <= 60; i++) {
       const z = lerp(0.35, 2.83, i / 60);
       belt.push([side * (bodyWidth(z) + 0.001), shoulder(z) + 0.006, z]);
-      if (z < 2.32)
-        rocker.push(
-          sidePoint(z, 0.248 + 0.009 * Math.sin((i / 60) * Math.PI), side),
-        );
     }
     tube(group, belt, 0.007, black);
-    tube(group, rocker, 0.006, paint);
-    const seams = [
-      [
-        [0.5, 0.958],
-        [0.48, 0.82],
-        [0.49, 0.54],
-        [0.56, 0.274],
-        [0.68, 0.23],
-        [1.56, 0.225],
-      ],
-      [
-        [1.6, 0.976],
-        [1.59, 0.82],
-        [1.575, 0.56],
-        [1.57, 0.225],
-      ],
-      [
-        [2.67, 1.02],
-        [2.7, 0.94],
-        [2.49, 0.6],
-        [2.28, 0.252],
-        [1.58, 0.225],
-      ],
-    ];
-    seams.forEach((points, index) => {
-      group = index < 2 ? frontDoor : rearDoor;
-      const curve = new THREE.CatmullRomCurve3(
-        points.map(([z, y]) => new THREE.Vector3(z, y, 0)),
-      );
-      tube(
-        group,
-        curve.getPoints(100).map((v) => {
-          const p = sidePoint(v.x, v.y, side);
-          p[0] += side * 0.003;
-          return p;
+    // Draw the shut line on the same contour as the actual removable skin.
+    // Separate approximate splines previously made two conflicting edges.
+    for (const [owner, shape] of [
+      [frontDoor, frontShape],
+      [rearDoor, rearShape],
+    ] as const) {
+      outlineTube(
+        k,
+        owner,
+        shape.getSpacedPoints(240).map((p) => {
+          const q = sidePoint(p.x, p.y, side);
+          q[0] += side * 0.0015;
+          return q;
         }),
-        0.0016,
-        k.steel,
+        0.00135,
+        black,
       );
-    });
+    }
     for (const [z, y] of [
       [1.39, 0.86],
       [2.31, 0.9],

@@ -48,6 +48,13 @@ Applied: replace the earlier tubular arm and block knuckle, add separate forward
 
 ## Fidelity boundary and next work
 
+### Front cover and impact absorber, 6 September 2026
+
+- The supplied exact EchoPark front, quarter and side photographs guide the diagonal bumper/fender joint, long lower corner crease and rounded lower door boundaries. Shared profiles now define both the removable panels and visible shut lines.
+- Toyota dealer [52611-02500 absorber listing](https://parts.elmhursttoyota.com/oem-parts/toyota-bumper-impact-absorber-5261102500) identifies the US-built application excluding SE/XSE/Nightshade/Apex/FX. The listing establishes configuration, not independent VIN certification.
+- A [physical part photograph](https://www.ebay.com/itm/156484110132), [direct image](https://i.ebayimg.com/images/g/PJsAAOSwr7tnIXQj/s-l1200.jpg), was visually inspected. Its stepped ends, two large end openings, central recesses and circular mould impressions guide the original foam geometry. No photograph is used as an in-product texture.
+- Front bumper catalog text was accessible, but the requested exploded image was blocked/unavailable. Do not describe that diagram as visually verified. The hollow reinforcement, stays, fasteners and front-rail sweep are spatial reconstructions; exact section material, dimensions and crash response are unverified.
+
 This is an original procedural educational model. Parts diagrams identify assemblies and attachment relationships; photographs guide surfaces. Neither supplies measured 3D contours, all brackets, every fastener or manufacturing tolerances. The exterior, seats, trim, HVAC cases, engine castings and harness routing still require iterative visual comparison. The project must not claim factory CAD accuracy or that every production component is modeled.
 
 The generic V6 systems graphic is a completeness checklist only. The correct model uses a transverse inline-four and a front transaxle with two half shafts; it has no longitudinal V6/driveshaft layout.

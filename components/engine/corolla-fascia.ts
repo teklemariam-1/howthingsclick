@@ -61,10 +61,10 @@ export function createCorollaFascia(
       0.033 *
       Math.exp(-(((a - 0.75) / 0.11) ** 2)) *
       Math.exp(-(((y - 0.46) / 0.082) ** 2));
-    const foldY = 0.337 + (a - 0.69) * 0.3;
+    const foldY = 0.374 - (a - 0.7) * 0.4;
     const fold =
-      0.015 *
-      Math.exp(-(((y - foldY) / 0.014) ** 2)) *
+      0.01 *
+      Math.exp(-(((y - foldY) / 0.018) ** 2)) *
       THREE.MathUtils.smoothstep(a, 0.68, 0.78) *
       (1 - THREE.MathUtils.smoothstep(a, 0.94, 1));
     return [
@@ -159,19 +159,28 @@ export function createCorollaFascia(
   ]);
   const corners = [-1, 1].map((side) => {
     const s = new THREE.Shape();
-    s.moveTo(side * 0.872, 0.412);
+    // This is the long folded cheek/air-guide seam visible in the LE quarter
+    // photograph. It sweeps down to the return, rather than forming a hook.
+    s.moveTo(side * 0.704, 0.366);
     s.bezierCurveTo(
-      side * 0.837,
-      0.424,
-      side * 0.803,
-      0.391,
-      side * 0.804,
-      0.364,
+      side * 0.782,
+      0.334,
+      side * 0.908,
+      0.327,
+      side * 0.954,
+      0.27,
     );
-    s.lineTo(side * 0.825, 0.293);
-    s.lineTo(side * 0.844, 0.302);
-    s.lineTo(side * 0.829, 0.365);
-    s.quadraticCurveTo(side * 0.833, 0.393, side * 0.879, 0.39);
+    s.lineTo(side * 0.982, 0.229);
+    s.lineTo(side * 0.958, 0.23);
+    s.bezierCurveTo(
+      side * 0.919,
+      0.279,
+      side * 0.898,
+      0.306,
+      side * 0.783,
+      0.318,
+    );
+    s.lineTo(side * 0.706, 0.354);
     s.closePath();
     return s;
   });
@@ -406,7 +415,20 @@ export function createCorollaFascia(
     });
     bodyPatch(k, cover, lamps[i], lensMaterial, (u, y) => face(u, y, 0.01));
     parent = bumper;
-    mapped(corners[i], trim, -0.003);
+    mapped(corners[i], trim, -0.014);
+    const cornerEdge = corners[i].getPoints(64);
+    surface(
+      parent,
+      (u, v) => {
+        const index = u * (cornerEdge.length - 1),
+          j = Math.min(cornerEdge.length - 2, Math.floor(index));
+        const p = cornerEdge[j].clone().lerp(cornerEdge[j + 1], index - j);
+        return face(p.x, p.y, -0.014 * v);
+      },
+      paint,
+      160,
+      4,
+    );
     surface(
       parent,
       (u, v) => {
@@ -438,5 +460,5 @@ export function createCorollaFascia(
     );
     badge.scale.set(sx, sy, 1);
   }
-  return { face, edgeZ: front + reach, height, toe, angleAtZ };
+  return { bumper, face, edgeZ: front + reach, height, toe, angleAtZ };
 }

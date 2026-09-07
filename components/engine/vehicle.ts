@@ -231,7 +231,7 @@ export function createVehicleContext() {
     group.add(new THREE.LineSegments(geometry, material));
   }
   const entries = [...chassis.parts, ...bodywork.parts, ...bay.parts];
-  const textures: THREE.Texture[] = [...bodywork.textures];
+  const textures: THREE.Texture[] = [...bodywork.textures, ...chassis.textures];
   const wheels: { spin: THREE.Object3D; side: number }[] = [];
   for (const side of [-1, 1])
     for (const z of [0, D.wheelbase]) {

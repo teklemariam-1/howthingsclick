@@ -17,6 +17,16 @@ Source: https://www.toyota.com/content/dam/toyota/brochures/pdf/2025/corolla_ebr
 
 ## Current combined-explorer revision
 
+### Body seams and front impact structure
+
+- 269 vehicle assemblies plus the four engine-bay services and engine module: **274 selectable car assemblies**. The new removable parts are the foam absorber, two reinforcement stays and their fastener set; the existing front reinforcement was rebuilt as a curved hollow section.
+- Front bumper side returns now leave with the cover, using the same contour as the visible fender joint. Wheel-opening returns fold inward instead of overlaying another painted ring. Door skins use curved lower corners and closely spaced shared edges. Sampling the shut lines before projecting them onto the curved body fixes the disappearing centre door seam.
+- The foam absorber follows the visually inspected 52611-02500 part photograph. Reinforcement, stay and front-rail dimensions are packaging reconstructions; they are not measured factory contours or an impact simulation.
+- Validation: TypeScript, changed-source lint and the model checks passed (269 assemblies / 650 meshes). New checks cover bumper side ownership and independent removal/restoration of the impact components. Browser checks passed for exterior views, cover/door removal, impact-part isolation/removal/return, and full assembly. Same-page engine entry/return, preserved car selection/removal, one active canvas, combustion/oil separation, engine assembly and mobile layout passed with no page errors.
+- The photographic fidelity limits below remain open. Part counts describe selectable educational assemblies, not every production fastener or a complete factory bill of materials.
+
+### Initial same-page engine release (270 assemblies)
+
 - The main page now opens the complete engine interactive in place through **Explore engine**. **Back to whole car** restores the car's filter/search, selection, removed components and camera. The hidden car renderer is disposed while the engine mode runs; browser checks confirmed one canvas and no page navigation in either direction, on desktop and mobile. The existing `/engine` route remains available for direct links.
 - 265 vehicle assemblies, four engine-bay service groups and the engine module: **270 selectable car assemblies**. New parts are the four wheel-house liners and separately removable mirror caps, glass/backing and adjustment units.
 - Corrected eight-spoke covers, front/rear tread widths and disc diameters, door-frame ownership, rear-quarter divider, softer door stamping, wheel-liner returns, reflective mirror glass and studio lighting.

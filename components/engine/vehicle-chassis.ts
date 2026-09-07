@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { modelKit, batchVehicleModel, type P3 } from './vehicle-model';
 import { createVehicleTransmission } from './vehicle-transmission';
 import { detailFrontSuspension } from './front-suspension';
+import { createFrontImpactStructure } from './front-impact-structure';
 import type { VehicleSystem } from '../../lib/engine/vehicle-parts';
 
 export function createVehicleChassis() {
@@ -61,7 +62,39 @@ export function createVehicleChassis() {
       0.047,
       steel,
     );
-    box(floor, [0.075, 0.08, 0.34], [side * 0.67, 0.34, -0.39], steel, 0.015);
+    // The boxed front rail meets the reinforcement stay, then descends to the
+    // floor/bulkhead. Its packaging is illustrative, not a crash-load model.
+    const railSection = new THREE.Shape();
+    railSection.moveTo(-0.049, -0.048);
+    railSection.lineTo(0.049, -0.048);
+    railSection.lineTo(0.049, 0.048);
+    railSection.lineTo(-0.049, 0.048);
+    railSection.closePath();
+    const railVoid = new THREE.Path();
+    railVoid.moveTo(-0.044, -0.043);
+    railVoid.lineTo(-0.044, 0.043);
+    railVoid.lineTo(0.044, 0.043);
+    railVoid.lineTo(0.044, -0.043);
+    railVoid.closePath();
+    railSection.holes.push(railVoid);
+    const rail = new THREE.ExtrudeGeometry(railSection, {
+      depth: 1.112,
+      steps: 64,
+      bevelEnabled: false,
+    });
+    const positions = rail.getAttribute('position');
+    for (let i = 0; i < positions.count; i++) {
+      const z = positions.getZ(i) - 0.387;
+      const blend = THREE.MathUtils.smoothstep(z, -0.28, 0.725);
+      positions.setXYZ(
+        i,
+        side * (0.548 + 0.142 * blend) + positions.getX(i),
+        0.49 - 0.235 * blend + positions.getY(i),
+        z,
+      );
+    }
+    rail.computeVertexNormals();
+    mesh(floor, rail, steel);
   }
   box(floor, [1.43, 0.07, 0.085], [0, 0.255, 0.68], steel, 0.012);
   box(floor, [0.15, 0.085, 1.92], [0, 0.265, 1.61], steel, 0.024);
@@ -96,28 +129,22 @@ export function createVehicleChassis() {
       steel,
     );
   box(subframe, [0.88, 0.065, 0.075], [0, 0.175, 0.36], steel, 0.01);
+  const impact = createFrontImpactStructure(k, group);
   for (const [id, name, z, y, w] of [
-    ['front', 'Front bumper reinforcement', -0.56, 0.355, 1.26],
     ['rear', 'Rear bumper reinforcement', 3.34, 0.32, 1.38],
   ] as const) {
     const beam = part(
       `${id}-crash-beam`,
       name,
       'body',
-      [0, 0.08, id === 'front' ? -0.85 : 0.85],
+      [0, 0.08, 0.85],
       2,
       'The energy-absorbing reinforcement sits behind the painted bumper cover. Its crush attachments transfer loads into the body structure.',
       'Aluminium / steel',
     );
     box(beam, [w, 0.08, 0.11], [0, y, z], alloy, 0.02);
     for (const side of [-1, 1])
-      box(
-        beam,
-        [0.11, 0.09, 0.16],
-        [side * 0.55, y, z + (id === 'front' ? 0.1 : -0.1)],
-        steel,
-        0.018,
-      );
+      box(beam, [0.11, 0.09, 0.16], [side * 0.55, y, z + -0.1], steel, 0.018);
   }
   const rack = part(
     'steering-rack',
@@ -540,6 +567,7 @@ export function createVehicleChassis() {
   return {
     group,
     materials: k.materials,
+    textures: impact.textures,
     parts: k.parts,
     setWheelAngle(angle: number) {
       shafts.forEach((s) => (s.rotation.x = angle));

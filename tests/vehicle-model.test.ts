@@ -94,6 +94,42 @@ for (const side of ['left', 'right'])
     );
   }
 const original = c.records.map((r) => r.group.matrixWorld.clone());
+// The cover includes the side return up to the front wheel opening. It must
+// travel with the cover instead of remaining as a detached fender fragment.
+assert(
+  c.meshes.some((m) => {
+    if (m.userData.vehiclePartId !== 'car-front-bumper') return false;
+    const p = m.geometry.getAttribute('position');
+    for (let i = 0; i < p.count; i++)
+      if (Math.abs(p.getX(i)) > 0.8 && p.getZ(i) > -0.25 && p.getZ(i) < -0.1)
+        return true;
+    return false;
+  }),
+  'front bumper owns its wheel-arch side return',
+);
+// Removing the foam must leave the structural reinforcement and its mounting
+// stays in place. All five structural pieces can be removed independently.
+const impactIds = [
+  'car-front-impact-absorber',
+  'car-front-crash-beam',
+  'car-front-left-impact-stay',
+  'car-front-right-impact-stay',
+  'car-front-impact-fasteners',
+];
+const impactStart = new Map(
+  impactIds.map((id) => [id, c.byId.get(id)!.group.matrixWorld.clone()]),
+);
+for (const removed of impactIds) {
+  c.update({ ...initialVehicleAssembly, removed: [removed] }, 1, true);
+  car.group.updateMatrixWorld(true);
+  for (const id of impactIds)
+    assert.equal(
+      c.byId.get(id)!.group.matrixWorld.equals(impactStart.get(id)!),
+      id !== removed,
+      `${removed} independently separates from ${id}`,
+    );
+  c.update(initialVehicleAssembly, 1, true);
+}
 c.update({ ...initialVehicleAssembly, explode: 1 }, 1, true);
 car.group.updateMatrixWorld(true);
 assert(
