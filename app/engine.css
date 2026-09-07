@@ -1685,7 +1685,7 @@ a:focus-visible {
     max-width: 55%;
   }
   .cinema-mode .creator-actions .toggle-control,
-  .cinema-mode .creator-actions > button:nth-last-child(-n + 2) {
+  .cinema-mode .creator-actions > .tour-script-download {
     display: none;
   }
   .cinema-mode .creator-actions > [data-slot='select-trigger'] {

@@ -1,5 +1,9 @@
 # Engine episode production
 
+## Caption-free recording update
+
+At the user's request, spoken-text captions are no longer shown during the engine tour or burned into recordings because their editorial timing did not match the supplied voice-over. Chapter titles, action prompts and part labels remain. The engine video uses the freed caption area for the model. Audio import/mixing is unchanged. Historical SRT files remain editing references; the engine creator controls no longer offer the mismatched caption export.
+
 The engine film uses the same interactive 3D scene as the site. No live voice API or media upload is needed by the viewer.
 
 ## First episode

@@ -53,8 +53,6 @@ import {
   tourDuration,
   tourShots,
   exportScript,
-  exportSrt,
-  captionAt,
   type TourVariant,
 } from '@/lib/engine/tour';
 import type { SceneOptions } from './scene';
@@ -461,7 +459,7 @@ export default function EngineExhibit({
           );
         setNotice(
           voiceActive
-            ? 'Video saved with your narration and timed captions.'
+            ? 'Video saved with your narration.'
             : 'Silent video saved. Add a voice-over file here to include narration in the next recording.',
         );
       };
@@ -975,7 +973,6 @@ export default function EngineExhibit({
                 </span>
                 <div>
                   <h2>{sample.shot.title}</h2>
-                  <p>{captionAt(tourTime ?? 0, variant)}</p>
                 </div>
               </div>
             )}
@@ -1011,7 +1008,7 @@ export default function EngineExhibit({
                 </p>
                 <p>
                   Add a voice-over file to include narration. Download the
-                  script and captions to add a studio voice track. The optional
+                  script to prepare a studio voice track. The optional
                   device voice plays only after you enable it.
                 </p>
                 <a
@@ -1290,7 +1287,7 @@ export default function EngineExhibit({
               <div>
                 <strong>One tour. Two ways to explore.</strong>
                 <span>
-                  Directed close-ups, timed captions and optional voice-over.
+                  Directed close-ups, part labels and optional voice-over.
                 </span>
               </div>
             </div>
@@ -1352,19 +1349,7 @@ export default function EngineExhibit({
               </Button>
               <Button
                 variant="ghost"
-                onClick={() =>
-                  downloadFile(
-                    `engine-${variant}.srt`,
-                    exportSrt(variant),
-                    'text/plain',
-                  )
-                }
-              >
-                <Download size={15} />
-                Captions
-              </Button>
-              <Button
-                variant="ghost"
+                className="tour-script-download"
                 onClick={() =>
                   downloadFile(
                     `engine-${variant}-narration.txt`,

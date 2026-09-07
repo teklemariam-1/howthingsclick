@@ -24,7 +24,6 @@ import {
 } from '@/lib/engine/mechanics';
 import {
   sampleTour,
-  captionAt,
   tourDuration,
   tourShots,
   type TourVariant,
@@ -2406,8 +2405,9 @@ export function createEngineScene(
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     const w = renderer.domElement.width,
       h = renderer.domElement.height;
-    const scale = Math.min(canvas.width / w, (canvas.height - 250) / h);
-    const imageTop = 100 + (canvas.height - 250 - h * scale) / 2;
+    const imageHeight = canvas.height - (options.carCaption ? 250 : 126);
+    const scale = Math.min(canvas.width / w, imageHeight / h);
+    const imageTop = 100 + (imageHeight - h * scale) / 2;
     ctx.drawImage(
       renderer.domElement,
       (canvas.width - w * scale) / 2,
@@ -2448,28 +2448,6 @@ export function createEngineScene(
         canvas.width - 42,
         43,
       );
-      ctx.textAlign = 'left';
-      // Brief timed captions instead of a whole paragraph covering the model.
-      const caption = captionAt(time, options.tourVariant);
-      ctx.font = '500 32px Arial';
-      ctx.fillStyle = '#f1f6f5';
-      const words = caption.split(' '),
-        lines: string[] = [];
-      let line = '';
-      for (const word of words) {
-        if (ctx.measureText(line + word).width > canvas.width - 150) {
-          lines.push(line.trim());
-          line = '';
-        }
-        line += word + ' ';
-      }
-      if (line.trim()) lines.push(line.trim());
-      ctx.textAlign = 'center';
-      lines
-        .slice(0, 2)
-        .forEach((text, i) =>
-          ctx.fillText(text, canvas.width / 2, canvas.height - 65 + i * 37),
-        );
       ctx.textAlign = 'left';
       const action =
         sample.shot.view === 'explode'
