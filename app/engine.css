@@ -1288,42 +1288,6 @@ a:focus-visible {
   margin-top: 18px;
   color: #8dc6ed;
 }
-.tour-caption {
-  position: absolute;
-  bottom: 43px;
-  left: 24px;
-  right: 24px;
-  max-width: 770px;
-  margin: auto;
-  display: flex;
-  gap: 20px;
-  padding: 20px 24px;
-  background: linear-gradient(110deg, #10222bed, #101920e8);
-  border: 1px solid #445960;
-  border-radius: 8px;
-  box-shadow: 0 12px 40px #050b0e45;
-  pointer-events: none;
-}
-.tour-caption > span {
-  font-size: 12px;
-  color: #83c5bb;
-  letter-spacing: 1px;
-  white-space: nowrap;
-  line-height: 2;
-}
-.tour-caption h2 {
-  font-size: 22px;
-  letter-spacing: -0.5px;
-  font-weight: 500;
-  line-height: 1.3;
-  margin: 0 0 8px;
-}
-.tour-caption p {
-  font-size: 15px;
-  color: #b9cad0;
-  line-height: 1.65;
-  margin: 0;
-}
 .tour-player {
   padding: 17px 22px;
   background: #152329;
@@ -1476,9 +1440,6 @@ a:focus-visible {
 .cinema-mode .creator-actions {
   justify-content: center;
 }
-.cinema-mode .tour-caption {
-  max-width: 900px;
-}
 .cinema-mode .during-tour {
   display: none;
 }
@@ -1528,15 +1489,6 @@ a:focus-visible {
   .view-controls .explode-control {
     margin-left: 0;
     flex: 1;
-  }
-  .tour-caption {
-    left: 15px;
-    right: 15px;
-    padding: 16px;
-    bottom: 40px;
-  }
-  .tour-caption p {
-    font-size: 14px;
   }
   .flow-legend {
     right: 15px;
@@ -1607,25 +1559,6 @@ a:focus-visible {
   .throttle-control > span {
     font-size: 12px;
   }
-  .tour-caption {
-    bottom: 14px;
-    padding: 14px;
-    gap: 10px;
-  }
-  .tour-caption > span {
-    font-size: 11px;
-  }
-  .tour-caption h2 {
-    font-size: 18px;
-    margin-bottom: 5px;
-  }
-  .tour-caption p {
-    font-size: 13px;
-    line-height: 1.5;
-  }
-  .tour-caption ~ .stage-footnote {
-    display: none;
-  }
   .tour-player {
     padding: 13px;
   }
@@ -1669,9 +1602,6 @@ a:focus-visible {
   .cinema-mode .model-host {
     height: calc(100dvh - 230px);
     min-height: 400px;
-  }
-  .cinema-mode .tour-caption {
-    bottom: 12px;
   }
   .cinema-mode .assembly-toolbar {
     padding: 9px 12px;

@@ -22,12 +22,7 @@ import {
   flowGate,
   frameDeltaSeconds,
 } from '@/lib/engine/mechanics';
-import {
-  sampleTour,
-  tourDuration,
-  tourShots,
-  type TourVariant,
-} from '@/lib/engine/tour';
+import { sampleTour, tourDuration, type TourVariant } from '@/lib/engine/tour';
 import { createVehicleContext } from './vehicle';
 import { createVehicleServices } from './vehicle-services';
 import {
@@ -2437,41 +2432,7 @@ export function createEngineScene(
     }
     if (sample) {
       const time = options.tourTime ?? 0;
-      ctx.fillStyle = '#a4d9ca';
-      ctx.font = '500 25px Arial';
-      ctx.fillText(sample.shot.title, 310, 43);
-      ctx.textAlign = 'right';
-      ctx.fillStyle = '#a5bab7';
-      ctx.font = '22px Arial';
-      ctx.fillText(
-        `${String(sample.index + 1).padStart(2, '0')} / ${tourShots(options.tourVariant).length}`,
-        canvas.width - 42,
-        43,
-      );
-      ctx.textAlign = 'left';
-      const action =
-        sample.shot.view === 'explode'
-          ? 'DISASSEMBLE'
-          : sample.shot.view === 'assemble'
-            ? 'ASSEMBLE'
-            : sample.shot.view === 'peel'
-              ? 'LIFT COVERS'
-              : sample.shot.view === 'inspect'
-                ? 'INSPECT PART'
-                : sample.shot.view === 'burn'
-                  ? 'SLOW MOTION · FOUR STROKES'
-                  : sample.shot.view === 'cooling'
-                    ? options.warm
-                      ? 'WARM · RADIATOR ROUTE'
-                      : 'COLD · BYPASS ROUTE'
-                    : sample.shot.view === 'invite'
-                      ? 'YOUR TURN · MOVE THE THROTTLE'
-                      : sample.shot.view === 'close'
-                        ? 'CLOSE COVERS'
-                        : 'FOLLOW THE MOTION';
-      ctx.fillStyle = '#a4d9ca';
-      ctx.font = '600 20px Arial';
-      ctx.fillText(action, 42, 86);
+      // The recording keeps anatomical labels, without timed editorial captions.
       if (sample.shot.part) {
         const assembly = assemblies.get(sample.shot.part);
         if (assembly?.group.visible) {
@@ -2510,17 +2471,6 @@ export function createEngineScene(
             ctx.fillText(name, lx + 14, ly + 27);
           }
         }
-      }
-      if (sample.shot.view === 'invite') {
-        ctx.textAlign = 'right';
-        ctx.fillStyle = '#a4d9ca';
-        ctx.font = '600 23px Arial';
-        ctx.fillText(
-          'Try the interactive · Link in description',
-          canvas.width - 42,
-          86,
-        );
-        ctx.textAlign = 'left';
       }
       ctx.fillStyle = '#28433e';
       ctx.fillRect(0, canvas.height - 6, canvas.width, 6);

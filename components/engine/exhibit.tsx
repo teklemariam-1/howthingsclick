@@ -737,8 +737,12 @@ export default function EngineExhibit({
                     : controls.playing
                       ? 'RUNNING · SLOW MOTION'
                       : 'PAUSED'}
-              <span className="stage-context-rule" />
-              {currentSystem.name.toUpperCase()}
+              {!touring && (
+                <>
+                  <span className="stage-context-rule" />
+                  {currentSystem.name.toUpperCase()}
+                </>
+              )}
             </div>
             {cinema && (
               <Button
@@ -900,31 +904,33 @@ export default function EngineExhibit({
                   )}
                 </div>
               )}
-            <div className="stage-footnote">
-              <span>
-                Drag to rotate <span>·</span> Scroll or pinch to zoom
-              </span>
-              <span>
-                {blocked
-                  ? 'Exploded assembly'
-                  : effective.cutaway
-                    ? 'Cutaway view'
-                    : !effective.carContext || effective.system !== 'all'
-                      ? 'Engine only'
-                      : effective.vehicleView === 'chassis'
-                        ? 'Chassis & powertrain'
-                        : effective.vehicleView === 'bay'
-                          ? 'Under the hood'
-                          : 'Complete exterior'}{' '}
-                <span>·</span>{' '}
-                {effective.carContext &&
-                effective.system === 'all' &&
-                !blocked &&
-                !effective.peel
-                  ? 'Illustrative wheel motion'
-                  : 'Metallic materials'}
-              </span>
-            </div>
+            {!touring && (
+              <div className="stage-footnote">
+                <span>
+                  Drag to rotate <span>·</span> Scroll or pinch to zoom
+                </span>
+                <span>
+                  {blocked
+                    ? 'Exploded assembly'
+                    : effective.cutaway
+                      ? 'Cutaway view'
+                      : !effective.carContext || effective.system !== 'all'
+                        ? 'Engine only'
+                        : effective.vehicleView === 'chassis'
+                          ? 'Chassis & powertrain'
+                          : effective.vehicleView === 'bay'
+                            ? 'Under the hood'
+                            : 'Complete exterior'}{' '}
+                  <span>·</span>{' '}
+                  {effective.carContext &&
+                  effective.system === 'all' &&
+                  !blocked &&
+                  !effective.peel
+                    ? 'Illustrative wheel motion'
+                    : 'Metallic materials'}
+                </span>
+              </div>
+            )}
             {selected && !touring && (
               <div className="part-inspector">
                 <div className="inspector-heading">
@@ -965,17 +971,6 @@ export default function EngineExhibit({
                 </div>
               </div>
             )}
-            {sample && (
-              <div className="tour-caption">
-                <span>
-                  {String(sample.index + 1).padStart(2, '0')} /{' '}
-                  {String(tourShots(variant).length).padStart(2, '0')}
-                </span>
-                <div>
-                  <h2>{sample.shot.title}</h2>
-                </div>
-              </div>
-            )}
             {showHelp && (
               <div className="help-panel">
                 <div className="inspector-heading">
@@ -1008,8 +1003,8 @@ export default function EngineExhibit({
                 </p>
                 <p>
                   Add a voice-over file to include narration. Download the
-                  script to prepare a studio voice track. The optional
-                  device voice plays only after you enable it.
+                  script to prepare a studio voice track. The optional device
+                  voice plays only after you enable it.
                 </p>
                 <a
                   href="https://www.bosch-mobility.com/en/solutions/powertrain/gasoline/gasoline-port-fuel-injection/"
