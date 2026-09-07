@@ -94,6 +94,45 @@ for (const side of ['left', 'right'])
     );
   }
 const original = c.records.map((r) => r.group.matrixWorld.clone());
+// Seat-mounted hardware follows its own backrest; the other backrest, bench
+// cushion and fixed buckle anchors stay in place. This catches mirrored 60/40
+// ownership and head restraints left floating after their seat is removed.
+for (const [removed, moving, fixed] of [
+  [
+    'car-rear-seatback',
+    [
+      'car-rear-headrest-0',
+      'car-rear-headrest-0.4',
+      'car-rear-centre-armrest',
+      'car-rear-armrest-cup-insert',
+      'car-rear-belt-0',
+    ],
+    [
+      'car-rear-seatback-left',
+      'car-rear-headrest--0.4',
+      'car-rear-seat',
+      'car-rear-buckle-0',
+    ],
+  ],
+  [
+    'car-driver-seatback',
+    ['car-driver-headrest'],
+    ['car-driver-seat', 'car-passenger-headrest'],
+  ],
+] as const) {
+  const ids = [...moving, ...fixed];
+  const start = new Map(
+    ids.map((id) => [id, c.byId.get(id)!.group.matrixWorld.clone()]),
+  );
+  c.update({ ...initialVehicleAssembly, removed: [removed] }, 1, true);
+  car.group.updateMatrixWorld(true);
+  for (const id of moving)
+    assert(!c.byId.get(id)!.group.matrixWorld.equals(start.get(id)!), id);
+  for (const id of fixed)
+    assert(c.byId.get(id)!.group.matrixWorld.equals(start.get(id)!), id);
+  c.update(initialVehicleAssembly, 1, true);
+  car.group.updateMatrixWorld(true);
+}
 // The cover includes the side return up to the front wheel opening. It must
 // travel with the cover instead of remaining as a detached fender fragment.
 assert(

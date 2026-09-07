@@ -48,6 +48,13 @@ Applied: replace the earlier tubular arm and block knuckle, add separate forward
 
 ## Fidelity boundary and next work
 
+### Cabin seating, 7 September 2026
+
+- The user's supplied front-cabin photograph guides two-tone cloth, dark centre/shoulder regions, light side bolsters, rounded head restraints with exposed posts, the three-spoke wheel and centre console. Surface contours and dimensions remain reconstructed from the image.
+- Toyota's [2025 Corolla owner manual, OM02688U](https://assets.sia.toyota.com/publications/en/om-s/OM02688U/pdf/OM02688U.pdf), printed pages 114–115, was rendered and visually inspected. The diagrams show separate backrest release buttons; the right-backrest centre-belt caution supports placing the centre belt with the wider right section. The implementation uses left 40% / right 60% ownership.
+- Printed page 279 was also rendered and visually inspected: the rear centre armrest folds forward and contains two cup recesses. The model includes the stowed armrest and a separately removable cup insert; it does not yet animate the folding mechanism. Exact hinge and latch dimensions remain unverified.
+- The [2025 US Corolla brochure](https://www.toyota.com/content/dam/toyota/brochures/pdf/2025/corolla_ebrochure.pdf) confirms LE fabric seating, a 60/40 rear seat, rear centre armrest/cup holders and steering-wheel controls. Steering switch packs are separate selectable assemblies; their small control legends remain illustrative.
+
 ### Front cover and impact absorber, 6 September 2026
 
 - The supplied exact EchoPark front, quarter and side photographs guide the diagonal bumper/fender joint, long lower corner crease and rounded lower door boundaries. Shared profiles now define both the removable panels and visible shut lines.

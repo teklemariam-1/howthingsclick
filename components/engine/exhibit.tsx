@@ -76,7 +76,7 @@ const initial: SceneOptions = {
   peel: 0,
   tourTime: null,
   tourVariant: 'full',
-  carContext: true,
+  carContext: false,
   vehicleView: 'bay',
   hoodOpen: true,
 };
@@ -296,6 +296,7 @@ export default function EngineExhibit({
     setControls((c) => ({
       ...c,
       system: id,
+      carContext: false,
       isolated: false,
       selected: null,
       explode: 0,
@@ -340,6 +341,7 @@ export default function EngineExhibit({
   }
   function disassemble() {
     update({
+      carContext: false,
       explode: 1,
       removed: [],
       peel: 0,
@@ -490,6 +492,9 @@ export default function EngineExhibit({
                     key={s.id}
                     value={s.id}
                     className="system-trigger"
+                    onClick={
+                      s.id === 'all' ? () => selectSystem('all') : undefined
+                    }
                   >
                     <Icon size={17} style={{ color: SYSTEM_COLORS[s.id] }} />
                     <span>{s.name}</span>
@@ -674,21 +679,23 @@ export default function EngineExhibit({
               </Button>
             )}
             {!touring && (
-              <div className="camera-tools" aria-label="Camera controls">
+              <>
                 <Button
                   variant="ghost"
-                  className="camera-text"
-                  aria-label="Car context"
+                  className="engine-context-toggle"
+                  aria-label="Show in car"
                   aria-pressed={
                     controls.carContext && controls.system === 'all'
                   }
-                  title="Explore the engine bay, chassis and exterior"
+                  title="Show or hide the car around the engine"
                   onClick={() =>
                     update({
                       carContext: !(
                         controls.carContext && controls.system === 'all'
                       ),
                       system: 'all',
+                      vehicleView: 'bay',
+                      hoodOpen: true,
                       selected: null,
                       isolated: false,
                       explode: 0,
@@ -699,69 +706,70 @@ export default function EngineExhibit({
                     })
                   }
                 >
-                  <CarFront size={17} /> Car
+                  <CarFront size={17} /> Show in car
                 </Button>
-                <span />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Reset camera"
-                  onClick={() => api.current?.camera('home')}
-                >
-                  <RotateCcw size={17} />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Zoom in"
-                  onClick={() => api.current?.camera('zoom-in')}
-                >
-                  <Plus size={18} />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Zoom out"
-                  onClick={() => api.current?.camera('zoom-out')}
-                >
-                  <Minus size={18} />
-                </Button>
-                <span />
-                <Button
-                  variant="ghost"
-                  className="camera-text"
-                  onClick={() => api.current?.camera('front')}
-                >
-                  Side
-                </Button>
-                {effective.carContext &&
-                  effective.system === 'all' &&
-                  effective.vehicleView === 'body' && (
-                    <>
-                      <Button
-                        variant="ghost"
-                        className="camera-text"
-                        onClick={() => api.current?.camera('nose')}
-                      >
-                        Front
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        className="camera-text"
-                        onClick={() => api.current?.camera('rear')}
-                      >
-                        Rear
-                      </Button>
-                    </>
-                  )}
-                <Button
-                  variant="ghost"
-                  className="camera-text"
-                  onClick={() => api.current?.camera('top')}
-                >
-                  Top
-                </Button>
-              </div>
+                <div className="camera-tools" aria-label="Camera controls">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Reset camera"
+                    onClick={() => api.current?.camera('home')}
+                  >
+                    <RotateCcw size={17} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Zoom in"
+                    onClick={() => api.current?.camera('zoom-in')}
+                  >
+                    <Plus size={18} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Zoom out"
+                    onClick={() => api.current?.camera('zoom-out')}
+                  >
+                    <Minus size={18} />
+                  </Button>
+                  <span />
+                  <Button
+                    variant="ghost"
+                    className="camera-text"
+                    onClick={() => api.current?.camera('front')}
+                  >
+                    Side
+                  </Button>
+                  {effective.carContext &&
+                    effective.system === 'all' &&
+                    effective.vehicleView === 'body' && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          className="camera-text"
+                          onClick={() => api.current?.camera('nose')}
+                        >
+                          Front
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          className="camera-text"
+                          onClick={() => api.current?.camera('rear')}
+                        >
+                          Rear
+                        </Button>
+                      </>
+                    )}
+                  <Button
+                    variant="ghost"
+                    className="camera-text"
+                    onClick={() => api.current?.camera('top')}
+                  >
+                    Top
+                  </Button>
+                </div>
+              </>
             )}
             {effective.flows && legend.length > 0 && (
               <div className="flow-legend">
@@ -829,12 +837,13 @@ export default function EngineExhibit({
                   ? 'Exploded assembly'
                   : effective.cutaway
                     ? 'Cutaway view'
-                    : effective.carContext &&
-                        effective.vehicleView === 'chassis'
-                      ? 'Chassis & powertrain'
-                      : effective.carContext && effective.vehicleView === 'bay'
-                        ? 'Under the hood'
-                        : 'Complete exterior'}{' '}
+                    : !effective.carContext || effective.system !== 'all'
+                      ? 'Engine only'
+                      : effective.vehicleView === 'chassis'
+                        ? 'Chassis & powertrain'
+                        : effective.vehicleView === 'bay'
+                          ? 'Under the hood'
+                          : 'Complete exterior'}{' '}
                 <span>·</span>{' '}
                 {effective.carContext &&
                 effective.system === 'all' &&

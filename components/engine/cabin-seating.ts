@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import type { ModelKit, P3 } from './vehicle-model';
 import type { CabinMaterials } from './cabin-materials';
+import { upholsteredPad, upholsteredPadSeam } from './upholstery';
+import { createRearSeatBacks } from './rear-seat-backs';
 
 export function createCabinSeating(
   k: ModelKit,
@@ -14,8 +16,9 @@ export function createCabinSeating(
     offset: P3,
     stage: number,
     description: string,
+    parent: THREE.Object3D = root,
   ) =>
-    k.part(root, {
+    k.part(parent, {
       id: `car-${id}`,
       name,
       system: 'cabin',
@@ -73,8 +76,14 @@ export function createCabinSeating(
       'The two-tone cloth cushion has a dark centre insert, light woven side bolsters and a rolled front edge over a contoured foam pad.',
     );
     const top = (u: number, v: number): P3 => {
-      const z = 0.995 + v * 0.535;
-      const width = 0.209 + 0.015 * Math.sin(Math.PI * v) - 0.036 * v ** 4;
+      const z =
+        0.995 +
+        v * 0.535 +
+        0.024 * Math.abs(u) ** 6 * (1 - THREE.MathUtils.smoothstep(v, 0, 0.14));
+      const width =
+        0.209 * (0.88 + 0.12 * THREE.MathUtils.smoothstep(v, 0, 0.13)) +
+        0.015 * Math.sin(Math.PI * v) -
+        0.036 * v ** 4;
       const edge = Math.abs(u),
         rounded = Math.sqrt(Math.max(0, 1 - edge ** 10));
       const frontRoll = 0.028 * Math.exp(-Math.pow((v - 0.04) / 0.105, 2));
@@ -192,21 +201,38 @@ export function createCabinSeating(
         0.193 +
         0.027 * Math.sin(v * Math.PI) -
         0.049 * THREE.MathUtils.smoothstep(v, 0.68, 1);
-      const y = 0.469 + 0.55 * v - 0.022 * Math.abs(u) ** 4;
+      const y =
+        0.469 +
+        0.55 * v -
+        0.022 * Math.abs(u) ** 4 -
+        0.018 * Math.abs(u) ** 4 * THREE.MathUtils.smoothstep(v, 0.75, 1);
       const z =
         1.499 +
         0.15 * v -
         0.025 * Math.sin(v * Math.PI) -
+        0.012 * Math.exp(-(((v - 0.25) / 0.22) ** 2)) * (1 - u * u) -
         0.053 *
           Math.exp(-Math.pow((Math.abs(u) - 0.78) / 0.2, 2)) *
           Math.sin(Math.PI * (0.13 + 0.76 * v));
       return [x + u * width, y, z];
     };
-    for (const [a, b, mat] of bands)
+    const insertEdge = (v: number) =>
+      0.61 + 0.39 * THREE.MathUtils.smoothstep(v, 0.76, 0.96);
+    for (const band of [-1, 0, 1])
       surface(
         back,
-        (u, v) => front(THREE.MathUtils.lerp(a, b, u), v),
-        mat,
+        (u, v) => {
+          const edge = insertEdge(v);
+          return front(
+            band < 0
+              ? THREE.MathUtils.lerp(-1, -edge, u)
+              : band > 0
+                ? THREE.MathUtils.lerp(edge, 1, u)
+                : THREE.MathUtils.lerp(-edge, edge, u),
+            v,
+          );
+        },
+        band === 0 ? m.cloth : m.bolster,
         32,
         64,
       );
@@ -231,7 +257,7 @@ export function createCabinSeating(
             p[2] + v * 0.055,
           ];
         },
-        m.bolster,
+        m.cloth,
         60,
         20,
       );
@@ -250,11 +276,12 @@ export function createCabinSeating(
         48,
         16,
       );
-    for (const u of [-0.63, 0.63])
+    for (const side2 of [-1, 1])
       tube(
         back,
         Array.from({ length: 50 }, (_, i) => {
-          const p = front(u, i / 49);
+          const v = (i / 49) * 0.96;
+          const p = front(side2 * insertEdge(v), v);
           p[2] -= 0.001;
           return p;
         }),
@@ -292,29 +319,21 @@ export function createCabinSeating(
       [side * 0.61, 1.4, 0.48],
       2,
       'The contoured cloth head restraint has two metal adjustment posts, a curved front pad and stitched perimeter.',
+      back,
     );
     for (const dx of [-0.061, 0.061]) {
-      bar(head, [x + dx, 0.993, 1.661], [x + dx, 1.086, 1.671], 0.006, alloy);
+      bar(head, [x + dx, 0.993, 1.661], [x + dx, 1.116, 1.671], 0.006, alloy);
       box(head, [0.026, 0.013, 0.024], [x + dx, 1.013, 1.658], m.dark, 0.006);
     }
-    const pad = box(
+    const pad = upholsteredPad(
+      k,
       head,
-      [0.25, 0.205, 0.11],
-      [x, 1.104, 1.664],
+      [0.25, 0.214, 0.12],
+      [x, 1.14, 1.664],
       m.cloth,
-      0.045,
     );
     pad.rotation.x = 0.13;
-    const seam: P3[] = [];
-    for (let i = 0; i <= 64; i++) {
-      const a = (i / 64) * Math.PI * 2;
-      seam.push([
-        x + 0.112 * Math.sign(Math.cos(a)) * Math.abs(Math.cos(a)) ** 0.65,
-        1.104 + 0.09 * Math.sign(Math.sin(a)) * Math.abs(Math.sin(a)) ** 0.65,
-        1.602 + 0.012 * Math.sin(a),
-      ]);
-    }
-    tube(head, seam, 0.0008, m.stitch);
+    upholsteredPadSeam(k, pad, [0.25, 0.214, 0.12], m.stitch);
     const belt = part(
       `${id}-belt`,
       `${label} seat belt`,
@@ -410,46 +429,41 @@ export function createCabinSeating(
     72,
     16,
   );
-  const rearBack = part(
-    'rear-seatback',
-    'Rear seat back',
-    [0, 1.05, 1.5],
-    3,
-    'The 60/40 split folding rear backrest has outer cloth inserts and a centre seating position. It separates the cabin from the luggage compartment.',
-  );
-  for (const [x, w] of [
-    [-0.218, 0.825],
-    [0.418, 0.407],
-  ]) {
-    const p = box(
-      rearBack,
-      [w, 0.465, 0.109],
-      [x, 0.718, 2.473],
+  const rearBacks = createRearSeatBacks(k, root, m);
+  // Close the cushion around its underside and back. It must remain a volume
+  // when removed, rather than showing an open upholstery sheet.
+  for (const side of [-1, 1])
+    surface(
+      bench,
+      (u, v) => {
+        const p = benchTop(side, u);
+        return [p[0], THREE.MathUtils.lerp(p[1], 0.36, v), p[2]];
+      },
       m.bolster,
-      0.034,
+      40,
+      12,
     );
-    p.rotation.x = 0.17;
-  }
   surface(
-    rearBack,
+    bench,
     (u, v) => {
-      const y = 0.495 + 0.435 * v;
-      return [(u * 2 - 1) * 0.625, y, 2.53 + (y - 0.718) * 0.1717];
+      const p = benchTop(u * 2 - 1, 1);
+      return [p[0], THREE.MathUtils.lerp(p[1], 0.36, v), p[2]];
     },
-    m.carpet,
+    m.dark,
     72,
-    40,
+    12,
   );
-  for (const x of [-0.41, 0.41]) {
-    const p = box(
-      rearBack,
-      [0.36, 0.393, 0.019],
-      [x, 0.712, 2.4],
-      m.cloth,
-      0.026,
-    );
-    p.rotation.x = 0.17;
-  }
+  surface(
+    bench,
+    (u, v) => {
+      const p = benchTop(u * 2 - 1, v);
+      p[1] = 0.36;
+      return p;
+    },
+    m.dark,
+    72,
+    32,
+  );
   for (const x of [-0.4, 0, 0.4]) {
     const head = part(
       `rear-headrest-${x}`,
@@ -457,15 +471,16 @@ export function createCabinSeating(
       [x, 1.4, 1.55],
       2,
       'A padded adjustable head restraint supports the rear seating position.',
+      x < 0 ? rearBacks.left : rearBacks.right,
     );
     for (const dx of [-0.051, 0.051])
       bar(head, [x + dx, 0.917, 2.505], [x + dx, 1.005, 2.51], 0.0055, alloy);
-    box(
+    upholsteredPad(
+      k,
       head,
       [x === 0 ? 0.191 : 0.222, 0.145, 0.09],
       [x, 1.029, 2.51],
       m.cloth,
-      0.033,
     );
     const belt = part(
       `rear-belt-${x}`,
@@ -473,8 +488,9 @@ export function createCabinSeating(
       [x, 1.1, 1.35],
       4,
       'Rear three-point seat-belt webbing, guide and buckle secure this seating position.',
+      x === 0 ? rearBacks.right : root,
     );
-    const sx = x === 0 ? -0.04 : Math.sign(x) * 0.625;
+    const sx = x === 0 ? 0.168 : Math.sign(x) * 0.625;
     surface(
       belt,
       (u, v) => [sx + (u - 0.5) * 0.039, 0.99 - v * 0.51, 2.5 - v * 0.066],
@@ -482,7 +498,14 @@ export function createCabinSeating(
       4,
       30,
     );
-    box(belt, [0.032, 0.044, 0.025], [x + 0.14, 0.496, 2.395], m.dark, 0.005);
-    box(belt, [0.026, 0.009, 0.02], [x + 0.14, 0.52, 2.392], m.red, 0.003);
+    const buckle = part(
+      `rear-buckle-${x}`,
+      `${x < 0 ? 'Left' : x > 0 ? 'Right' : 'Centre'} rear seat-belt buckle`,
+      [x, 0.3, 0.65],
+      3,
+      'The anchored buckle remains beside the rear cushion when the backrest and its attached hardware are removed.',
+    );
+    box(buckle, [0.032, 0.044, 0.025], [x + 0.14, 0.496, 2.395], m.dark, 0.005);
+    box(buckle, [0.026, 0.009, 0.02], [x + 0.14, 0.52, 2.392], m.red, 0.003);
   }
 }

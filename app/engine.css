@@ -296,7 +296,7 @@ a:focus-visible {
 }
 .vehicle-view-controls {
   position: absolute;
-  top: 20px;
+  bottom: 55px;
   right: 18px;
   display: flex;
   flex-wrap: wrap;
@@ -319,7 +319,6 @@ a:focus-visible {
 }
 @media (max-width: 700px) {
   .vehicle-view-controls {
-    top: 47px;
     right: 10px;
   }
   .vehicle-view-controls button {
@@ -378,13 +377,20 @@ a:focus-visible {
   font-size: 11px;
   padding: 0 !important;
 }
-.camera-tools button[aria-label='Car context'] {
-  flex-direction: column;
-  gap: 1px;
-  height: 43px;
-  font-size: 9px;
+.engine-context-toggle {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  height: 34px;
+  gap: 7px;
+  padding: 0 10px;
+  border: 1px solid #506661;
+  background: #152122e8;
+  color: #d6e8e0;
+  font-size: 12px;
+  backdrop-filter: blur(10px);
 }
-.camera-tools button[aria-pressed='true'] {
+.engine-context-toggle[aria-pressed='true'] {
   background: #24423f;
   color: #b9f5e5;
 }
@@ -931,6 +937,10 @@ a:focus-visible {
     left: 9px;
     top: 52px;
   }
+  .engine-context-toggle {
+    top: 52px;
+    right: 10px;
+  }
   .stage-footnote {
     left: 15px;
     bottom: 12px;
@@ -1037,6 +1047,7 @@ a:focus-visible {
   .heading-actions button,
   .inspector-actions button,
   .camera-tools button,
+  .engine-context-toggle,
   .mobile-systems button,
   .model-label,
   .tour-controls button {

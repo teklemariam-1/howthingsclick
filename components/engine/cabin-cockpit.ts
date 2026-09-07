@@ -141,6 +141,32 @@ export function createCabinCockpit(
     2,
     'The LE-style cluster combines analogue gauges with a central information display under a shaded instrument hood.',
   );
+  // The curved instrument hood meets a recessed bezel around the cluster;
+  // this closes the exposed edge without covering the gauge opening.
+  const surround = new THREE.Shape();
+  surround.moveTo(-0.569, 0.799);
+  surround.lineTo(-0.569, 0.853);
+  surround.bezierCurveTo(-0.557, 0.93, -0.481, 0.943, -0.379, 0.943);
+  surround.bezierCurveTo(-0.277, 0.943, -0.201, 0.93, -0.189, 0.853);
+  surround.lineTo(-0.189, 0.799);
+  surround.closePath();
+  const aperture = new THREE.Path();
+  aperture.moveTo(-0.548, 0.813);
+  aperture.lineTo(-0.21, 0.813);
+  aperture.lineTo(-0.211, 0.872);
+  aperture.bezierCurveTo(-0.236, 0.917, -0.301, 0.925, -0.379, 0.925);
+  aperture.bezierCurveTo(-0.457, 0.925, -0.522, 0.917, -0.547, 0.872);
+  aperture.closePath();
+  surround.holes.push(aperture);
+  mouldedPanel(
+    k,
+    dash,
+    surround,
+    m.dark,
+    (x, y) => [x, y, 1.002],
+    [0, 0, -0.014],
+    2,
+  );
   const face = box(
     cluster,
     [0.329, 0.115, 0.022],
@@ -679,18 +705,51 @@ export function createCabinCockpit(
       [0, 0, -0.018],
       1,
     );
+    const switches = k.part(wheel, {
+      id: `car-${side < 0 ? 'left' : 'right'}-steering-switches`,
+      name: `${side < 0 ? 'Left' : 'Right'} steering-wheel switch pack`,
+      system: 'cabin',
+      offset: [side * 0.06, 0.015, 0.115],
+      stage: 1,
+      material: 'Moulded polymer and electrical switches',
+      description:
+        side < 0
+          ? 'The left switch pack contains the multi-information display, audio and phone controls. It can be removed separately from the wheel and central airbag module.'
+          : 'The right switch pack groups the cruise-control and driving-assistance controls. Its housing and buttons separate from the steering-wheel spoke.',
+    });
+    const switchShape = new THREE.Shape();
+    switchShape.moveTo(side * 0.073, 0.047);
+    switchShape.quadraticCurveTo(side * 0.135, 0.071, side * 0.139, 0.044);
+    switchShape.lineTo(side * 0.133, 0.001);
+    switchShape.lineTo(side * 0.077, -0.029);
+    switchShape.quadraticCurveTo(side * 0.065, -0.02, side * 0.068, 0.011);
+    switchShape.closePath();
+    mouldedPanel(
+      k,
+      switches,
+      switchShape,
+      m.soft,
+      (x, y) => [x, y, 0.009],
+      [0, 0, -0.008],
+      1,
+    );
     for (let j = 0; j < 3; j++)
       box(
-        wheel,
-        [0.019, 0.008, 0.005],
-        [side * (0.078 + j * 0.012), 0.023 - j * 0.012, 0.009],
-        m.soft,
+        switches,
+        [0.019, 0.008, 0.004],
+        [side * (0.078 + j * 0.012), 0.007 - j * 0.012, 0.014],
+        m.dark,
         0.003,
       );
-    mesh(wheel, new THREE.TorusGeometry(0.012, 0.002, 8, 24), m.soft, [
+    mesh(switches, new THREE.TorusGeometry(0.012, 0.002, 8, 32), m.dark, [
       side * 0.108,
       0.029,
-      0.012,
+      0.016,
+    ]);
+    mesh(switches, new THREE.CircleGeometry(0.008, 32), m.dark, [
+      side * 0.108,
+      0.029,
+      0.017,
     ]);
   }
   const lower = bodyOutline([
@@ -725,16 +784,17 @@ export function createCabinCockpit(
     description:
       'The padded central module contains the folded airbag and inflator. It detaches from the wheel hub as one service assembly; deployment is not simulated.',
   });
-  const pad = bodyOutline([
-    [-0.065, 0.058],
-    [-0.088, 0.033],
-    [-0.079, -0.028],
-    [-0.027, -0.085],
-    [0.027, -0.085],
-    [0.079, -0.028],
-    [0.088, 0.033],
-    [0.065, 0.058],
-  ]);
+  const pad = new THREE.Shape();
+  pad.moveTo(-0.065, 0.058);
+  pad.quadraticCurveTo(-0.09, 0.053, -0.087, 0.021);
+  pad.quadraticCurveTo(-0.086, -0.008, -0.076, -0.028);
+  pad.quadraticCurveTo(-0.05, -0.066, -0.026, -0.079);
+  pad.quadraticCurveTo(0, -0.091, 0.026, -0.079);
+  pad.quadraticCurveTo(0.05, -0.066, 0.076, -0.028);
+  pad.quadraticCurveTo(0.086, -0.008, 0.087, 0.021);
+  pad.quadraticCurveTo(0.09, 0.053, 0.065, 0.058);
+  pad.quadraticCurveTo(0, 0.065, -0.065, 0.058);
+  pad.closePath();
   mouldedPanel(
     k,
     airbag,

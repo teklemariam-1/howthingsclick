@@ -2126,7 +2126,8 @@ export function createEngineScene(
       options.carContext &&
       options.system === 'all' &&
       options.explode === 0 &&
-      options.removed.length === 0
+      options.removed.length === 0 &&
+      options.vehicleAssembly?.inspection !== 'cabin'
     )
       frameAssembly(true);
   }
@@ -2433,6 +2434,7 @@ export function createEngineScene(
       carVisible &&
       hoodMoving &&
       options.vehicleView === 'body' &&
+      options.vehicleAssembly?.inspection !== 'cabin' &&
       options.tourTime === null
     )
       frameAssembly(true);
@@ -2849,10 +2851,10 @@ export function createEngineScene(
         autoFrame = false;
         vehicle.group.updateMatrixWorld(true);
         targetGoal = vehicle.group.localToWorld(
-          new THREE.Vector3(0.05, 0.78, 1.37),
+          new THREE.Vector3(0.08, 0.775, 1.28),
         );
         cameraGoal = vehicle.group.localToWorld(
-          new THREE.Vector3(-1.35, 1.11, 1.18),
+          new THREE.Vector3(-1.2, 1.11, 1.46),
         );
         return;
       }

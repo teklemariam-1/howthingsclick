@@ -436,6 +436,7 @@ export default function CarExhibit() {
                   disabled={!parts.length}
                   onClick={() => {
                     pendingCamera.current = 'cabin';
+                    api.current?.camera('cabin');
                     setLabels(false);
                     change({
                       ...initialVehicleAssembly,

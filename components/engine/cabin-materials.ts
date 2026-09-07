@@ -23,21 +23,24 @@ export function createCabinMaterials(k: ModelKit) {
   weave.anisotropy = 4;
   weave.needsUpdate = true;
   const fabric = (color: string) =>
-    new THREE.MeshStandardMaterial({
+    new THREE.MeshPhysicalMaterial({
       color,
       roughness: 0.92,
       map: weave,
       bumpMap: weave,
       bumpScale: 0.00032,
+      sheen: 0.32,
+      sheenRoughness: 0.92,
+      sheenColor: '#8f9292',
       side: THREE.DoubleSide,
     });
   const m = {
     cloth: fabric('#383b3d'),
-    bolster: fabric('#929185'),
+    bolster: fabric('#93938d'),
     headliner: fabric('#a4a296'),
     stitch: new THREE.MeshStandardMaterial({ color: '#484c4d', roughness: 1 }),
     pale: new THREE.MeshStandardMaterial({
-      color: '#a4a396',
+      color: '#a4a59e',
       roughness: 0.78,
       side: THREE.DoubleSide,
     }),

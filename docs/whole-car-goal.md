@@ -17,6 +17,14 @@ Source: https://www.toyota.com/content/dam/toyota/brochures/pdf/2025/corolla_ebr
 
 ## Current combined-explorer revision
 
+### Engine-only entry and cabin seating
+
+- The engine lab now starts with the engine alone. Clicking **Whole engine**, including the already selected tab, restores that view. A separate **Show in car** toggle opens the engine bay and reframes the camera; engine disassembly returns to the standalone view. Both direct `/engine` entry and the same-page engine mode use this behavior.
+- 279 vehicle assemblies / 675 meshes, plus the four engine-bay services and engine module: **284 selectable car assemblies**. The revised cabin includes rounded cloth head restraints, shaped front upholstery, closed rear-seat surfaces, independent left 40% / right 60% backrests, release buttons, a stowed centre armrest and cup insert, and separate steering switch packs.
+- Rear centre armrest, cup insert and centre belt belong to the wider right backrest. Front head restraints follow their respective backrests during removal; cushions and body-mounted buckles remain independent. Tests check these ownership relationships and exact restoration.
+- Interior inspection now retains its close camera framing through initial hood closure and viewport resize. The armrest is represented stowed and removable; folding-seat/armrest operation is not simulated. Upholstery shoulders, trim, body and engine castings still need fidelity work. This remains an educational reconstruction, not a factory-exact completion claim.
+- Validation: TypeScript, changed-source lint and the 279-assembly model checks passed. Browser checks covered cabin entry/resize, seating and steering-switch removal/return, full assembly, standalone engine entry, repeated Whole engine selection, car-context toggling, engine disassembly, moving-part flows without oil, same-page return and mobile layout, with no page errors.
+
 ### Body seams and front impact structure
 
 - 269 vehicle assemblies plus the four engine-bay services and engine module: **274 selectable car assemblies**. The new removable parts are the foam absorber, two reinforcement stays and their fastener set; the existing front reinforcement was rebuilt as a curved hollow section.
