@@ -3,9 +3,9 @@ import './globals.css';
 import './engine.css';
 
 export const metadata: Metadata = {
-  title: 'Inside the engine — How Things Click',
+  title: 'Inside the Corolla — How Things Click',
   description:
-    'Explore a working four-cylinder engine in 3D. Inspect the mechanisms, take the assemblies apart, and follow the oil and cooling circuits.',
+    'Explore the Corolla in 3D. Separate its body, cabin, wheels and mechanical systems, then dive into the detailed four-cylinder engine lab.',
   icons: { icon: '/favicon.svg' },
 };
 

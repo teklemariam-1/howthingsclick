@@ -436,7 +436,8 @@ export default function EngineExhibit() {
         <div className="topbar-middle">
           <span className="section-index">01 / MACHINES</span>
           <span className="topbar-divider" />
-          <span>Inside the engine</span>
+          <a href="/">Whole car</a>
+          <span> / Engine lab</span>
         </div>
         <span className="preview-status">
           <span />

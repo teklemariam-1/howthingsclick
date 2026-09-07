@@ -1,8 +1,16 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { vehiclePart, type VehicleAssembly } from './vehicle-assemblies';
+import type { VehiclePart } from '../../lib/engine/vehicle-parts';
 export type P3 = [number, number, number];
 export function modelKit() {
+  const parts: VehicleAssembly[] = [];
+  const part = (
+    parent: THREE.Object3D,
+    info: VehiclePart,
+    existing?: THREE.Group,
+  ) => vehiclePart(parent, info, parts, existing);
   const paint = new THREE.MeshPhysicalMaterial({
     color: '#bac8d2',
     metalness: 0.72,
@@ -152,6 +160,8 @@ export function modelKit() {
     return mesh(parent, g, m);
   }
   return {
+    parts,
+    part,
     paint,
     steel,
     alloy,

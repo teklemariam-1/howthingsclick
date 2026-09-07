@@ -9,6 +9,32 @@ export function bodyOutline(points: number[][]) {
   return shape;
 }
 
+// Densify straight outline edges before applying the tube spline. Otherwise a
+// long, sparsely sampled door edge bows away from its painted panel.
+export function outlineTube(
+  k: ModelKit,
+  parent: THREE.Object3D,
+  points: P3[],
+  radius: number,
+  material: THREE.Material,
+) {
+  const dense: P3[] = [];
+  for (let i = 0; i < points.length - 1; i++) {
+    const a = new THREE.Vector3(...points[i]),
+      b = new THREE.Vector3(...points[i + 1]);
+    const steps = Math.max(1, Math.ceil(a.distanceTo(b) / 0.012));
+    for (let j = 0; j < steps; j++)
+      dense.push(
+        a
+          .clone()
+          .lerp(b, j / steps)
+          .toArray() as P3,
+      );
+  }
+  dense.push(points[points.length - 1]);
+  return k.tube(parent, dense, radius, material);
+}
+
 // Subdivide in panel coordinates before projecting onto the curved body. This
 // preserves openings without large flat triangles across the painted surface.
 export function bodyPatch(

@@ -23,9 +23,16 @@ import {
 } from '@/lib/engine/mechanics';
 import { sampleTour, type TourVariant } from '@/lib/engine/tour';
 import { createVehicleContext } from './vehicle';
+import {
+  CAR_ENGINE_PART,
+  vehicleStage,
+  type VehicleAssemblyOptions,
+} from '@/lib/engine/vehicle-parts';
 import { VEHICLE_GROUND_Y } from '@/lib/engine/vehicle-dimensions';
 
 export type SceneOptions = {
+  vehicleAssembly?: VehicleAssemblyOptions;
+  carCaption?: { title: string; body: string };
   playing: boolean;
   speed: number;
   cutaway: boolean;
@@ -1888,50 +1895,67 @@ export function createEngineScene(
   host.appendChild(labelRoot);
   const labelNodes = new Map<string, HTMLButtonElement>();
   const activeLabels = () =>
-    options.carContext &&
-    options.vehicleView === 'body' &&
-    !options.hoodOpen &&
-    options.system === 'all' &&
-    options.explode === 0 &&
-    !options.selected
-      ? []
-      : options.selected
-        ? [options.selected]
-        : options.explode > 0.1
+    options.vehicleAssembly
+      ? options.vehicleAssembly.selected
+        ? [options.vehicleAssembly.selected]
+        : options.vehicleAssembly.explode > 0.1
           ? [
-              'cover',
-              'head',
-              'head-gasket',
-              'block',
-              'piston-1',
-              'crank',
-              'sump',
-              'timing-cover',
+              'car-hood',
+              'car-roof',
+              'car-front-left-tire',
+              'car-trunk',
+              'car-engine',
             ]
-          : options.carContext && options.system === 'all'
-            ? ['block']
-            : options.system === 'oil'
-              ? ['oil-pump', 'oil-filter', 'sump']
-              : options.system === 'cooling'
-                ? ['water-pump', 'radiator', 'thermostat']
-                : options.system === 'combustion'
-                  ? ['airbox', 'throttle', 'rail']
-                  : options.system === 'timing'
-                    ? ['cam-intake', 'timing']
-                    : options.cutaway
-                      ? ['piston-1', 'crank']
-                      : ['cover', 'timing-cover'];
+          : []
+      : options.carContext &&
+          options.vehicleView === 'body' &&
+          !options.hoodOpen &&
+          options.system === 'all' &&
+          options.explode === 0 &&
+          !options.selected
+        ? []
+        : options.selected
+          ? [options.selected]
+          : options.explode > 0.1
+            ? [
+                'cover',
+                'head',
+                'head-gasket',
+                'block',
+                'piston-1',
+                'crank',
+                'sump',
+                'timing-cover',
+              ]
+            : options.carContext && options.system === 'all'
+              ? ['block']
+              : options.system === 'oil'
+                ? ['oil-pump', 'oil-filter', 'sump']
+                : options.system === 'cooling'
+                  ? ['water-pump', 'radiator', 'thermostat']
+                  : options.system === 'combustion'
+                    ? ['airbox', 'throttle', 'rail']
+                    : options.system === 'timing'
+                      ? ['cam-intake', 'timing']
+                      : options.cutaway
+                        ? ['piston-1', 'crank']
+                        : ['cover', 'timing-cover'];
   function rebuildLabels() {
     labelRoot.replaceChildren();
     labelNodes.clear();
     if (!options.labels) return;
     for (const id of activeLabels()) {
-      const part = findPart(id);
+      const part = options.vehicleAssembly
+        ? id === CAR_ENGINE_PART.id
+          ? CAR_ENGINE_PART
+          : vehicle.controller.byId.get(id)?.part
+        : findPart(id);
       if (!part) continue;
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'model-label';
       b.textContent =
+        !options.vehicleAssembly &&
         options.carContext &&
         options.system === 'all' &&
         !options.selected &&
@@ -2096,24 +2120,37 @@ export function createEngineScene(
       ),
       camera,
     );
-    const hit = raycaster.intersectObjects(meshes, false).find((h) => {
-      if (
-        (
-          h.object as THREE.Mesh<
-            THREE.BufferGeometry,
-            THREE.MeshStandardMaterial
-          >
-        ).material.opacity < 0.2
+    const hit = raycaster
+      .intersectObjects(
+        options.vehicleAssembly
+          ? [...vehicle.controller.meshes, ...meshes]
+          : meshes,
+        false,
       )
-        return false;
-      let p: THREE.Object3D | null = h.object;
-      while (p) {
-        if (!p.visible) return false;
-        p = p.parent;
-      }
-      return true;
-    });
-    onSelect(hit?.object.userData.partId ?? null);
+      .find((h) => {
+        if (
+          (
+            h.object as THREE.Mesh<
+              THREE.BufferGeometry,
+              THREE.MeshStandardMaterial
+            >
+          ).material.opacity < 0.2
+        )
+          return false;
+        let p: THREE.Object3D | null = h.object;
+        while (p) {
+          if (!p.visible) return false;
+          p = p.parent;
+        }
+        return true;
+      });
+    onSelect(
+      hit
+        ? options.vehicleAssembly
+          ? (hit.object.userData.vehiclePartId ?? 'car-engine')
+          : hit.object.userData.partId
+        : null,
+    );
   };
   renderer.domElement.addEventListener('pointerdown', down);
   renderer.domElement.addEventListener('pointerup', up);
@@ -2124,15 +2161,20 @@ export function createEngineScene(
     stream: MediaStream;
   } | null = null;
   const cameraDirection = new THREE.Vector3(-1.2, 0.85, -1.15).normalize();
+  const carFrameDirection = new THREE.Vector3(-1, 0.25, -1.55).normalize();
   function frameAssembly(
     vehicleView = false,
     direction = vehicleView
-      ? (options.vehicleView === 'bay'
-          ? new THREE.Vector3(-1, 1.25, -0.94)
-          : new THREE.Vector3(-1, 0.25, -1.55)
-        ).normalize()
+      ? options.vehicleAssembly
+        ? carFrameDirection
+        : (options.vehicleView === 'bay'
+            ? new THREE.Vector3(-1, 1.25, -0.94)
+            : new THREE.Vector3(-1, 0.25, -1.55)
+          ).normalize()
       : cameraDirection,
   ) {
+    if (vehicleView && options.vehicleAssembly)
+      carFrameDirection.copy(direction);
     if (vehicleView && options.vehicleView === 'bay') {
       targetGoal = new THREE.Vector3(-0.4, 1.35, 0);
       cameraGoal = targetGoal.clone().add(
@@ -2145,7 +2187,22 @@ export function createEngineScene(
     }
     const subject = vehicleView ? vehicle.group : root;
     subject.updateMatrixWorld(true);
-    bounds.setFromObject(subject);
+    if (vehicleView && options.vehicleAssembly) {
+      bounds.makeEmpty();
+      subject.traverseVisible((o) => {
+        if (
+          o instanceof THREE.Mesh &&
+          !(o.material instanceof THREE.ShaderMaterial)
+        ) {
+          if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
+          bounds.union(
+            o.geometry.boundingBox!.clone().applyMatrix4(o.matrixWorld),
+          );
+        }
+      });
+      if (root.visible) bounds.union(new THREE.Box3().setFromObject(root));
+      if (bounds.isEmpty()) bounds.setFromObject(subject);
+    } else bounds.setFromObject(subject);
     const center = bounds.getCenter(new THREE.Vector3());
     const right = new THREE.Vector3()
         .crossVectors(new THREE.Vector3(0, 1, 0), direction)
@@ -2184,7 +2241,8 @@ export function createEngineScene(
     }
   };
   orbit.addEventListener('start', stopCamera);
-  let lastExpand = false;
+  let lastExpand = false,
+    carEngineAmount = 0;
   function drawCapture() {
     if (!capture) return;
     const { canvas, ctx } = capture;
@@ -2207,6 +2265,19 @@ export function createEngineScene(
       options.tourTime === null
         ? null
         : sampleTour(options.tourTime, options.tourVariant);
+    if (options.carCaption) {
+      ctx.fillStyle = '#93dace';
+      ctx.font = '600 25px Arial';
+      ctx.fillText(options.carCaption.title, 42, canvas.height - 82);
+      ctx.fillStyle = '#e6eef2';
+      ctx.font = '21px Arial';
+      ctx.fillText(
+        options.carCaption.body,
+        42,
+        canvas.height - 42,
+        canvas.width - 84,
+      );
+    }
     if (sample) {
       ctx.fillStyle = '#93dace';
       ctx.font = '600 25px Arial';
@@ -2246,14 +2317,50 @@ export function createEngineScene(
     if (document.hidden) return;
     vehicle.setView(options.vehicleView, options.hoodOpen);
     const hoodMoving = vehicle.update(dt);
+    const carAssembly = vehicle.updateAssembly(
+      options.vehicleAssembly,
+      dt,
+      reduced.matches,
+    );
+    const carOptions = options.vehicleAssembly;
+    const carEngineTarget = carOptions
+      ? carOptions.returned?.includes('car-engine')
+        ? 0
+        : carOptions.removed.includes('car-engine')
+          ? 1
+          : vehicleStage(carOptions.explode, CAR_ENGINE_PART.stage)
+      : 0;
+    carEngineAmount = reduced.matches
+      ? carEngineTarget
+      : THREE.MathUtils.damp(carEngineAmount, carEngineTarget, 5, dt);
+    if (Math.abs(carEngineAmount - carEngineTarget) < 0.0002)
+      carEngineAmount = carEngineTarget;
+    root.position
+      .set(...CAR_ENGINE_PART.offset)
+      .multiplyScalar(carEngineAmount);
+    root.visible =
+      !carOptions ||
+      (carOptions.isolated && carOptions.selected
+        ? carOptions.selected === 'car-engine'
+        : carOptions.system === 'all' || carOptions.system === 'powertrain');
+    if (carOptions && autoFrame) {
+      frameAssembly(true);
+      if (
+        !carAssembly.moving &&
+        Math.abs(carEngineAmount - carEngineTarget) < 0.001
+      )
+        autoFrame = false;
+    }
+
     const returned = [...assemblies.values()].every((a) => a.amount < 0.001);
     const carVisible =
-      options.carContext &&
-      options.system === 'all' &&
-      options.explode === 0 &&
-      options.removed.length === 0 &&
-      !options.isolated &&
-      options.peel === 0;
+      !!options.vehicleAssembly ||
+      (options.carContext &&
+        options.system === 'all' &&
+        options.explode === 0 &&
+        options.removed.length === 0 &&
+        !options.isolated &&
+        options.peel === 0);
     vehicleOpacity = THREE.MathUtils.damp(
       vehicleOpacity,
       carVisible ? 1 : 0,
@@ -2365,7 +2472,8 @@ export function createEngineScene(
     });
     floor.position.y =
       THREE.MathUtils.lerp(-1.48, VEHICLE_GROUND_Y, vehicleOpacity) -
-      maxAmount * 4.6;
+      maxAmount * 4.6 -
+      carAssembly.maxAmount * 8;
     const expanded = options.explode > 0.01 || options.removed.length > 0;
     if (options.tourTime === null && expanded && autoFrame) {
       frameAssembly();
@@ -2421,8 +2529,12 @@ export function createEngineScene(
     const rect = host.getBoundingClientRect();
     const occupied: { x: number; y: number }[] = [];
     for (const [id, b] of labelNodes) {
-      const a = assemblies.get(id)!;
-      if (!a.group.visible) {
+      const a = options.vehicleAssembly
+        ? id === 'car-engine'
+          ? { group: root }
+          : vehicle.controller.byId.get(id)
+        : assemblies.get(id);
+      if (!a || !a.group.visible) {
         b.hidden = true;
         continue;
       }
@@ -2469,15 +2581,49 @@ export function createEngineScene(
       renderer.domElement.dataset.carVisible = String(carVisible);
       renderer.domElement.dataset.wheelAngle = wheelAngle.toFixed(4);
       renderer.domElement.dataset.vehicleView = options.vehicleView;
+      renderer.domElement.dataset.carAssemblies = String(
+        vehicle.controller.records.length + 1,
+      );
+      renderer.domElement.dataset.carSeparation =
+        carAssembly.maxAmount.toFixed(3);
+      renderer.domElement.dataset.carSettled = String(
+        !carAssembly.moving &&
+          Math.abs(carEngineAmount - carEngineTarget) < 0.001,
+      );
+      renderer.domElement.dataset.carSelected =
+        options.vehicleAssembly?.selected ?? '';
+
       reported = now;
     }
   }
   frameId = requestAnimationFrame(animate);
   return {
+    getVehicleParts() {
+      return [
+        ...vehicle.controller.records.map((r) => r.part),
+        CAR_ENGINE_PART,
+      ];
+    },
     setOptions(next: SceneOptions) {
       const prev = options;
       options = { ...next };
       vehicle.setView(next.vehicleView, next.hoodOpen);
+      if (
+        JSON.stringify(prev.vehicleAssembly) !==
+        JSON.stringify(next.vehicleAssembly)
+      ) {
+        rebuildLabels();
+        if (
+          prev.vehicleAssembly?.explode !== next.vehicleAssembly?.explode ||
+          prev.vehicleAssembly?.removed.join() !==
+            next.vehicleAssembly?.removed.join() ||
+          prev.vehicleAssembly?.returned?.join() !==
+            next.vehicleAssembly?.returned?.join() ||
+          prev.vehicleAssembly?.system !== next.vehicleAssembly?.system
+        )
+          autoFrame = true;
+      }
+
       // Frame the directional shadow around the car in vehicle views, avoiding
       // clipped shadows and keeping the focused engine map sharp at close range.
       const litVehicle =
@@ -2591,6 +2737,26 @@ export function createEngineScene(
           .sub(orbit.target)
           .multiplyScalar(preset === 'zoom-in' ? 0.82 : 1.22)
           .add(orbit.target);
+        return;
+      }
+      if (preset === 'focus' && options.vehicleAssembly?.selected) {
+        const id = options.vehicleAssembly.selected;
+        const b =
+          id === 'car-engine'
+            ? new THREE.Box3().setFromObject(root)
+            : vehicle.controller.bounds(id);
+        if (b && !b.isEmpty()) {
+          const center = b.getCenter(new THREE.Vector3());
+          const size = b.getSize(new THREE.Vector3()).length();
+          targetGoal = center;
+          cameraGoal = center
+            .clone()
+            .add(
+              new THREE.Vector3(-1, 0.65, 1)
+                .normalize()
+                .multiplyScalar(Math.max(5, size * 1.7) * aspectScale()),
+            );
+        }
         return;
       }
       if (preset === 'focus' && options.selected) {

@@ -1,4 +1,9 @@
 import * as THREE from 'three';
+import { createVehicleAssemblyController } from './vehicle-assemblies';
+import {
+  initialVehicleAssembly,
+  type VehicleAssemblyOptions,
+} from '../../lib/engine/vehicle-parts';
 import { createRoadWheel } from './road-wheel';
 import { createVehicleChassis } from './vehicle-chassis';
 import { createVehicleBody } from './vehicle-body';
@@ -223,27 +228,29 @@ export function createVehicleContext() {
     );
     group.add(new THREE.LineSegments(geometry, material));
   }
-  const template = createRoadWheel();
-  const solidMaterials = [
-    ...template.materials,
-    ...chassis.materials,
-    ...bodywork.materials,
-    ...bay.materials,
-  ];
+  const entries = [...chassis.parts, ...bodywork.parts, ...bay.parts];
+  const textures: THREE.Texture[] = [];
+  const wheels: { spin: THREE.Object3D; side: number }[] = [];
+  for (const side of [-1, 1])
+    for (const z of [0, D.wheelbase]) {
+      const corner = `${z === 0 ? 'front' : 'rear'}-${side < 0 ? 'left' : 'right'}`;
+      const label = `${side < 0 ? 'Left' : 'Right'} ${z === 0 ? 'front' : 'rear'}`;
+      const wheel = createRoadWheel(corner, label, z !== 0);
+      wheel.group.position.set((side * D.track) / 2, TIRE_RADIUS, z);
+      wheel.group.rotation.y = (side * Math.PI) / 2;
+      group.add(wheel.group);
+      entries.push(...wheel.parts);
+      textures.push(...wheel.textures);
+      wheels.push({ spin: wheel.group.getObjectByName('wheel-rotor')!, side });
+    }
+  const controller = createVehicleAssemblyController(group, entries);
+  const solidMaterials = controller.materials;
   solidMaterials.forEach((m) => {
     m.userData.vehicleOpacity = m.opacity;
     m.userData.vehicleTransparent = m.transparent;
   });
-  const wheels: { spin: THREE.Object3D; side: number }[] = [];
-  for (const side of [-1, 1])
-    for (const z of [0, D.wheelbase]) {
-      const wheel = template.group.clone(true);
-      wheel.name = `road-wheel-${side}-${z}`;
-      wheel.position.set((side * D.track) / 2, TIRE_RADIUS, z);
-      wheel.rotation.y = (side * Math.PI) / 2;
-      group.add(wheel);
-      wheels.push({ spin: wheel.getObjectByName('wheel-rotor')!, side });
-    }
+  let assemblyActive = false,
+    assemblyAmount = 0;
   const contactMaterial = new THREE.ShaderMaterial({
     transparent: true,
     depthWrite: false,
@@ -263,10 +270,30 @@ export function createVehicleContext() {
     }
   return {
     group,
+    controller,
     setView(next: 'bay' | 'chassis' | 'body', hoodOpen: boolean) {
       view = next;
       hoodTarget = next === 'bay' || hoodOpen ? 1 : 0;
       bodywork.group.visible = view !== 'chassis';
+    },
+    updateAssembly(
+      options: VehicleAssemblyOptions | undefined,
+      dt: number,
+      instant = false,
+    ) {
+      if (options) {
+        assemblyActive = true;
+        const result = controller.update(options, dt, instant);
+        assemblyAmount = result.maxAmount;
+        return result;
+      }
+      if (assemblyActive) {
+        controller.update(initialVehicleAssembly, dt, true);
+        controller.resetVisibility();
+        assemblyActive = false;
+        assemblyAmount = 0;
+      }
+      return { moving: false, maxAmount: 0 };
     },
     update(dt: number) {
       hoodAmount = THREE.MathUtils.damp(hoodAmount, hoodTarget, 5, dt);
@@ -274,12 +301,13 @@ export function createVehicleContext() {
       return Math.abs(hoodAmount - hoodTarget) > 0.002;
     },
     dispose() {
-      template.textures.forEach((texture) => texture.dispose());
+      textures.forEach((texture) => texture.dispose());
     },
     setOpacity(amount: number) {
       outline.opacity = (view === 'chassis' ? 0.23 : 0) * amount;
       detail.opacity = (view === 'chassis' ? 0.09 : 0) * amount;
-      contactMaterial.uniforms.opacity.value = 0.3 * amount;
+      contactMaterial.uniforms.opacity.value =
+        0.3 * amount * (1 - assemblyAmount);
       for (const material of solidMaterials) {
         const transparent =
           amount < 0.995 || material.userData.vehicleTransparent;

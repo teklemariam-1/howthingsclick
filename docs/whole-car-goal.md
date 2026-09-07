@@ -1,0 +1,29 @@
+# Whole Corolla exhibit — active implementation
+
+The requested end state is a realistic and accurate Corolla exterior and a whole-car exhibit with assembly, disassembly, identification and inspection of the car's parts, alongside the existing engine exhibit. This is not complete merely because a whole-car explode button exists.
+
+## Evidence and requirements
+
+- Exterior: compare front, rear, both sides and three-quarter views against the exact EchoPark listing and user screenshots. Correct panel outlines, glazing, wheel covers, fascia and lighting details; preserve the assembled silhouette when splitting parts.
+- Structure: individually separable hood, four doors, glazing, mirrors, front fenders, quarters, roof, trunk, bumpers, grilles and lights, with believable inner structure exposed during removal.
+- Cabin: seats, rails, head restraints, dashboard, console, steering controls, door trim, glazing mechanisms, restraints, headliner and luggage compartment components.
+- Running gear: LE MacPherson front struts, **torsion-beam rear suspension**, coils, dampers, steering rack, control arms, hubs, wheels, tires, covers, fasteners, discs, calipers and brake hydraulics. Toyota's US 2025 brochure explicitly distinguishes LE torsion beam from SE/XSE multi-link.
+- Powertrain and services: current engine lab, transmission/final drive, half shafts, mounts, intake, cooling, A/C, battery, electrical distribution and harnesses, fuel storage/delivery and exhaust.
+- Interaction: whole-car and per-part reversible assembly, staging, filtering, searchable part descriptions, focus/isolation, accessible controls, responsive layout and inspection from all angles.
+- Presentation: preserve engine tours/recording; add a coherent whole-car tour and recording path before completion.
+- Verification: prove each registered assembly has renderable geometry, unique identity and valid description; inspect rest/exploded positions and exact restoration, all controls, keyboard/mobile usability, runtime errors and visual fidelity. Keep the full goal active until the complete requested state is reviewed.
+
+Source: https://www.toyota.com/content/dam/toyota/brochures/pdf/2025/corolla_ebrochure.pdf . Dimensions and system layouts are checked against Toyota references. Procedural geometry is not factory CAD; unverified geometry remains an outstanding fidelity issue, not evidence of exactness.
+
+## Whole-car implementation checkpoint
+
+- The home page is now the whole-car explorer. `/engine` preserves the original detailed engine exhibit; `/car` is an alias for the car view.
+- 174 registered car assemblies plus the engine module: body panels, glazing, cabin, door hardware, wheel components, suspension, fuel/exhaust, electrical equipment and a separable transmission layout.
+- Eight system filters, text search, part descriptions, focus, isolation, staged disassembly, per-part removal/return, assembly slider and directional cameras.
+- A silent 62-second car tour shares its shot data with canvas recording, captions and an exported narration script.
+- Model tests check finite geometry, unique IDs, complete mesh ownership, nested isolation, stage order, individual return overrides and exact restoration. Run `node scripts/test-vehicle.mjs`.
+- Browser review found and fixed spline overshoot around door outlines and roof trim protruding through the exterior. The latest front/rear/side/quarter renders remain approximate, especially lamp optics, bumper corner surfacing and wheel-cover sculpture.
+- Transmission functional reference: https://global.toyota/en/mobility/tnga/powertrain2018/cvt/index.html . Its pulley/belt and launch-gear paths are represented, but casing dimensions and internal placements are not measured factory CAD.
+- Still required before the full goal is complete: further exterior matching, curved inner body surfaces and luggage tub, more accurate panel boundaries at the rear lamps/trunk, complete cooling/HVAC separation from the engine module, and a visual/mechanical review of the newly exposed hardware. Do not treat the assembly count as a claim that every production fastener and internal component has been modeled.
+
+Verified for this checkpoint: model tests passed for 174 car assemblies / 395 meshes; whole-car browser checks passed on desktop and 390 px mobile with no page errors; keyboard assembly and individual return overrides passed; a 1600×900 WebM recording (692,346 bytes in the short check), SRT download, tour replay and navigation to/from the engine lab passed. Existing engine assembly, hood, combustion flows and oil-only separation checks passed.

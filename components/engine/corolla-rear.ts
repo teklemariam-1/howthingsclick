@@ -4,15 +4,55 @@ import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import badgeFont from './corolla-badge-font.json';
 import type { ModelKit, P3 } from './vehicle-model';
 import { bodyOutline, bodyPatch } from './body-surface';
+import { clipPanelGeometry } from './panel-clipping';
 
 export function createCorollaRear(
   k: ModelKit,
-  group: THREE.Group,
+  root: THREE.Group,
   rear: number,
   sideRear: number,
   sidePoint: (z: number, y: number, side: number) => P3,
+  trunk: THREE.Group,
 ) {
   const { paint, black, alloy, mesh, tube, surface, box } = k;
+  const part = (
+    id: string,
+    name: string,
+    offset: P3,
+    stage: number,
+    description: string,
+  ) =>
+    k.part(root, {
+      id: `car-${id}`,
+      name,
+      system: 'body',
+      offset,
+      stage,
+      description,
+      material: 'Paint, polymer, glass and metal',
+    });
+  const bumper = part(
+    'rear-bumper',
+    'Rear bumper cover',
+    [0, 0.08, 1.3],
+    1,
+    'The sculpted rear bumper wraps around the luggage compartment and houses two tall corner reflectors.',
+  );
+  const tailPanel = part(
+    'tail-panel',
+    'Rear body closing panel',
+    [0, 0.15, 0.8],
+    5,
+    'The welded rear panel joins the rear quarters below the luggage opening.',
+  );
+  const valanceGroup = part(
+    'rear-valance',
+    'Rear lower valance',
+    [0, -0.1, 1.8],
+    0,
+    'The broad black lower insert curls under the rear bumper.',
+  );
+  let group = bumper;
   const material = (color: string, metalness: number, roughness: number) => {
     const m = new THREE.MeshPhysicalMaterial({
       color,
@@ -129,7 +169,36 @@ export function createCorollaRear(
     ),
   );
   outer.holes.push(valance, ...lamps, ...reflectors);
-  mapped(outer, paint);
+  const painted = mapped(outer, paint);
+  for (const [target, limits] of [
+    [bumper, [{ axis: 1, value: 0.574, greater: false }]],
+    [
+      trunk,
+      [
+        { axis: 1, value: 0.574, greater: true },
+        { axis: 0, value: -0.725, greater: true },
+        { axis: 0, value: 0.725, greater: false },
+      ],
+    ],
+    [
+      tailPanel,
+      [
+        { axis: 1, value: 0.574, greater: true },
+        { axis: 0, value: -0.725, greater: false },
+      ],
+    ],
+    [
+      tailPanel,
+      [
+        { axis: 1, value: 0.574, greater: true },
+        { axis: 0, value: 0.725, greater: true },
+      ],
+    ],
+  ] as const)
+    mesh(target, clipPanelGeometry(painted.geometry, [...limits]), paint);
+  bumper.remove(painted);
+  painted.geometry.dispose();
+  group = trunk;
   // Close the curved deck edge all the way across the upper rear panel.
   surface(
     group,
@@ -146,6 +215,7 @@ export function createCorollaRear(
     100,
     8,
   );
+  group = valanceGroup;
   mapped(valance, valanceMat, -0.009);
   tube(
     group,
@@ -165,6 +235,7 @@ export function createCorollaRear(
     72,
     10,
   );
+  group = trunk;
   const trunkBar = bodyOutline([
     [-0.43, 0.878],
     [0, 0.87],
@@ -184,6 +255,14 @@ export function createCorollaRear(
     alloy,
   );
   for (const [i, side] of [-1, 1].entries()) {
+    const lampGroup = part(
+      `${side < 0 ? 'left' : 'right'}-tail-lamp`,
+      `${side < 0 ? 'Left' : 'Right'} rear lamp`,
+      [side * 0.65, 0.25, 0.95],
+      0,
+      'Red upper guides sit above a clear lower lens; the lamp wraps into the rear quarter panel.',
+    );
+    group = lampGroup;
     mapped(lamps[i], red, 0.004);
     mapped(lowerLamps[i], clear, 0.006);
     tube(
@@ -212,6 +291,13 @@ export function createCorollaRear(
         j % 3 === 0 ? lensBlack : alloy,
       );
     }
+    group = part(
+      `${side < 0 ? 'left' : 'right'}-rear-reflector`,
+      `${side < 0 ? 'Left' : 'Right'} rear reflector`,
+      [side * 0.4, -0.05, 1.55],
+      0,
+      'A tall red reflector is inset at the outside edge of the rear bumper.',
+    );
     mapped(reflectors[i], lensBlack, 0.002);
     mapped(
       bodyOutline(
@@ -225,6 +311,7 @@ export function createCorollaRear(
       red,
       0.004,
     );
+    group = bumper;
     // Rear corner returns meet the quarter-panel edge with the same contour.
     surface(
       group,
@@ -242,6 +329,7 @@ export function createCorollaRear(
       48,
       16,
     );
+    group = lampGroup;
     const sideLamp = new THREE.Shape();
     sideLamp.moveTo(3.17, 0.917);
     sideLamp.quadraticCurveTo(3.25, 0.957, 3.36, 0.947);
@@ -280,6 +368,7 @@ export function createCorollaRear(
       );
     }
   }
+  group = trunk;
   // Inset, stamped plate pocket with a correctly sized US plate frame.
   box(group, [0.314, 0.16, 0.01], face(0, 0.7, 0.007), black, 0.008);
   const plate = material('#d2d6d3', 0.18, 0.44);

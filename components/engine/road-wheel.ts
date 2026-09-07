@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { vehiclePart, type VehicleAssembly } from './vehicle-assemblies';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import {
@@ -7,7 +8,11 @@ import {
 } from '../../lib/engine/vehicle-dimensions';
 
 // Local Z is the axle. The caliper stays fixed as the tire, rim and disc turn.
-export function createRoadWheel() {
+export function createRoadWheel(
+  prefix = 'wheel',
+  label = 'Wheel',
+  rear = false,
+) {
   const rimScale = D.rimDiameter / (17 * 0.0254);
   const sidewallRadius = (r: number) =>
     THREE.MathUtils.mapLinear(
@@ -19,6 +24,74 @@ export function createRoadWheel() {
     );
   const group = new THREE.Group(),
     spin = new THREE.Group();
+  const parts: VehicleAssembly[] = [];
+  const part = (
+    id: string,
+    name: string,
+    offset: [number, number, number],
+    stage: number,
+    description: string,
+    parent: THREE.Group = spin,
+  ) =>
+    vehiclePart(
+      parent,
+      {
+        id: `car-${prefix}-${id}`,
+        name: `${label} ${name}`,
+        system: 'brakes',
+        offset,
+        stage,
+        description,
+        material: 'Rubber, steel and polymer',
+      },
+      parts,
+    );
+  const tireGroup = part(
+    'tire',
+    'tire',
+    [0, 0, 0.85],
+    2,
+    '205/55 R16 tire with a shaped sidewall and grooved tread.',
+  );
+  const rimGroup = part(
+    'rim',
+    'steel wheel',
+    [0, 0, 0.5],
+    3,
+    'The pressed steel wheel supports the tire beads.',
+  );
+  const coverGroup = part(
+    'cover',
+    'wheel cover',
+    [0, 0, 1.18],
+    0,
+    'A silver ten-spoke cover clips over the steel wheel.',
+  );
+  const discGroup = part(
+    'disc',
+    rear ? 'solid brake disc' : 'ventilated brake disc',
+    [0, 0, 0.29],
+    4,
+    rear
+      ? 'The rear solid disc provides a friction surface for braking.'
+      : 'Two friction faces and cooling vanes form the ventilated front brake disc.',
+  );
+  const fasteners = part(
+    'nuts',
+    'wheel nuts',
+    [0, 0, 1.4],
+    0,
+    'Five wheel nuts clamp the wheel to the hub.',
+  );
+  const caliperGroup = part(
+    'caliper',
+    'brake caliper',
+    [-0.18, 0.18, 0.28],
+    3,
+    'The fixed caliper body squeezes pads against the rotating brake disc.',
+    group,
+  );
+  let current = tireGroup;
   spin.name = 'wheel-rotor';
   group.add(spin);
   group.scale.z = D.tireWidth / 0.225;
@@ -80,7 +153,7 @@ export function createRoadWheel() {
     geometry: THREE.BufferGeometry,
     material: THREE.MeshStandardMaterial,
     z = 0,
-    parent = spin,
+    parent = current,
   ) {
     const m = new THREE.Mesh(geometry, material);
     m.position.z = z;
@@ -183,8 +256,11 @@ export function createRoadWheel() {
     ring(sidewallRadius(0.222), 0.0015, side * 0.106, rubber);
     ring(sidewallRadius(0.279), 0.0012, side * 0.112, rubber);
     ring(sidewallRadius(0.294), 0.0012, side * 0.105, rubber);
+    current = rimGroup;
     ring(D.rimDiameter / 2, 0.0045, side * 0.092);
+    current = tireGroup;
   }
+  current = rimGroup;
   lathe(
     [
       [0.213, -0.095],
@@ -197,8 +273,42 @@ export function createRoadWheel() {
     graphite,
   );
   ring(0.204 * rimScale, 0.003, 0.092);
-  disk(0.171, 0.005, 0.053, rotorSteel);
-  disk(0.171, 0.005, 0.041, rotorSteel);
+  const pressedFace = new THREE.Shape();
+  pressedFace.absarc(0, 0, 0.184, 0, Math.PI * 2, false);
+  const centerHole = new THREE.Path();
+  centerHole.absarc(0, 0, 0.033, 0, Math.PI * 2, true);
+  pressedFace.holes.push(centerHole);
+  for (let j = 0; j < 10; j++) {
+    const a = (j / 10) * Math.PI * 2,
+      hole = new THREE.Path();
+    hole.absellipse(
+      Math.cos(a) * 0.128,
+      Math.sin(a) * 0.128,
+      0.026,
+      0.034,
+      0,
+      Math.PI * 2,
+      true,
+      a,
+    );
+    pressedFace.holes.push(hole);
+  }
+  mesh(
+    new THREE.ExtrudeGeometry(pressedFace, {
+      depth: 0.006,
+      bevelEnabled: true,
+      bevelSize: 0.002,
+      bevelThickness: 0.002,
+      bevelSegments: 2,
+      curveSegments: 16,
+    }),
+    graphite,
+    0.062,
+  );
+
+  current = discGroup;
+  disk(rear ? 0.135 : 0.15, rear ? 0.009 : 0.005, 0.053, rotorSteel);
+  if (!rear) disk(0.15, 0.005, 0.041, rotorSteel);
   disk(0.072, 0.032, 0.056, graphite);
   const ventGeometries: THREE.BufferGeometry[] = [];
   for (let i = 0; i < 48; i++) {
@@ -210,9 +320,15 @@ export function createRoadWheel() {
   }
   const vents = mergeGeometries(ventGeometries);
   ventGeometries.forEach((g) => g.dispose());
-  if (vents) mesh(vents, graphite);
-  ring(0.145, 0.00065, 0.056, graphite);
-  ring(0.163, 0.00065, 0.056, graphite);
+  if (vents) {
+    if (!rear) {
+      vents.scale(0.87, 0.87, 1);
+      mesh(vents, graphite);
+    } else vents.dispose();
+  }
+  ring(rear ? 0.112 : 0.131, 0.00065, 0.06, graphite);
+  ring(rear ? 0.127 : 0.143, 0.00065, 0.06, graphite);
+  current = coverGroup;
   const spokes: THREE.BufferGeometry[] = [];
   for (let i = 0; i < 5; i++)
     for (const branch of [-1, 1]) {
@@ -245,12 +361,14 @@ export function createRoadWheel() {
   disk(0.052, 0.016, 0.085, alloy);
   disk(0.027, 0.005, 0.097, graphite);
   ring(0.025, 0.0013, 0.1);
+  current = fasteners;
   for (let i = 0; i < 5; i++) {
     const a = (i * Math.PI * 2) / 5,
       bolt = disk(0.0065, 0.009, 0.098, polished, 6);
     bolt.position.x = Math.cos(a) * 0.04;
     bolt.position.y = Math.sin(a) * 0.04;
   }
+  current = rimGroup;
   const valve = disk(0.0035, 0.021, 0.104, rubber, 8);
   valve.position.set(0.181 * rimScale, 0, 0.104);
   valve.rotation.y = 0.2;
@@ -258,15 +376,15 @@ export function createRoadWheel() {
     new RoundedBoxGeometry(0.057, 0.112, 0.051, 3, 0.009),
     graphite,
     0.046,
-    group,
+    caliperGroup,
   );
-  caliper.position.x = -0.146;
+  caliper.position.x = rear ? -0.125 : -0.143;
   const bridge = mesh(
     new RoundedBoxGeometry(0.038, 0.071, 0.016, 2, 0.005),
     alloy,
     0.078,
-    group,
+    caliperGroup,
   );
-  bridge.position.x = -0.153;
-  return { group, materials, textures: [grain] };
+  bridge.position.x = rear ? -0.132 : -0.15;
+  return { group, materials, parts, textures: [grain] };
 }

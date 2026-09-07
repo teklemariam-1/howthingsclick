@@ -1,2 +1,4 @@
-import EngineExhibit from '@/components/engine/exhibit';
-export default function Home() { return <EngineExhibit />; }
+import CarExhibit from '@/components/engine/car-exhibit';
+export default function Home() {
+  return <CarExhibit />;
+}

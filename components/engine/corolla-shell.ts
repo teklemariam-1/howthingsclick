@@ -2,16 +2,45 @@ import * as THREE from 'three';
 import { modelKit, type P3 } from './vehicle-model';
 import { createCorollaFascia } from './corolla-fascia';
 import { createCorollaRear } from './corolla-rear';
-import { bodyPatch } from './body-surface';
+import { bodyPatch, bodyOutline, outlineTube } from './body-surface';
+import { createDoorHardware } from './door-hardware';
+import { clipPanelGeometry } from './panel-clipping';
 import { VEHICLE_DIMENSIONS as D } from '../../lib/engine/vehicle-dimensions';
 
 // Original lofted geometry, shaped from the supplied Corolla LE reference photos.
 // X crosses the car; Z runs from the front bumper to the rear bumper, in metres.
 export function createCorollaShell(
   k: ReturnType<typeof modelKit>,
-  group: THREE.Group,
+  root: THREE.Group,
 ) {
   const { surface, tube, mesh, box, paint, black, alloy, glass, rubber } = k;
+  const part = (
+    id: string,
+    name: string,
+    offset: P3,
+    stage: number,
+    description: string,
+    material = 'Painted steel and trim',
+    parent: THREE.Object3D = root,
+  ) =>
+    k.part(parent, {
+      id: `car-${id}`,
+      name,
+      system: 'body',
+      offset,
+      stage,
+      description,
+      material,
+    });
+  const frame = part(
+    'body-frame',
+    'Passenger cell and pillars',
+    [0, 0, 0],
+    6,
+    'The welded A, B and C pillars and rocker structure form the central reference assembly. Welded structure is shown separately for education, not as a service-removal instruction.',
+  );
+  let group = frame;
+  const doors = new Map<string, THREE.Group>();
   paint.color.set('#e5e8e6');
   paint.metalness = 0.12;
   paint.roughness = 0.31;
@@ -115,7 +144,7 @@ export function createCorollaShell(
     }
     return bottom;
   }
-  const fascia = createCorollaFascia(k, group, front, sidePoint);
+  const fascia = createCorollaFascia(k, root, front, sidePoint);
   const hoodHinge: P3 = [0, 0.96, 0.32];
   function hoodPoint(u: number, v: number): P3 {
     const s = v * 2 - 1,
@@ -138,7 +167,21 @@ export function createCorollaShell(
   const hood = new THREE.Group();
   hood.name = 'opening-hood';
   hood.position.set(...hoodHinge);
-  group.add(hood);
+  root.add(hood);
+  k.part(
+    root,
+    {
+      id: 'car-hood',
+      name: 'Hood and inner reinforcement',
+      system: 'body',
+      offset: [0, 1.4, -0.6],
+      stage: 1,
+      description:
+        'The hinged hood encloses the engine bay. The outer skin and reinforcing inner frame lift together.',
+      material: 'Painted steel',
+    },
+    hood,
+  );
   surface(
     hood,
     (u, v) => {
@@ -182,46 +225,132 @@ export function createCorollaShell(
     alloy,
     0.007,
   );
+  const filler = new THREE.Shape();
+  filler.moveTo(2.756, 0.996);
+  filler.lineTo(2.916, 0.996);
+  filler.quadraticCurveTo(2.94, 0.996, 2.94, 0.972);
+  filler.lineTo(2.94, 0.844);
+  filler.quadraticCurveTo(2.94, 0.822, 2.916, 0.822);
+  filler.lineTo(2.756, 0.822);
+  filler.quadraticCurveTo(2.732, 0.822, 2.732, 0.846);
+  filler.lineTo(2.732, 0.972);
+  filler.quadraticCurveTo(2.732, 0.996, 2.756, 0.996);
   for (const side of [-1, 1]) {
-    const skin = surface(
-      group,
-      (u, v) => {
-        const z = lerp(sideFront, sideRear, u),
-          y = lerp(archBottom(z), shoulder(z), v);
-        return sidePoint(z, y, side);
-      },
-      paint,
-      280,
-      36,
+    const sideName = side < 0 ? 'left' : 'right',
+      label = side < 0 ? 'Left' : 'Right';
+    const fender = part(
+      `${sideName}-fender`,
+      `${label} front fender`,
+      [side * 0.95, 0.2, -0.25],
+      2,
+      'The front fender forms the wheel opening and meets the hood, front door and bumper.',
     );
-    // The positive-X panel must face outward as well as have outward normals.
-    // Double-sided shading flips normals on back faces; a winding mismatch makes
-    // white paint look like a dark chrome stripe under the studio lights.
-    if (side > 0) {
-      const index = skin.geometry.getIndex()!;
-      for (let i = 0; i < index.count; i += 3) {
-        const b = index.getX(i + 1);
-        index.setX(i + 1, index.getX(i + 2));
-        index.setX(i + 2, b);
-      }
+    const quarter = part(
+      `${sideName}-quarter`,
+      `${label} rear quarter panel`,
+      [side * 0.95, 0.2, 0.4],
+      5,
+      'The rear quarter is a welded outer body panel surrounding the rear wheel opening.',
+    );
+    const frontDoor = part(
+      `${sideName}-front-door`,
+      `${label} front door`,
+      [side * 1.05, 0.08, -0.28],
+      1,
+      'The front door separates with its exterior skin. Its glass, handle and interior trim can be inspected separately.',
+    );
+    const rearDoor = part(
+      `${sideName}-rear-door`,
+      `${label} rear door`,
+      [side * 1.05, 0.1, 0.4],
+      1,
+      'The rear door closes the rear passenger opening and includes a main window and fixed quarter glass.',
+    );
+    doors.set(`${side}-front`, frontDoor);
+    doors.set(`${side}-rear`, rearDoor);
+    const frontShape = bodyOutline([
+      [0.51, 0.94],
+      [0.489, 0.82],
+      [0.5, 0.54],
+      [0.568, 0.282],
+      [0.685, 0.239],
+      [1.551, 0.237],
+      [1.578, 0.953],
+    ]);
+    const rearShape = bodyOutline([
+      [1.612, 0.959],
+      [2.65, 1.0],
+      [2.684, 0.942],
+      [2.478, 0.607],
+      [2.27, 0.264],
+      [1.601, 0.237],
+    ]);
+    const outside = new THREE.Shape();
+    outside.moveTo(sideFront, archBottom(sideFront));
+    for (let i = 1; i <= 280; i++) {
+      const z = lerp(sideFront, sideRear, i / 280);
+      outside.lineTo(z, archBottom(z));
     }
-    // Stable body normals keep the wheel cut-outs from distorting door reflections.
-    const p = skin.geometry.getAttribute('position'),
-      normals = skin.geometry.getAttribute('normal');
-    for (let i = 0; i < p.count; i++) {
-      const z = p.getZ(i),
-        y = p.getY(i),
-        e = 0.0002;
-      const dz = new THREE.Vector3(...sidePoint(z + e, y, side)).sub(
-        new THREE.Vector3(...sidePoint(z - e, y, side)),
+    for (let i = 280; i >= 0; i--) {
+      const z = lerp(sideFront, sideRear, i / 280);
+      outside.lineTo(z, shoulder(z));
+    }
+    outside.closePath();
+    outside.holes.push(frontShape, rearShape);
+    if (side < 0) outside.holes.push(filler);
+    const skin = bodyPatch(k, frame, outside, paint, (z, y) =>
+      sidePoint(z, y, side),
+    );
+    for (const [target, lo, hi] of [
+      [fender, -10, 0.48],
+      [frame, 0.48, 2.51],
+      [quarter, 2.51, 10],
+    ] as const) {
+      mesh(
+        target,
+        clipPanelGeometry(skin.geometry, [
+          { axis: 2, value: lo, greater: true },
+          { axis: 2, value: hi, greater: false },
+        ]),
+        paint,
       );
-      const dy = new THREE.Vector3(...sidePoint(z, y + e, side)).sub(
-        new THREE.Vector3(...sidePoint(z, y - e, side)),
+    }
+    frame.remove(skin);
+    skin.geometry.dispose();
+    for (const [target, shape, which] of [
+      [frontDoor, frontShape, 'front'],
+      [rearDoor, rearShape, 'rear'],
+    ] as const) {
+      bodyPatch(k, target, shape, paint, (z, y) => sidePoint(z, y, side));
+      createDoorHardware(k, target, side, which === 'front', shape, sidePoint);
+      const inner = part(
+        `${sideName}-${which}-door-trim`,
+        `${label} ${which} door trim`,
+        [side * 0.21, 0.05, 0],
+        3,
+        'The moulded inner trim carries the armrest and covers the door cavity.',
+        'Textile and moulded polymer',
+        target,
       );
-      const n = dy.cross(dz).normalize().multiplyScalar(side);
-      normals.setXYZ(i, n.x, n.y, n.z);
+      bodyPatch(k, inner, shape, black, (z, y) => {
+        const p = sidePoint(z, y, side);
+        return [p[0] - side * 0.047, p[1], p[2]];
+      });
+      outlineTube(
+        k,
+        target,
+        shape.getPoints(12).map((p) => {
+          const q = sidePoint(p.x, p.y, side);
+          q[0] -= side * 0.018;
+          return q;
+        }),
+        0.014,
+        paint,
+      );
     }
     for (const axle of [0, D.wheelbase]) {
+      group = axle === 0 ? fender : quarter;
+
       // Flush painted arch flange and a recessed black wheel-house liner.
       surface(
         group,
@@ -253,6 +382,7 @@ export function createCorollaShell(
         6,
       );
     }
+    group = fender;
     // Fender shoulders meet the curved hood opening exactly.
     surface(
       group,
@@ -275,6 +405,7 @@ export function createCorollaShell(
       72,
       20,
     );
+    group = frame;
     // Beltline, stamped door character line and gently rising rocker.
     const belt: P3[] = [],
       rocker: P3[] = [];
@@ -311,7 +442,8 @@ export function createCorollaShell(
         [1.58, 0.225],
       ],
     ];
-    seams.forEach((points) => {
+    seams.forEach((points, index) => {
+      group = index < 2 ? frontDoor : rearDoor;
       const curve = new THREE.CatmullRomCurve3(
         points.map(([z, y]) => new THREE.Vector3(z, y, 0)),
       );
@@ -330,6 +462,15 @@ export function createCorollaShell(
       [1.39, 0.86],
       [2.31, 0.9],
     ]) {
+      group = part(
+        `${sideName}-${z < 2 ? 'front' : 'rear'}-handle`,
+        `${label} ${z < 2 ? 'front' : 'rear'} exterior handle`,
+        [side * 0.17, 0.05, 0],
+        2,
+        'The pull handle operates the door latch through a mechanical linkage.',
+        'Painted polymer / metal',
+        z < 2 ? frontDoor : rearDoor,
+      );
       const p = sidePoint(z, y, side);
       const pocket = mesh(group, new THREE.SphereGeometry(1, 32, 16), k.steel, [
         p[0] - side * 0.001,
@@ -353,17 +494,14 @@ export function createCorollaShell(
       );
     }
   }
+  group = part(
+    'fuel-door',
+    'Fuel filler door',
+    [-0.35, 0.03, 0.15],
+    1,
+    'The small hinged flap covers the filler opening on the left rear quarter.',
+  );
   // The filler door is on the left rear quarter of the reference LE.
-  const filler = new THREE.Shape();
-  filler.moveTo(2.756, 0.996);
-  filler.lineTo(2.916, 0.996);
-  filler.quadraticCurveTo(2.94, 0.996, 2.94, 0.972);
-  filler.lineTo(2.94, 0.844);
-  filler.quadraticCurveTo(2.94, 0.822, 2.916, 0.822);
-  filler.lineTo(2.756, 0.822);
-  filler.quadraticCurveTo(2.732, 0.822, 2.732, 0.846);
-  filler.lineTo(2.732, 0.972);
-  filler.quadraticCurveTo(2.732, 0.996, 2.756, 0.996);
   tube(
     group,
     filler.getPoints(12).map((p) => {
@@ -374,6 +512,34 @@ export function createCorollaShell(
     0.0016,
     k.steel,
   );
+  bodyPatch(k, group, filler, paint, (z, y) => {
+    const p = sidePoint(z, y, -1);
+    p[0] -= 0.003;
+    return p;
+  });
+  const pocket = k.part(root, {
+    id: 'car-fuel-pocket',
+    name: 'Fuel filler pocket and cap',
+    system: 'fuel',
+    offset: [-0.55, 0.1, 0.25],
+    stage: 2,
+    description:
+      'The recessed filler pocket contains the sealed fuel cap and the entrance to the filler neck.',
+    material: 'Polymer and metal',
+  });
+  bodyPatch(k, pocket, filler, black, (z, y) => {
+    const p = sidePoint(z, y, -1);
+    p[0] += 0.027;
+    return p;
+  });
+  const cap = mesh(
+    pocket,
+    new THREE.CylinderGeometry(0.033, 0.036, 0.022, 32),
+    black,
+    [-0.859, 0.908, 2.837],
+  );
+  cap.rotation.z = Math.PI / 2;
+  group = frame;
   // One flowing roof profile supplies the roof, glazing and broad painted pillars.
   const roofY = (z: number) =>
     profile(
@@ -424,10 +590,46 @@ export function createCorollaShell(
       40,
     );
   }
-  roofSurface(group, 0.329, 1.093, glass);
-  roofSurface(group, 1.099, 2.398, paint);
-  roofSurface(group, 2.405, 3.1, glass);
+  roofSurface(
+    part(
+      'windshield',
+      'Windshield',
+      [0, 1.1, -0.6],
+      0,
+      'Laminated glass bonds to the front opening and provides the forward view.',
+      'Laminated glass',
+    ),
+    0.329,
+    1.093,
+    glass,
+  );
+  roofSurface(
+    part(
+      'roof',
+      'Roof panel',
+      [0, 1.8, 0.1],
+      2,
+      'The welded roof skin spans the passenger cell. Its support bows and headliner are separate interior components.',
+    ),
+    1.099,
+    2.398,
+    paint,
+  );
+  roofSurface(
+    part(
+      'rear-window',
+      'Rear windshield',
+      [0, 1.1, 0.8],
+      0,
+      'The bonded rear glass closes the back of the cabin and contains heating elements.',
+      'Tempered glass',
+    ),
+    2.405,
+    3.1,
+    glass,
+  );
   for (const side of [-1, 1]) {
+    group = frame;
     const outer = new THREE.Shape();
     outer.moveTo(0.325, shoulder(0.325) - 0.004);
     for (let i = 0; i <= 100; i++) {
@@ -500,15 +702,27 @@ export function createCorollaShell(
       );
     }
     cabinGeometry(outer, paint);
-    for (const outline of windows) {
+    for (const [windowIndex, outline] of windows.entries()) {
+      const front = windowIndex < 2;
+      group = part(
+        `${side < 0 ? 'left' : 'right'}-glass-${windowIndex}`,
+        `${side < 0 ? 'Left' : 'Right'} ${front ? 'front' : 'rear'} ${windowIndex === 0 || windowIndex === 3 ? 'fixed quarter' : 'door'} glass`,
+        [side * 0.23, 0.38, 0],
+        0,
+        'This glazing closes the door window opening. The main pane retracts into the door; the quarter pane is fixed.',
+        'Safety glass',
+        doors.get(`${side}-${front ? 'front' : 'rear'}`)!,
+      );
       cabinGeometry(new THREE.Shape(outline.getPoints(64)), glass, 0.001);
-      tube(
+      outlineTube(
+        k,
         group,
         outline.getPoints(64).map((p) => cabinPoint(p.x, p.y, 0.002)),
         0.007,
         black,
       );
     }
+    group = frame;
     // Black B-pillar applique is slightly swept, matching the door frame.
     const bp = new THREE.Shape();
     bp.moveTo(1.518, 0.985);
@@ -517,6 +731,15 @@ export function createCorollaShell(
     bp.lineTo(1.68, 0.992);
     bp.closePath();
     cabinGeometry(bp, black, 0.003);
+    group = part(
+      `${side < 0 ? 'left' : 'right'}-mirror`,
+      `${side < 0 ? 'Left' : 'Right'} exterior mirror`,
+      [side * 0.65, 0.28, -0.15],
+      0,
+      'The door-mounted mirror housing contains the adjustable reflective glass and electric adjustment motor.',
+      'Painted polymer and glass',
+      doors.get(`${side}-front`)!,
+    );
     // Flat-backed, body-coloured mirror cap with a black pedestal.
     const stem = box(
       group,
@@ -559,6 +782,14 @@ export function createCorollaShell(
     );
     mirror.rotation.y = side * 0.16;
   }
+  const trunk = part(
+    'trunk',
+    'Trunk lid',
+    [0, 1.2, 1.0],
+    1,
+    'The trunk lid opens the luggage compartment. The rear badge, plate and central trim travel with the lid.',
+  );
+  group = trunk;
   // A continuous rear deck blends into both quarters and the rear fascia.
   const trunkPoint = (u: number, v: number): P3 => {
     const side = v * 2 - 1;
@@ -588,7 +819,15 @@ export function createCorollaShell(
       16,
     );
   }
-  createCorollaRear(k, group, rear, sideRear, sidePoint);
+  createCorollaRear(k, root, rear, sideRear, sidePoint, trunk);
+  group = part(
+    'antenna',
+    'Roof antenna',
+    [0, 0.65, 0.2],
+    0,
+    'A compact antenna housing sits on the rear roof.',
+    'Painted polymer',
+  );
   // A low shark-fin aerial follows the roof instead of floating above it.
   const aerialOutline = new THREE.Shape();
   aerialOutline.moveTo(-0.09, 0);

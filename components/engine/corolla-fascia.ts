@@ -6,11 +6,42 @@ import { bodyOutline, bodyPatch } from './body-surface';
 // photographs: broad horizontal slats, hooked lamps, and folded bumper cheeks.
 export function createCorollaFascia(
   k: ModelKit,
-  parent: THREE.Group,
+  root: THREE.Group,
   front: number,
   sidePoint: (z: number, y: number, side: number) => P3,
 ) {
   const { mesh, tube, surface, paint, black, alloy } = k;
+  const part = (
+    id: string,
+    name: string,
+    offset: P3,
+    stage: number,
+    description: string,
+  ) =>
+    k.part(root, {
+      id: `car-${id}`,
+      name,
+      system: 'body',
+      offset,
+      stage,
+      description,
+      material: 'Paint, polymer, glass and metal',
+    });
+  const bumper = part(
+    'front-bumper',
+    'Front bumper cover',
+    [0, 0.12, -1.3],
+    1,
+    'The moulded painted cover forms the rounded nose and large lower intake opening. The crash beam is a separate structure behind it.',
+  );
+  const grilleGroup = part(
+    'front-grille',
+    'Front grille and emblem',
+    [0, 0.12, -1.8],
+    0,
+    'Horizontal slats admit air to the cooling pack. The upper grille carries the Toyota emblem.',
+  );
+  let parent = bumper;
   const reach = 0.56;
   const height = (u: number) => 0.742 + 0.075 * Math.abs(u) ** 2;
   const toe = (y: number) =>
@@ -140,6 +171,7 @@ export function createCorollaFascia(
   });
   outer.holes.push(...lamps, grille, upper, ...corners);
   mapped(outer, paint);
+  parent = grilleGroup;
   mapped(grille, black, -0.027);
   tube(
     parent,
@@ -189,6 +221,13 @@ export function createCorollaFascia(
         tube(parent, p, 0.0013, slats);
       }
   for (const [i, side] of [-1, 1].entries()) {
+    parent = part(
+      `${side < 0 ? 'left' : 'right'}-headlamp`,
+      `${side < 0 ? 'Left' : 'Right'} headlamp`,
+      [side * 0.5, 0.3, -1.05],
+      0,
+      'The swept headlamp includes the projector, reflector surfaces and amber side marker.',
+    );
     mapped(lamps[i], lens, -0.003);
     tube(
       parent,
@@ -291,6 +330,7 @@ export function createCorollaFascia(
       ].map(([u, y]) => [side * u, y]),
     );
     mapped(marker, amber, 0.006);
+    parent = bumper;
     mapped(corners[i], trim, -0.003);
     surface(
       parent,
@@ -303,6 +343,7 @@ export function createCorollaFascia(
       8,
     );
   }
+  parent = grilleGroup;
   const badgeBack = mesh(parent, new THREE.SphereGeometry(1, 36, 20), trim, [
     0,
     0.655,
