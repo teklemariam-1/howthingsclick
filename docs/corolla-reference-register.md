@@ -38,6 +38,14 @@ These genuine-parts catalog entries were read through indexed page content. Thei
 
 Applied: replace the earlier tubular arm and block knuckle, add separate forward/rear bushings, ball joints and hollow hub bearings on both sides. Spring paths now share the damper axis and include seats and protective bellows. These shapes are original reconstructions, not copied diagram textures.
 
+## Exterior review, 6 September 2026
+
+- Toyota's [2025 US Corolla brochure](https://www.toyota.com/content/dam/toyota/brochures/pdf/2025/corolla_ebrochure.pdf), printed page 21, specifies LE tread of 60.3 inches front / 61.0 rear and 10.8-inch ventilated front / 10.2-inch solid rear discs. These replace the single track value and oversized brake geometry; tests measure the actual generated geometry.
+- The original [42602-02540 wheel-cover photograph](https://suburbanwheelcover.com/products/2020-2025-toyota-corolla-le-16-hubcap-42602-02540) was visually inspected. It has eight broad faceted spokes, eight rounded openings, a continuous outer shoulder and five recessed lug openings. This corrects the previous ten-spoke approximation. The photograph guides shape; the seller's fitment range is not independent verification of a 2025 VIN.
+- Supplied side and quarter photographs guide the black rear quarter-window divider, softer lower door stamping and painted mirror caps. The mirror backing, glass and adjustment mechanism now separate. The hidden adjustment unit remains illustrative.
+- Four removable wheel-house liners and their return flanges close the wheel openings. Upper door surrounds and B-pillar appliques now belong to the removable doors; the fixed pillar structure stays with the passenger cell.
+- Studio reflections are generated in code, without downloaded textures. This improves paint and glass presentation but does not establish photographic or factory-CAD accuracy.
+
 ## Fidelity boundary and next work
 
 This is an original procedural educational model. Parts diagrams identify assemblies and attachment relationships; photographs guide surfaces. Neither supplies measured 3D contours, all brackets, every fastener or manufacturing tolerances. The exterior, seats, trim, HVAC cases, engine castings and harness routing still require iterative visual comparison. The project must not claim factory CAD accuracy or that every production component is modeled.

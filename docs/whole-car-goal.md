@@ -15,6 +15,14 @@ The requested end state is a realistic and accurate Corolla exterior and a whole
 
 Source: https://www.toyota.com/content/dam/toyota/brochures/pdf/2025/corolla_ebrochure.pdf . Dimensions and system layouts are checked against Toyota references. Procedural geometry is not factory CAD; unverified geometry remains an outstanding fidelity issue, not evidence of exactness.
 
+## Current combined-explorer revision
+
+- The main page now opens the complete engine interactive in place through **Explore engine**. **Back to whole car** restores the car's filter/search, selection, removed components and camera. The hidden car renderer is disposed while the engine mode runs; browser checks confirmed one canvas and no page navigation in either direction, on desktop and mobile. The existing `/engine` route remains available for direct links.
+- 265 vehicle assemblies, four engine-bay service groups and the engine module: **270 selectable car assemblies**. New parts are the four wheel-house liners and separately removable mirror caps, glass/backing and adjustment units.
+- Corrected eight-spoke covers, front/rear tread widths and disc diameters, door-frame ownership, rear-quarter divider, softer door stamping, wheel-liner returns, reflective mirror glass and studio lighting.
+- Validation passed: 265 assembly / 644 mesh model check for identity, geometry, ownership, nested isolation, dimensional measurements and restoration; same-page engine controls, assembly, combustion/oil separation, mobile return and preserved car state; TypeScript and lint on the changed source. The embedded engine tour exported a 453,145-byte WebM; presentation exit, end-of-tour replay and return to the car also passed.
+- Visual limits remain: the body stampings, lamp optics, cabin surfaces and engine castings still read as a procedural reconstruction. Mirror internals, hidden pipe routing and all production fasteners are not fully verified. The overall goal remains active; this revision is not a factory-exact or photorealistic completion claim.
+
 ## Whole-car implementation checkpoint
 
 - The home page is now the whole-car explorer. `/engine` preserves the original detailed engine exhibit; `/car` is an alias for the car view.

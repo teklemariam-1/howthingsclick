@@ -8,6 +8,35 @@
   font-family: Arial, Helvetica, sans-serif;
   padding: 0 28px;
 }
+.car-exhibit[hidden] {
+  display: none;
+}
+.car-mode-nav {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.car-mode-nav > span {
+  color: #9bb5ad;
+  font-size: 13px;
+}
+.engine-return {
+  margin-left: auto;
+  white-space: nowrap;
+}
+@media (max-width: 600px) {
+  .car-mode-nav > span {
+    display: none;
+  }
+  .car-exhibit .car-mode-nav button {
+    font-size: 12px;
+    padding: 8px;
+  }
+  .engine-return {
+    font-size: 12px;
+    padding-inline: 9px;
+  }
+}
 .car-exhibit button,
 .car-exhibit a,
 .car-exhibit input {

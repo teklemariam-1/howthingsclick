@@ -15,6 +15,8 @@ export function createRoadWheel(
   rear = false,
 ) {
   const rimScale = D.rimDiameter / (17 * 0.0254);
+  const brakeRadius = (rear ? D.rearBrakeDiameter : D.frontBrakeDiameter) / 2;
+  const brakeScale = brakeRadius / (rear ? 0.135 : 0.15);
   const sidewallRadius = (r: number) =>
     THREE.MathUtils.mapLinear(
       r,
@@ -66,7 +68,7 @@ export function createRoadWheel(
     'wheel cover',
     [0, 0, 1.18],
     0,
-    'A silver ten-spoke cover clips over the steel wheel.',
+    'An eight-spoke silver polymer cover clips over the steel wheel. Its broad faceted spokes and recessed lug openings follow the photographed Corolla LE cover.',
   );
   const discGroup = part(
     'disc',
@@ -89,7 +91,7 @@ export function createRoadWheel(
     'brake caliper',
     [-0.18, 0.18, 0.28],
     3,
-    'The fixed caliper body squeezes pads against the rotating brake disc.',
+    'The caliper stays with the suspension while the disc rotates. Its hydraulic piston presses the pads against both disc faces.',
     group,
   );
   let current = tireGroup;
@@ -126,7 +128,15 @@ export function createRoadWheel(
     roughness: 0.43,
     metalness: 0.9,
   });
+  const coverMaterial = new THREE.MeshPhysicalMaterial({
+    color: '#abb0b3',
+    metalness: 0.28,
+    roughness: 0.36,
+    clearcoat: 0.42,
+    clearcoatRoughness: 0.25,
+  });
   const materials = [
+    coverMaterial,
     rubber,
     treadRubber,
     alloy,
@@ -308,8 +318,8 @@ export function createRoadWheel(
   );
 
   current = discGroup;
-  disk(rear ? 0.135 : 0.15, rear ? 0.009 : 0.005, 0.053, rotorSteel);
-  if (!rear) disk(0.15, 0.005, 0.041, rotorSteel);
+  disk(brakeRadius, rear ? 0.009 : 0.005, 0.053, rotorSteel);
+  if (!rear) disk(brakeRadius, 0.005, 0.041, rotorSteel);
   disk(0.072, 0.032, 0.056, graphite);
   const ventGeometries: THREE.BufferGeometry[] = [];
   for (let i = 0; i < 48; i++) {
@@ -323,16 +333,59 @@ export function createRoadWheel(
   ventGeometries.forEach((g) => g.dispose());
   if (vents) {
     if (!rear) {
-      vents.scale(0.87, 0.87, 1);
+      vents.scale(0.87 * brakeScale, 0.87 * brakeScale, 1);
       mesh(vents, graphite);
     } else vents.dispose();
   }
-  ring(rear ? 0.112 : 0.131, 0.00065, 0.06, graphite);
-  ring(rear ? 0.127 : 0.143, 0.00065, 0.06, graphite);
+  ring((rear ? 0.112 : 0.131) * brakeScale, 0.00065, 0.06, graphite);
+  ring((rear ? 0.127 : 0.143) * brakeScale, 0.00065, 0.06, graphite);
   current = coverGroup;
-  mesh(corollaWheelCoverGeometry(D.rimDiameter / 2 - 0.006), alloy);
-  disk(0.054, 0.013, 0.09, alloy);
-  disk(0.029, 0.004, 0.099, alloy);
+  mesh(corollaWheelCoverGeometry(D.rimDiameter / 2 - 0.006), coverMaterial);
+  const coverRim = new THREE.LatheGeometry(
+    [
+      new THREE.Vector2(0.171, 0.081),
+      new THREE.Vector2(0.177, 0.087),
+      new THREE.Vector2(0.185, 0.089),
+      new THREE.Vector2(0.194, 0.087),
+      new THREE.Vector2(D.rimDiameter / 2 - 0.004, 0.081),
+      new THREE.Vector2(0.194, 0.077),
+      new THREE.Vector2(0.171, 0.077),
+      new THREE.Vector2(0.171, 0.081),
+    ],
+    96,
+  );
+  coverRim.rotateX(Math.PI / 2);
+  mesh(coverRim, coverMaterial);
+  ring(D.rimDiameter / 2 - 0.006, 0.003, 0.083, coverMaterial);
+  const coverCentre = new THREE.Shape();
+  coverCentre.absarc(0, 0, 0.07, 0, Math.PI * 2, false);
+  for (let i = 0; i < 5; i++) {
+    const a = (i * Math.PI * 2) / 5,
+      hole = new THREE.Path();
+    hole.absarc(
+      Math.cos(a) * 0.05,
+      Math.sin(a) * 0.05,
+      0.011,
+      0,
+      Math.PI * 2,
+      true,
+    );
+    coverCentre.holes.push(hole);
+  }
+  mesh(
+    new THREE.ExtrudeGeometry(coverCentre, {
+      depth: 0.007,
+      bevelEnabled: true,
+      bevelSize: 0.002,
+      bevelThickness: 0.002,
+      bevelSegments: 3,
+      curveSegments: 48,
+    }),
+    coverMaterial,
+    0.09,
+  );
+
+  disk(0.029, 0.004, 0.099, coverMaterial);
   ring(0.031, 0.0008, 0.101, polished);
   for (const [r, sx, sy, y] of [
     [0.011, 1.35, 1, 0],
@@ -351,8 +404,8 @@ export function createRoadWheel(
   for (let i = 0; i < 5; i++) {
     const a = (i * Math.PI * 2) / 5,
       bolt = disk(0.0065, 0.009, 0.098, polished, 6);
-    bolt.position.x = Math.cos(a) * 0.04;
-    bolt.position.y = Math.sin(a) * 0.04;
+    bolt.position.x = Math.cos(a) * 0.05;
+    bolt.position.y = Math.sin(a) * 0.05;
   }
   current = rimGroup;
   const valve = disk(0.0035, 0.021, 0.104, rubber, 8);
@@ -364,13 +417,13 @@ export function createRoadWheel(
     0.046,
     caliperGroup,
   );
-  caliper.position.x = rear ? -0.125 : -0.143;
+  caliper.position.x = (rear ? -0.125 : -0.143) * brakeScale;
   const bridge = mesh(
     new RoundedBoxGeometry(0.038, 0.071, 0.016, 2, 0.005),
     alloy,
     0.078,
     caliperGroup,
   );
-  bridge.position.x = rear ? -0.132 : -0.15;
+  bridge.position.x = (rear ? -0.132 : -0.15) * brakeScale;
   return { group, materials, parts, textures: [grain] };
 }

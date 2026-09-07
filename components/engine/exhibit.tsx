@@ -1,5 +1,6 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import {
   ArrowUpRight,
   Box,
@@ -99,7 +100,9 @@ function downloadFile(name: string, contents: BlobPart, type: string) {
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 30000);
 }
-export default function EngineExhibit() {
+export default function EngineExhibit({
+  onBack,
+}: { onBack?: () => void } = {}) {
   const host = useRef<HTMLDivElement>(null),
     exhibit = useRef<HTMLElement>(null),
     api = useRef<EngineApi | null>(null);
@@ -120,29 +123,40 @@ export default function EngineExhibit() {
     [recording, setRecording] = useState(false);
   const recorder = useRef<MediaRecorder | null>(null),
     tourTimeRef = useRef(tourTime);
-  tourTimeRef.current = tourTime;
-  const sample = tourTime === null ? null : sampleTour(tourTime, variant);
-  const effective: SceneOptions = sample
-    ? {
-        ...controls,
-        playing: tourPlaying,
-        system: sample.shot.system,
-        selected: null,
-        removed: [],
-        isolated: false,
-        cutaway: sample.cutaway,
-        explode: sample.explode,
-        peel: sample.peel,
-        throttle: sample.throttle,
-        warm: sample.warm,
-        flows: sample.cutaway,
-        labels: false,
-        tourTime,
-        tourVariant: variant,
-      }
-    : controls;
+  useEffect(() => {
+    tourTimeRef.current = tourTime;
+  }, [tourTime]);
+  const sample = useMemo(
+    () => (tourTime === null ? null : sampleTour(tourTime, variant)),
+    [tourTime, variant],
+  );
+  const effective = useMemo<SceneOptions>(
+    () =>
+      sample
+        ? {
+            ...controls,
+            playing: tourPlaying,
+            system: sample.shot.system,
+            selected: null,
+            removed: [],
+            isolated: false,
+            cutaway: sample.cutaway,
+            explode: sample.explode,
+            peel: sample.peel,
+            throttle: sample.throttle,
+            warm: sample.warm,
+            flows: sample.cutaway,
+            labels: false,
+            tourTime,
+            tourVariant: variant,
+          }
+        : controls,
+    [sample, controls, tourPlaying, tourTime, variant],
+  );
   const controlRef = useRef(effective);
-  controlRef.current = effective;
+  useEffect(() => {
+    controlRef.current = effective;
+  }, [effective]);
   const currentSystem = SYSTEMS.find((x) => x.id === effective.system)!,
     selected = findPart(effective.selected);
   const blocked = controls.removed.length > 0 || controls.explode > 0,
@@ -150,10 +164,14 @@ export default function EngineExhibit() {
   const update = (patch: Partial<SceneOptions>) =>
     setControls((p) => ({ ...p, ...patch }));
   useEffect(() => {
+    if (onBack)
+      exhibit.current
+        ?.querySelector<HTMLButtonElement>('.engine-return')
+        ?.focus();
+  }, [onBack]);
+  useEffect(() => {
     let active = true,
       local: EngineApi | null = null;
-    setReady(false);
-    setError('');
     import('./scene')
       .then(({ createEngineScene }) => {
         if (!active || !host.current) return;
@@ -205,9 +223,17 @@ export default function EngineExhibit() {
         if (accumulated >= 0.05) {
           const advance = accumulated;
           accumulated = 0;
-          setTourTime((t) =>
-            Math.min(tourDuration(variant), (t ?? 0) + advance),
+          const next = Math.min(
+            tourDuration(variant),
+            (tourTimeRef.current ?? 0) + advance,
           );
+          setTourTime(next);
+          if (next >= tourDuration(variant)) {
+            setTourPlaying(false);
+            if (recorder.current && recorder.current.state !== 'inactive')
+              recorder.current.stop();
+            return;
+          }
         }
       }
       id = requestAnimationFrame(step);
@@ -215,13 +241,6 @@ export default function EngineExhibit() {
     id = requestAnimationFrame(step);
     return () => cancelAnimationFrame(id);
   }, [tourPlaying, variant]);
-  useEffect(() => {
-    if (sample?.done) {
-      setTourPlaying(false);
-      if (recorder.current && recorder.current.state !== 'inactive')
-        recorder.current.stop();
-    }
-  }, [sample?.done]);
   useEffect(() => {
     const visibility = () => {
       const media = recorder.current;
@@ -231,16 +250,17 @@ export default function EngineExhibit() {
     document.addEventListener('visibilitychange', visibility);
     return () => document.removeEventListener('visibilitychange', visibility);
   }, []);
+  const narrationText = sample?.shot.narration;
   useEffect(() => {
     if (!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
-    if (narration && tourPlaying && sample) {
-      const utterance = new SpeechSynthesisUtterance(sample.shot.narration);
+    if (narration && tourPlaying && narrationText) {
+      const utterance = new SpeechSynthesisUtterance(narrationText);
       utterance.rate = 1;
       window.speechSynthesis.speak(utterance);
     }
     return () => window.speechSynthesis.cancel();
-  }, [narration, tourPlaying, sample?.index, variant]);
+  }, [narration, tourPlaying, sample?.index, narrationText, variant]);
   function stopRecording() {
     if (recorder.current && recorder.current.state !== 'inactive')
       recorder.current.stop();
@@ -430,19 +450,25 @@ export default function EngineExhibit() {
   return (
     <main className={`engine-app ${cinema ? 'cinema-mode' : ''}`} ref={exhibit}>
       <header className="site-topbar">
-        <a className="wordmark" href="/" aria-label="How Things Click home">
+        <Link className="wordmark" href="/" aria-label="How Things Click home">
           how things <span>click.</span>
-        </a>
+        </Link>
         <div className="topbar-middle">
           <span className="section-index">01 / MACHINES</span>
           <span className="topbar-divider" />
-          <a href="/">Whole car</a>
+          {onBack ? <span>Whole car</span> : <Link href="/">Whole car</Link>}
           <span> / Engine lab</span>
         </div>
-        <span className="preview-status">
-          <span />
-          Interactive engine lab
-        </span>
+        {onBack ? (
+          <Button className="engine-return" onClick={onBack}>
+            <CarFront size={16} /> Back to whole car
+          </Button>
+        ) : (
+          <span className="preview-status">
+            <span />
+            Interactive engine lab
+          </span>
+        )}
       </header>
       <div className="exhibit-layout">
         <aside className="system-rail">
@@ -603,16 +629,22 @@ export default function EngineExhibit() {
           <div className="stage-shell">
             <div className="model-host" ref={host} />
             {!ready && !error && (
-              <div className="model-loading" role="status">
+              <output className="model-loading">
                 <span className="loading-ring" />
                 Preparing the engine
-              </div>
+              </output>
             )}
             {error && (
               <div className="model-error" role="alert">
                 <h2>The 3D view could not start.</h2>
                 <p>{error}</p>
-                <Button onClick={() => setRetry((x) => x + 1)}>
+                <Button
+                  onClick={() => {
+                    setReady(false);
+                    setError('');
+                    setRetry((x) => x + 1);
+                  }}
+                >
                   Try again
                 </Button>
               </div>
@@ -1018,7 +1050,7 @@ export default function EngineExhibit() {
                 </Button>
                 <div className="cycle-control">
                   <div className="control-caption">
-                    <label id="cycle-label">ENGINE CYCLE</label>
+                    <span id="cycle-label">ENGINE CYCLE</span>
                     <span>
                       <strong>{Math.round(cycle)}°</strong> / 720°
                     </span>
@@ -1042,7 +1074,7 @@ export default function EngineExhibit() {
                   </div>
                 </div>
                 <div className="speed-control">
-                  <label id="speed-label">PLAYBACK</label>
+                  <span id="speed-label">PLAYBACK</span>
                   <Select
                     value={String(controls.speed)}
                     onValueChange={(value) => update({ speed: Number(value) })}
@@ -1073,41 +1105,45 @@ export default function EngineExhibit() {
                 </Button>
               </div>
               <div className="view-controls">
-                <label className="toggle-control">
+                <label className="toggle-control" htmlFor="engine-toggle-0">
                   <Switch
+                    id="engine-toggle-0"
                     checked={controls.cutaway}
                     onCheckedChange={(value) => update({ cutaway: value })}
                   />
                   <Layers3 size={15} />
                   Cutaway
                 </label>
-                <label className="toggle-control">
+                <label className="toggle-control" htmlFor="engine-toggle-1">
                   <Switch
+                    id="engine-toggle-1"
                     checked={controls.labels}
                     onCheckedChange={(value) => update({ labels: value })}
                   />
                   <Tag size={15} />
                   Labels
                 </label>
-                <label className="toggle-control">
+                <label className="toggle-control" htmlFor="engine-toggle-2">
                   <Switch
+                    id="engine-toggle-2"
                     checked={controls.colors}
                     onCheckedChange={(colors) => update({ colors })}
                   />
                   System colors
                 </label>
-                <label className="toggle-control">
+                <label className="toggle-control" htmlFor="engine-toggle-3">
                   <Switch
+                    id="engine-toggle-3"
                     checked={controls.flows}
                     onCheckedChange={(flows) => update({ flows })}
                   />
                   Animated flows
                 </label>
                 <div className="explode-control">
-                  <label id="explode-label">
+                  <span id="explode-label">
                     <Expand size={15} />
                     Disassembly
-                  </label>
+                  </span>
                   <Slider
                     aria-labelledby="explode-label"
                     min={0}
@@ -1196,8 +1232,9 @@ export default function EngineExhibit() {
                   <SelectItem value="teaser">YouTube teaser</SelectItem>
                 </SelectContent>
               </Select>
-              <label className="toggle-control">
+              <label className="toggle-control" htmlFor="engine-toggle-4">
                 <Switch
+                  id="engine-toggle-4"
                   checked={narration}
                   disabled={recording}
                   onCheckedChange={(v) => {

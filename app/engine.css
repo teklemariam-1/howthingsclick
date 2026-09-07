@@ -604,7 +604,7 @@ a:focus-visible {
 .speed-control {
   margin-left: 4px;
 }
-.speed-control > label {
+.speed-control > #speed-label {
   display: block;
   font-size: 10px;
   letter-spacing: 1px;
@@ -651,7 +651,7 @@ a:focus-visible {
   max-width: 400px;
   margin-left: auto;
 }
-.explode-control label {
+.explode-control #explode-label {
   white-space: nowrap;
   display: flex;
   align-items: center;
@@ -1072,7 +1072,7 @@ a:focus-visible {
 .engine-app .part-material,
 .engine-app .control-caption,
 .engine-app .cycle-ticks,
-.engine-app .speed-control > label,
+.engine-app .speed-control > #speed-label,
 .engine-app .notice,
 .engine-app .cylinder-cell strong,
 .engine-app .exhibit-footer {
@@ -1080,7 +1080,7 @@ a:focus-visible {
 }
 .engine-app .part-row,
 .engine-app .toggle-control,
-.engine-app .explode-control label {
+.engine-app .explode-control #explode-label {
   font-size: 14px;
 }
 .engine-app .part-inspector p,

@@ -238,7 +238,11 @@ export function createVehicleContext() {
       const corner = `${z === 0 ? 'front' : 'rear'}-${side < 0 ? 'left' : 'right'}`;
       const label = `${side < 0 ? 'Left' : 'Right'} ${z === 0 ? 'front' : 'rear'}`;
       const wheel = createRoadWheel(corner, label, z !== 0);
-      wheel.group.position.set((side * D.track) / 2, TIRE_RADIUS, z);
+      wheel.group.position.set(
+        (side * (z === 0 ? D.frontTrack : D.rearTrack)) / 2,
+        TIRE_RADIUS,
+        z,
+      );
       wheel.group.rotation.y = (side * Math.PI) / 2;
       group.add(wheel.group);
       entries.push(...wheel.parts);
@@ -267,7 +271,11 @@ export function createVehicleContext() {
   for (const side of [-1, 1])
     for (const z of [0, D.wheelbase]) {
       const contact = new THREE.Mesh(contactGeometry, contactMaterial);
-      contact.position.set((side * D.track) / 2, 0.003, z);
+      contact.position.set(
+        (side * (z === 0 ? D.frontTrack : D.rearTrack)) / 2,
+        0.003,
+        z,
+      );
       group.add(contact);
     }
   return {

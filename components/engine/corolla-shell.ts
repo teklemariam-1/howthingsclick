@@ -6,6 +6,8 @@ import { createCorollaFascia } from './corolla-fascia';
 import { createCorollaRear } from './corolla-rear';
 import { bodyPatch, bodyOutline, outlineTube } from './body-surface';
 import { createDoorHardware } from './door-hardware';
+import { createWheelHouseLiner } from './wheel-house-liner';
+import { createExteriorMirror } from './exterior-mirror';
 import { clipPanelGeometry, splitPanelRegion } from './panel-clipping';
 import { rearBumperSideLine } from '../../lib/engine/corolla-panel-lines';
 import { createLuggageCompartment } from './luggage-compartment';
@@ -46,12 +48,19 @@ export function createCorollaShell(
   );
   let group = frame;
   const doors = new Map<string, THREE.Group>();
-  paint.color.set('#edf0ed');
+  paint.color.set('#e8e9e8');
   paint.metalness = 0.12;
   paint.roughness = 0.25;
-  paint.clearcoatRoughness = 0.24;
+  paint.clearcoatRoughness = 0.16;
   paint.side = THREE.DoubleSide;
   black.side = THREE.DoubleSide;
+  const linerMaterial = new THREE.MeshStandardMaterial({
+    color: '#111317',
+    roughness: 0.97,
+    envMapIntensity: 0.35,
+    side: THREE.DoubleSide,
+  });
+  k.materials.push(linerMaterial);
   glass.color.set('#1d2925');
   glass.opacity = 0.9;
   glass.roughness = 0.23;
@@ -116,8 +125,8 @@ export function createCorollaShell(
         0.012 * Math.exp(-(((y - sillCrease - 0.09) / 0.11) ** 2)));
     const sculpt =
       -0.063 * (1 - t) ** 2 +
-      0.026 * Math.sin(t * Math.PI) -
-      0.022 * Math.exp(-(((t - 0.27) / 0.095) ** 2)) +
+      0.022 * Math.sin(t * Math.PI) -
+      0.013 * Math.exp(-(((t - 0.27) / 0.11) ** 2)) +
       0.009 * Math.exp(-(((t - 0.76) / 0.1) ** 2)) +
       doorStamp;
     const toe = 0.105 * (1 - THREE.MathUtils.smoothstep(y, 0.22, 0.54));
@@ -416,21 +425,7 @@ export function createCorollaShell(
         90,
         6,
       );
-      surface(
-        group,
-        (u, v) => {
-          const a = lerp(-0.25, Math.PI + 0.25, u),
-            z = axle - Math.cos(a) * 0.346;
-          return [
-            side * (bodyWidth(z) - 0.012 - v * 0.13),
-            0.316 + Math.sin(a) * 0.346,
-            z,
-          ];
-        },
-        rubber,
-        72,
-        6,
-      );
+      createWheelHouseLiner(k, root, side, axle, sidePoint, linerMaterial);
     }
     group = fender;
     // Fender shoulders meet the curved hood opening exactly.
@@ -751,7 +746,47 @@ export function createCorollaShell(
         2,
       );
     }
-    cabinGeometry(outer, paint);
+    // Partition the existing roof-side surface without filling its glass
+    // openings. The door's welded window surround must move with the door;
+    // the structural pillars and roof rail remain with the passenger cell.
+    const frameRegions = [
+      [
+        [0.367, 0.952],
+        [0.523, 1.071],
+        [1.068, 1.326],
+        [1.366, 1.373],
+        [1.61, 1.37],
+        [1.55, 0.981],
+      ],
+      [
+        [1.64, 0.986],
+        [1.69, 1.375],
+        [2.175, 1.33],
+        [2.405, 1.255],
+        [2.767, 1.075],
+        [2.72, 1.027],
+      ],
+    ];
+    function assignDoorSurrounds(source: THREE.Mesh) {
+      let remaining = source.geometry;
+      for (const [i, region] of frameRegions.entries()) {
+        const result = splitPanelRegion(
+          remaining,
+          region.map(([z, y]) => new THREE.Vector2(z, y)),
+        );
+        mesh(
+          doors.get(`${side}-${i === 0 ? 'front' : 'rear'}`)!,
+          result.inside,
+          source.material as THREE.Material,
+        );
+        if (remaining !== source.geometry) remaining.dispose();
+        remaining = result.outside;
+      }
+      mesh(frame, remaining, source.material as THREE.Material);
+      frame.remove(source);
+      source.geometry.dispose();
+    }
+    assignDoorSurrounds(cabinGeometry(outer, paint));
     for (const [windowIndex, outline] of windows.entries()) {
       const front = windowIndex < 2;
       group = part(
@@ -780,57 +815,18 @@ export function createCorollaShell(
     bp.lineTo(1.73, 1.355);
     bp.lineTo(1.68, 0.992);
     bp.closePath();
-    cabinGeometry(bp, black, 0.003);
-    group = part(
-      `${side < 0 ? 'left' : 'right'}-mirror`,
-      `${side < 0 ? 'Left' : 'Right'} exterior mirror`,
-      [side * 0.65, 0.28, -0.15],
-      0,
-      'The door-mounted mirror housing contains the adjustable reflective glass and electric adjustment motor.',
-      'Painted polymer and glass',
-      doors.get(`${side}-front`)!,
-    );
-    // Flat-backed, body-coloured mirror cap with a black pedestal.
-    const stem = box(
-      group,
-      [0.044, 0.112, 0.061],
-      [side * 0.839, 0.987, 0.625],
-      black,
-      0.014,
-    );
-    stem.rotation.z = -side * 0.21;
-    surface(
-      group,
-      (u, v) => {
-        const a = u * Math.PI * 2,
-          t = v * 0.82,
-          r = Math.sqrt(Math.max(0, 1 - (t * 2 - 1) ** 2));
-        return [
-          side * 0.925 + Math.cos(a) * 0.087 * r,
-          1.046 + Math.sin(a) * 0.044 * r,
-          0.515 + t * 0.178,
-        ];
-      },
-      paint,
-      48,
-      22,
-    );
-    const base = box(
-      group,
-      [0.149, 0.029, 0.144],
-      [side * 0.922, 1.012, 0.607],
-      black,
-      0.014,
-    );
-    base.rotation.y = side * 0.16;
-    const mirror = box(
-      group,
-      [0.122, 0.056, 0.006],
-      [side * 0.922, 1.045, 0.673],
-      glass,
-      0.02,
-    );
-    mirror.rotation.y = side * 0.16;
+    assignDoorSurrounds(cabinGeometry(bp, black, 0.003));
+    // The rear door's quarter-light divider is black, not a white C-pillar.
+    group = doors.get(`${side}-rear`)!;
+    const divider = bodyOutline([
+      [2.332, 1.023],
+      [2.357, 1.277],
+      [2.402, 1.249],
+      [2.386, 1.026],
+    ]);
+    cabinGeometry(divider, black, 0.004);
+
+    createExteriorMirror(k, doors.get(`${side}-front`)!, side);
   }
   const trunkPivot: P3 = [0, 0.905, 2.89];
   const trunkMotion = new THREE.Group();

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { createVehicleStudioEnvironment } from './vehicle-studio';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import {
@@ -110,8 +111,10 @@ export function createEngineScene(
   scene.environment = env.texture;
   scene.environmentIntensity = 0.65;
   environment.dispose();
+  const vehicleEnvironment = createVehicleStudioEnvironment(pmrem);
   pmrem.dispose();
-  scene.add(new THREE.HemisphereLight('#e4f5ef', '#29313e', 1.1));
+  const hemisphere = new THREE.HemisphereLight('#e4f5ef', '#29313e', 1.1);
+  scene.add(hemisphere);
   const key = new THREE.DirectionalLight('#fff1dd', 3.1);
   key.position.set(5, 10, -4);
   key.castShadow = true;
@@ -2103,9 +2106,14 @@ export function createEngineScene(
           v.y - valveLift(cylinderPose(cycle, v.n).phase, v.type)),
     );
   }
+  let previousWidth = 0,
+    previousHeight = 0;
   function resize() {
     const { width, height } = host.getBoundingClientRect();
     if (width <= 0 || height <= 0) return;
+    if (width === previousWidth && height === previousHeight) return;
+    previousWidth = width;
+    previousHeight = height;
     renderer.setSize(width, height);
     const previousScale = aspectScale();
     camera.aspect = width / height;
@@ -2635,6 +2643,11 @@ export function createEngineScene(
     if (now - reported > 100) {
       onTick(cycle);
       renderer.domElement.dataset.assemblies = String(assemblies.size);
+      renderer.domElement.dataset.cameraSettled = String(
+        (!cameraGoal ||
+          camera.position.distanceToSquared(cameraGoal) < 0.0025) &&
+          (!targetGoal || orbit.target.distanceToSquared(targetGoal) < 0.0025),
+      );
       renderer.domElement.dataset.separation = maxAmount.toFixed(3);
       renderer.domElement.dataset.settled = String(settled);
       renderer.domElement.dataset.flowRoutes = String(
@@ -2662,6 +2675,28 @@ export function createEngineScene(
   }
   frameId = requestAnimationFrame(animate);
   return {
+    getCameraState() {
+      return {
+        position: camera.position.toArray(),
+        target: orbit.target.toArray(),
+        fov: camera.fov,
+      };
+    },
+    restoreCamera(state: {
+      position: number[];
+      target: number[];
+      fov: number;
+    }) {
+      autoFrame = false;
+      cameraGoal = null;
+      targetGoal = null;
+      camera.position.fromArray(state.position);
+      orbit.target.fromArray(state.target);
+      carFrameDirection.copy(camera.position).sub(orbit.target).normalize();
+      camera.fov = state.fov;
+      camera.updateProjectionMatrix();
+      orbit.update();
+    },
     getVehicleParts() {
       return [...carRecords.map((r) => r.part), CAR_ENGINE_PART];
     },
@@ -2701,8 +2736,18 @@ export function createEngineScene(
       });
       key.shadow.camera.updateProjectionMatrix();
       key.shadow.normalBias = litVehicle ? 0.065 : 0.025;
-      renderer.toneMappingExposure =
-        litVehicle && next.vehicleView === 'body' ? 0.84 : 1.02;
+      scene.environment = litVehicle ? vehicleEnvironment.texture : env.texture;
+      scene.environmentIntensity = litVehicle ? 0.85 : 0.65;
+      hemisphere.color.set(litVehicle ? '#f1f2f4' : '#e4f5ef');
+      hemisphere.groundColor.set(litVehicle ? '#353940' : '#29313e');
+      hemisphere.intensity = litVehicle ? 0.8 : 1.1;
+      key.color.set(litVehicle ? '#fffaf3' : '#fff1dd');
+      key.intensity = litVehicle ? 1.8 : 3.1;
+      rim.color.set(litVehicle ? '#edf1ff' : '#c0e8ff');
+      rim.intensity = litVehicle ? 1.1 : 3;
+      fill.color.set(litVehicle ? '#f5f6fa' : '#b3c9ce');
+      fill.intensity = litVehicle ? 0.8 : 1.4;
+      renderer.toneMappingExposure = litVehicle ? 0.92 : 1.02;
 
       const removalChanged = prev.removed.join() !== next.removed.join();
       if (prev.explode !== next.explode || removalChanged) autoFrame = true;
@@ -2795,6 +2840,7 @@ export function createEngineScene(
         | 'zoom-in'
         | 'zoom-out',
     ) {
+      renderer.domElement.dataset.cameraSettled = 'false';
       cameraGoal = null;
       targetGoal = null;
       camera.fov = preset === 'cabin' ? 49 : 34;
@@ -2924,6 +2970,7 @@ export function createEngineScene(
       grain.dispose();
       vehicle.dispose();
       env.dispose();
+      vehicleEnvironment.dispose();
       renderer.dispose();
       renderer.domElement.remove();
       labelRoot.remove();

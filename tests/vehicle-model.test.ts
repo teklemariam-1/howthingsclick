@@ -4,6 +4,7 @@ import { splitPanelRegion } from '../components/engine/panel-clipping';
 import { trunkShutLine } from '../lib/engine/corolla-panel-lines';
 import { createVehicleServices } from '../components/engine/vehicle-services';
 import { createVehicleContext } from '../components/engine/vehicle';
+import { VEHICLE_UNITS_PER_METRE } from '../lib/engine/vehicle-dimensions';
 import {
   initialVehicleAssembly,
   vehicleStage,
@@ -39,6 +40,59 @@ for (const r of c.records) {
   assert(r.part.description.length > 25);
 }
 car.group.updateMatrixWorld(true);
+// Published US LE track widths and brake diameters are physical dimensions,
+// not just labels. Measure the actual assembled geometry in its local frame.
+for (const [axle, inches, diameter] of [
+  ['front', 60.3, 10.8],
+  ['rear', 61.0, 10.2],
+] as const) {
+  const left = c.byId
+    .get(`car-${axle}-left-tire`)!
+    .group.getWorldPosition(new THREE.Vector3());
+  const right = c.byId
+    .get(`car-${axle}-right-tire`)!
+    .group.getWorldPosition(new THREE.Vector3());
+  assert(
+    Math.abs(
+      left.distanceTo(right) / VEHICLE_UNITS_PER_METRE - inches * 0.0254,
+    ) < 1e-6,
+    `${axle} track`,
+  );
+  const disc = c.byId.get(`car-${axle}-left-disc`)!.group;
+  const inverse = disc.matrixWorld.clone().invert();
+  let radius = 0;
+  disc.traverse((o) => {
+    if (!(o instanceof THREE.Mesh)) return;
+    const transform = inverse.clone().multiply(o.matrixWorld);
+    const points = o.geometry.getAttribute('position');
+    for (let i = 0; i < points.count; i++) {
+      const p = new THREE.Vector3()
+        .fromBufferAttribute(points, i)
+        .applyMatrix4(transform);
+      radius = Math.max(radius, Math.hypot(p.x, p.y));
+    }
+  });
+  assert(
+    Math.abs(radius * 2 - diameter * 0.0254) < 1e-5,
+    `${axle} disc diameter`,
+  );
+}
+// The door owns its upper painted surround, in addition to separately owned
+// glass. A body-only upper ring would otherwise stay behind on disassembly.
+for (const side of ['left', 'right'])
+  for (const door of ['front', 'rear']) {
+    const own = c.meshes.filter(
+      (m) => m.userData.vehiclePartId === `car-${side}-${door}-door`,
+    );
+    assert(
+      own.some((m) => {
+        const p = m.geometry.getAttribute('position');
+        for (let i = 0; i < p.count; i++) if (p.getY(i) > 1.34) return true;
+        return false;
+      }),
+      `${side} ${door} upper surround belongs to door`,
+    );
+  }
 const original = c.records.map((r) => r.group.matrixWorld.clone());
 c.update({ ...initialVehicleAssembly, explode: 1 }, 1, true);
 car.group.updateMatrixWorld(true);
