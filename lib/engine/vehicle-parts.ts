@@ -27,6 +27,7 @@ export type VehicleAssemblyOptions = {
   isolated: boolean;
   system: VehicleSystem;
   colors: boolean;
+  inspection?: 'cabin';
 };
 export const initialVehicleAssembly: VehicleAssemblyOptions = {
   explode: 0,
@@ -36,6 +37,7 @@ export const initialVehicleAssembly: VehicleAssemblyOptions = {
   isolated: false,
   system: 'all',
   colors: false,
+  inspection: undefined,
 };
 export function vehicleStage(progress: number, stage: number) {
   const start = Math.min(6, Math.max(0, stage)) * 0.09;

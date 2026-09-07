@@ -1,10 +1,14 @@
+import type { CabinMaterials } from './cabin-materials';
+import { createCabinDoorTrim } from './cabin-door-trim';
 import * as THREE from 'three';
 import { modelKit, type P3 } from './vehicle-model';
 import { createCorollaFascia } from './corolla-fascia';
 import { createCorollaRear } from './corolla-rear';
 import { bodyPatch, bodyOutline, outlineTube } from './body-surface';
 import { createDoorHardware } from './door-hardware';
-import { clipPanelGeometry } from './panel-clipping';
+import { clipPanelGeometry, splitPanelRegion } from './panel-clipping';
+import { rearBumperSideLine } from '../../lib/engine/corolla-panel-lines';
+import { createLuggageCompartment } from './luggage-compartment';
 import { VEHICLE_DIMENSIONS as D } from '../../lib/engine/vehicle-dimensions';
 
 // Original lofted geometry, shaped from the supplied Corolla LE reference photos.
@@ -12,6 +16,7 @@ import { VEHICLE_DIMENSIONS as D } from '../../lib/engine/vehicle-dimensions';
 export function createCorollaShell(
   k: ReturnType<typeof modelKit>,
   root: THREE.Group,
+  cabinMaterials: CabinMaterials,
 ) {
   const { surface, tube, mesh, box, paint, black, alloy, glass, rubber } = k;
   const part = (
@@ -235,6 +240,14 @@ export function createCorollaShell(
     0.007,
   );
   const filler = new THREE.Shape();
+  const rearBumper = part(
+    'rear-bumper',
+    'Rear bumper cover',
+    [0, 0.08, 1.3],
+    1,
+    'The moulded cover wraps around the luggage compartment and continues to both rear wheel openings. It separates from the welded rear quarters.',
+    'Painted polymer',
+  );
   filler.moveTo(2.756, 0.996);
   filler.lineTo(2.916, 0.996);
   filler.quadraticCurveTo(2.94, 0.996, 2.94, 0.972);
@@ -315,14 +328,36 @@ export function createCorollaShell(
       [frame, 0.48, 2.51],
       [quarter, 2.51, 10],
     ] as const) {
-      mesh(
-        target,
-        clipPanelGeometry(skin.geometry, [
-          { axis: 2, value: lo, greater: true },
-          { axis: 2, value: hi, greater: false },
-        ]),
-        paint,
-      );
+      const panel = clipPanelGeometry(skin.geometry, [
+        { axis: 2, value: lo, greater: true },
+        { axis: 2, value: hi, greater: false },
+      ]);
+      if (target === quarter) {
+        const seam = rearBumperSideLine(sideRear).getPoints(48);
+        const region = [
+          new THREE.Vector2(2.94, 0),
+          new THREE.Vector2(4, 0),
+          new THREE.Vector2(4, 0.815),
+          ...seam.reverse(),
+        ];
+        const split = splitPanelRegion(panel, region, [2, 1]);
+        mesh(rearBumper, split.inside, paint);
+        mesh(quarter, split.outside, paint);
+        panel.dispose();
+        outlineTube(
+          k,
+          rearBumper,
+          rearBumperSideLine(sideRear)
+            .getPoints(64)
+            .map((p) => {
+              const q = sidePoint(p.x, p.y, side);
+              q[0] += side * 0.0015;
+              return q;
+            }),
+          0.0013,
+          k.steel,
+        );
+      } else mesh(target, panel, paint);
     }
     frame.remove(skin);
     skin.geometry.dispose();
@@ -341,10 +376,16 @@ export function createCorollaShell(
         'Textile and moulded polymer',
         target,
       );
-      bodyPatch(k, inner, shape, black, (z, y) => {
-        const p = sidePoint(z, y, side);
-        return [p[0] - side * 0.047, p[1], p[2]];
-      });
+      k.parts.find((p) => p.group === inner)!.part.system = 'cabin';
+      createCabinDoorTrim(
+        k,
+        inner,
+        side,
+        which === 'front',
+        shape,
+        sidePoint,
+        cabinMaterials,
+      );
       outlineTube(
         k,
         target,
@@ -791,13 +832,20 @@ export function createCorollaShell(
     );
     mirror.rotation.y = side * 0.16;
   }
+  const trunkPivot: P3 = [0, 0.905, 2.89];
+  const trunkMotion = new THREE.Group();
+  trunkMotion.position.set(...trunkPivot);
+  root.add(trunkMotion);
   const trunk = part(
     'trunk',
     'Trunk lid',
     [0, 1.2, 1.0],
     1,
     'The trunk lid opens the luggage compartment. The rear badge, plate and central trim travel with the lid.',
+    'Painted steel',
+    trunkMotion,
   );
+  trunk.position.set(0, -trunkPivot[1], -trunkPivot[2]);
   group = trunk;
   // A continuous rear deck blends into both quarters and the rear fascia.
   const trunkPoint = (u: number, v: number): P3 => {
@@ -848,7 +896,24 @@ export function createCorollaShell(
       16,
     );
   }
-  createCorollaRear(k, root, rear, sideRear, sidePoint, trunk);
+  const rearBody = createCorollaRear(
+    k,
+    root,
+    rear,
+    sideRear,
+    sidePoint,
+    trunk,
+    rearBumper,
+  );
+  createLuggageCompartment(
+    k,
+    root,
+    trunk,
+    trunkMotion,
+    trunkPivot,
+    rearBody.face,
+    trunkPoint,
+  );
   group = part(
     'antenna',
     'Roof antenna',
@@ -880,6 +945,9 @@ export function createCorollaShell(
     hood,
     setHood: (amount: number) => {
       hood.rotation.x = amount * 1.04;
+    },
+    setTrunk: (amount: number) => {
+      trunkMotion.rotation.x = -amount * 1.32;
     },
   };
 }

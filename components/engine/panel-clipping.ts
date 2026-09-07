@@ -1,16 +1,20 @@
 import * as THREE from 'three';
 
-/** Partition an existing surface along a convex outline in its UV coordinates.
+/** Partition a surface in UV coordinates, or in two supplied position axes.
  * Rejected fragments are retained, so the two results exactly cover the source.
  * Openings already present in the source remain openings in both pieces. */
 export function splitPanelRegion(
   source: THREE.BufferGeometry,
   outline: THREE.Vector2[],
+  axes?: [0 | 1 | 2, 0 | 1 | 2],
 ) {
   const points = outline.filter(
     (p, i) => i === 0 || p.distanceToSquared(outline[i - 1]) > 1e-12,
   );
-  if (points[0].distanceToSquared(points[points.length - 1]) < 1e-12)
+  if (
+    points.length > 1 &&
+    points[0].distanceToSquared(points[points.length - 1]) < 1e-12
+  )
     points.pop();
   if (points.length < 3)
     throw new Error('A panel region needs at least three points');
@@ -23,8 +27,12 @@ export function splitPanelRegion(
     offsets.push(stride);
     stride += a.itemSize;
   }
-  const uv = offsets[attrs.findIndex(([name]) => name === 'uv')];
-  if (uv === undefined) throw new Error('Panel region requires UV coordinates');
+  const attribute =
+    offsets[attrs.findIndex(([name]) => name === (axes ? 'position' : 'uv'))];
+  if (attribute === undefined)
+    throw new Error('Panel region requires projection coordinates');
+  const cx = attribute + (axes?.[0] ?? 0),
+    cy = attribute + (axes?.[1] ?? 1);
   const inside: number[][] = attrs.map(() => []),
     outside: number[][] = attrs.map(() => []);
   const emit = (polygon: number[][], out: number[][]) => {
@@ -59,10 +67,10 @@ export function splitPanelRegion(
           b = polygon[(i + 1) % polygon.length];
         const da =
             orientation *
-            (edge.dx * (a[uv + 1] - edge.a.y) - edge.dy * (a[uv] - edge.a.x)),
+            (edge.dx * (a[cy] - edge.a.y) - edge.dy * (a[cx] - edge.a.x)),
           db =
             orientation *
-            (edge.dx * (b[uv + 1] - edge.a.y) - edge.dy * (b[uv] - edge.a.x));
+            (edge.dx * (b[cy] - edge.a.y) - edge.dy * (b[cx] - edge.a.x));
         (da >= 0 ? accepted : rejected).push(a);
         if (da >= 0 !== db >= 0) {
           const t = da / (da - db),

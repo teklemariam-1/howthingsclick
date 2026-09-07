@@ -79,6 +79,7 @@ export default function CarExhibit() {
   const [query, setQuery] = useState(''),
     [labels, setLabels] = useState(true),
     [hood, setHood] = useState(false),
+    [trunk, setTrunk] = useState(false),
     [running, setRunning] = useState(false),
     [showParts, setShowParts] = useState(false),
     [high, setHigh] = useState(false);
@@ -87,6 +88,7 @@ export default function CarExhibit() {
     [recording, setRecording] = useState(false),
     [notice, setNotice] = useState('');
   const recorder = useRef<MediaRecorder | null>(null),
+    pendingCamera = useRef<'cabin' | null>(null),
     lastShot = useRef(-1);
   const shot = tour === null ? null : carTourAt(tour);
   const effective = useMemo<SceneOptions>(
@@ -99,6 +101,7 @@ export default function CarExhibit() {
         tour === null,
       labels,
       hoodOpen: hood && tour === null,
+      trunkOpen: trunk && tour === null,
       quality: high ? 'high' : 'balanced',
       vehicleAssembly: shot
         ? {
@@ -109,7 +112,7 @@ export default function CarExhibit() {
         : assembly,
       carCaption: shot ? { title: shot.title, body: shot.body } : undefined,
     }),
-    [running, labels, hood, high, assembly, shot, tour],
+    [running, labels, hood, trunk, high, assembly, shot, tour],
   );
   const current = useRef(effective);
   const tourClock = useRef(0);
@@ -148,6 +151,10 @@ export default function CarExhibit() {
   }, []);
   useEffect(() => {
     api.current?.setOptions(effective);
+    if (api.current && pendingCamera.current) {
+      api.current.camera(pendingCamera.current);
+      pendingCamera.current = null;
+    }
   }, [effective, parts.length]);
   useEffect(() => {
     if (!shot) return;
@@ -190,6 +197,8 @@ export default function CarExhibit() {
     (assembly.removed.includes(p.id) ||
       vehicleStage(assembly.explode, p.stage) > 0.01);
   function change(patch: Partial<VehicleAssemblyOptions>) {
+    if (patch.explode !== undefined || patch.removed !== undefined)
+      setTrunk(false);
     setTour(null);
     setTourPlaying(false);
     setAssembly((s) => ({ ...s, ...patch }));
@@ -201,6 +210,7 @@ export default function CarExhibit() {
   }
   function startTour() {
     setHood(false);
+    setTrunk(false);
     setRunning(false);
     lastShot.current = -1;
     setTour(0);
@@ -385,6 +395,21 @@ export default function CarExhibit() {
               </div>
             )}
             <div className="car-camera" aria-label="Camera views">
+              <Button
+                disabled={!parts.length}
+                onClick={() => {
+                  pendingCamera.current = 'cabin';
+                  setLabels(false);
+                  change({
+                    ...initialVehicleAssembly,
+                    system: 'cabin',
+                    inspection: 'cabin',
+                  });
+                }}
+                title="Inspect the cabin with the near-side trim and headliner cut away"
+              >
+                Interior
+              </Button>
               {(['home', 'nose', 'rear', 'front', 'top'] as const).map(
                 (view, i) => (
                   <Button
@@ -488,6 +513,17 @@ export default function CarExhibit() {
                 onClick={() => setHood((v) => !v)}
               >
                 Hood
+              </Button>
+              <Button
+                aria-pressed={trunk}
+                disabled={
+                  assembly.explode > 0 ||
+                  assembly.removed.length > 0 ||
+                  tour !== null
+                }
+                onClick={() => setTrunk((v) => !v)}
+              >
+                {trunk ? 'Close trunk' : 'Open trunk'}
               </Button>
               <Button
                 aria-pressed={running}

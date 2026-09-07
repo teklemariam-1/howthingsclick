@@ -54,6 +54,7 @@ export type SceneOptions = {
   carContext: boolean;
   vehicleView: 'bay' | 'chassis' | 'body';
   hoodOpen: boolean;
+  trunkOpen?: boolean;
 };
 type V3 = [number, number, number];
 type Assembly = {
@@ -2354,7 +2355,7 @@ export function createEngineScene(
     const dt = frameDeltaSeconds(now, last);
     last = now;
     if (document.hidden) return;
-    vehicle.setView(options.vehicleView, options.hoodOpen);
+    vehicle.setView(options.vehicleView, options.hoodOpen, options.trunkOpen);
     const hoodMoving = vehicle.update(dt);
     const carAssembly = vehicle.updateAssembly(
       options.vehicleAssembly,
@@ -2649,7 +2650,8 @@ export function createEngineScene(
       renderer.domElement.dataset.carSeparation =
         carAssembly.maxAmount.toFixed(3);
       renderer.domElement.dataset.carSettled = String(
-        !carAssembly.moving &&
+        !hoodMoving &&
+          !carAssembly.moving &&
           Math.abs(carEngineAmount - carEngineTarget) < 0.001,
       );
       renderer.domElement.dataset.carSelected =
@@ -2666,7 +2668,7 @@ export function createEngineScene(
     setOptions(next: SceneOptions) {
       const prev = options;
       options = { ...next };
-      vehicle.setView(next.vehicleView, next.hoodOpen);
+      vehicle.setView(next.vehicleView, next.hoodOpen, next.trunkOpen);
       if (
         JSON.stringify(prev.vehicleAssembly) !==
         JSON.stringify(next.vehicleAssembly)
@@ -2719,6 +2721,7 @@ export function createEngineScene(
           'carContext',
           'vehicleView',
           'hoodOpen',
+          'trunkOpen',
         ].some(
           (k) =>
             prev[k as keyof SceneOptions] !== next[k as keyof SceneOptions],
@@ -2755,7 +2758,8 @@ export function createEngineScene(
         (prev.carContext !== next.carContext ||
           prev.system !== next.system ||
           prev.vehicleView !== next.vehicleView ||
-          prev.hoodOpen !== next.hoodOpen)
+          prev.hoodOpen !== next.hoodOpen ||
+          prev.trunkOpen !== next.trunkOpen)
       ) {
         if (
           next.carContext &&
@@ -2787,11 +2791,25 @@ export function createEngineScene(
         | 'rear'
         | 'top'
         | 'focus'
+        | 'cabin'
         | 'zoom-in'
         | 'zoom-out',
     ) {
       cameraGoal = null;
       targetGoal = null;
+      camera.fov = preset === 'cabin' ? 49 : 34;
+      camera.updateProjectionMatrix();
+      if (preset === 'cabin' && options.vehicleAssembly) {
+        autoFrame = false;
+        vehicle.group.updateMatrixWorld(true);
+        targetGoal = vehicle.group.localToWorld(
+          new THREE.Vector3(0.05, 0.78, 1.37),
+        );
+        cameraGoal = vehicle.group.localToWorld(
+          new THREE.Vector3(-1.35, 1.11, 1.18),
+        );
+        return;
+      }
       if (preset === 'zoom-in' || preset === 'zoom-out') {
         camera.position
           .sub(orbit.target)

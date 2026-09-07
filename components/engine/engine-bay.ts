@@ -154,6 +154,52 @@ export function createEngineBay() {
   // Fuse/relay box, ECU and loom junctions.
   box(group, [0.197, 0.123, 0.239], [-0.579, 0.485, 0.374], black, 0.018);
   box(group, [0.202, 0.018, 0.245], [-0.579, 0.552, 0.374], rubber, 0.012);
+  const secondaryFuseBox = part(
+    'secondary-fuse-box',
+    'Secondary engine-bay fuse box',
+    'electrical',
+    [0.75, 0.65, 0.16],
+    'The second under-hood fuse enclosure sits on the passenger-side inner wing. Toyota’s owner-manual bay diagram identifies fuse boxes on both sides.',
+  );
+  box(
+    secondaryFuseBox,
+    [0.151, 0.059, 0.151],
+    [0.617, 0.646, 0.294],
+    black,
+    0.014,
+  );
+  for (let i = 0; i < 6; i++)
+    box(
+      secondaryFuseBox,
+      [0.012, 0.017, 0.023],
+      [0.574 + i * 0.017, 0.68, 0.276],
+      reservoir,
+      0.003,
+    );
+  const secondaryFuseLid = part(
+    'secondary-fuse-lid',
+    'Secondary fuse-box cover',
+    'electrical',
+    [0.75, 0.9, 0.16],
+    'The clipped cover protects the secondary fuse enclosure from dirt and moisture and lifts away to expose its fuse positions.',
+    1,
+  );
+  secondaryFuseBox.add(secondaryFuseLid);
+  box(
+    secondaryFuseLid,
+    [0.158, 0.013, 0.159],
+    [0.617, 0.693, 0.294],
+    rubber,
+    0.01,
+  );
+  for (const x of [0.54, 0.694])
+    box(
+      secondaryFuseLid,
+      [0.013, 0.029, 0.035],
+      [x, 0.684, 0.294],
+      black,
+      0.004,
+    );
   group = part(
     'ecu',
     'Engine control unit',

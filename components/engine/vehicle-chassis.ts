@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { modelKit, batchVehicleModel, type P3 } from './vehicle-model';
 import { createVehicleTransmission } from './vehicle-transmission';
+import { detailFrontSuspension } from './front-suspension';
 import type { VehicleSystem } from '../../lib/engine/vehicle-parts';
 
 export function createVehicleChassis() {
@@ -140,15 +141,6 @@ export function createVehicleChassis() {
       4,
       'The L-shaped lower arm locates the front wheel through two body bushings and an outer ball joint.',
     );
-    bar(arm, [side * 0.43, 0.19, -0.21], [side * 0.71, 0.29, 0], 0.023, alloy);
-    bar(arm, [side * 0.45, 0.19, 0.3], [side * 0.71, 0.29, 0], 0.023, alloy);
-    bar(
-      arm,
-      [side * 0.43, 0.19, -0.21],
-      [side * 0.45, 0.19, 0.3],
-      0.017,
-      steel,
-    );
     const knuckle = part(
       `front-${s}-knuckle`,
       `${label} front steering knuckle`,
@@ -158,7 +150,7 @@ export function createVehicleChassis() {
       'The knuckle joins the hub bearing, strut, lower ball joint and steering tie rod.',
       'Cast iron / steel',
     );
-    box(knuckle, [0.08, 0.15, 0.08], [side * 0.71, 0.318, 0], steel, 0.018);
+    detailFrontSuspension(k, group, arm, knuckle, side);
     const strut = part(
       `front-${s}-strut`,
       `${label} front MacPherson damper`,
@@ -191,15 +183,54 @@ export function createVehicleChassis() {
       'Spring steel',
     );
     const points: P3[] = [];
-    for (let i = 0; i <= 112; i++) {
-      const a = (i / 112) * Math.PI * 12;
-      points.push([
-        side * 0.6 + Math.cos(a) * 0.056,
-        0.46 + (i / 112) * 0.23,
-        0.045 + Math.sin(a) * 0.056,
-      ]);
+    const strutAxis = new THREE.Vector3(-side * 0.12, 0.41, 0.055).normalize();
+    const springRotation = new THREE.Quaternion().setFromUnitVectors(
+      new THREE.Vector3(0, 1, 0),
+      strutAxis,
+    );
+    const atHeight = (y: number): P3 => [
+      side * (0.71 - ((y - 0.31) * 0.12) / 0.41),
+      y,
+      ((y - 0.31) * 0.055) / 0.41,
+    ];
+    for (let i = 0; i <= 160; i++) {
+      const t = i / 160,
+        a = t * Math.PI * 11;
+      const center = new THREE.Vector3(...atHeight(0.46 + t * 0.23));
+      const radial = new THREE.Vector3(
+        Math.cos(a) * 0.056,
+        0,
+        Math.sin(a) * 0.056,
+      ).applyQuaternion(springRotation);
+      points.push(center.add(radial).toArray() as P3);
     }
     tube(spring, points, 0.0085, black);
+    for (const y of [0.455, 0.697]) {
+      const seat = mesh(
+        strut,
+        new THREE.CylinderGeometry(0.068, 0.061, 0.011, 48),
+        steel,
+        atHeight(y),
+      );
+      seat.quaternion.copy(springRotation);
+      const isolator = mesh(
+        strut,
+        new THREE.TorusGeometry(0.055, 0.0045, 10, 48),
+        rubber,
+        atHeight(y + 0.006),
+      );
+      isolator.rotation.x = Math.PI / 2;
+      isolator.quaternion.premultiply(springRotation);
+    }
+    for (let i = 0; i < 11; i++) {
+      const boot = mesh(
+        strut,
+        new THREE.CylinderGeometry(0.023, 0.026, 0.009, 32),
+        rubber,
+        atHeight(0.555 + i * 0.012),
+      );
+      boot.quaternion.copy(springRotation);
+    }
     const mount = part(
       `front-${s}-top-mount`,
       `${label} front strut mount`,
@@ -237,7 +268,7 @@ export function createVehicleChassis() {
       'Steel and rubber',
     );
     const rotor = new THREE.Group();
-    rotor.position.set(0, 0.325, 0.025);
+    rotor.position.set(0, 0.325, 0);
     shaft.add(rotor);
     shafts.push(rotor);
     bar(rotor, [side * 0.43, 0, 0], [side * 0.715, 0, 0], 0.012, alloy);
@@ -473,7 +504,7 @@ export function createVehicleChassis() {
     'Internal chambers attenuate exhaust sound before gas leaves through the outlet.',
     'Stainless steel',
   );
-  box(muffler, [0.54, 0.125, 0.3], [0.28, 0.23, 3.19], steel, 0.05);
+  box(muffler, [0.4, 0.125, 0.3], [0.48, 0.23, 3.19], steel, 0.05);
   tube(
     muffler,
     [

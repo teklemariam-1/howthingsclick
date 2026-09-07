@@ -47,6 +47,60 @@ assert(
     120,
 );
 c.update(initialVehicleAssembly, 1, true);
+// Opening a closure rotates its attached hardware around its hinge, while the
+// body-side mount, outer lamp and weatherstrip stay fixed. Closing restores it.
+car.group.updateMatrixWorld(true);
+const trunkMovingIds = [
+  'car-trunk',
+  'car-trunk-inner-frame',
+  'car-trunk-latch',
+  'car-left-trunk-hinge',
+  'car-left-inner-tail-lamp',
+];
+const trunkFixedIds = [
+  'car-left-trunk-hinge-bracket',
+  'car-left-quarter',
+  'car-left-tail-lamp',
+  'car-trunk-seal',
+  'car-trunk-striker',
+];
+const closureStart = new Map(
+  [...trunkMovingIds, ...trunkFixedIds].map((id) => [
+    id,
+    c.byId.get(id)!.group.matrixWorld.clone(),
+  ]),
+);
+car.setView('body', false, true);
+car.update(10);
+car.group.updateMatrixWorld(true);
+for (const id of trunkMovingIds)
+  assert(!c.byId.get(id)!.group.matrixWorld.equals(closureStart.get(id)!), id);
+for (const id of trunkFixedIds)
+  assert(c.byId.get(id)!.group.matrixWorld.equals(closureStart.get(id)!), id);
+car.setView('body', false, false);
+car.update(10);
+car.group.updateMatrixWorld(true);
+for (const [id, start] of closureStart)
+  c.byId
+    .get(id)!
+    .group.matrixWorld.elements.forEach((v, i) =>
+      assert(Math.abs(v - start.elements[i]) < 1e-9, id),
+    );
+const bumperChild = c.byId.get('car-left-rear-reflector')!.group;
+const bumperChildStart = bumperChild.getWorldPosition(new THREE.Vector3());
+c.update({ ...initialVehicleAssembly, removed: ['car-rear-bumper'] }, 1, true);
+car.group.updateMatrixWorld(true);
+assert(
+  bumperChild
+    .getWorldPosition(new THREE.Vector3())
+    .distanceTo(bumperChildStart) > 1,
+);
+assert(
+  c.byId
+    .get('car-left-quarter')!
+    .group.matrixWorld.equals(closureStart.get('car-left-quarter')!),
+);
+c.update(initialVehicleAssembly, 1, true);
 car.group.updateMatrixWorld(true);
 c.records.forEach((r, i) =>
   assert(r.group.matrixWorld.equals(original[i]), r.part.id),
@@ -99,6 +153,37 @@ assert(
 c.update({ ...initialVehicleAssembly, system: 'cabin' }, 1, true);
 assert(c.byId.get('car-driver-seat')!.group.visible);
 assert(!c.byId.get('car-left-fender')!.group.visible);
+c.update(
+  { ...initialVehicleAssembly, system: 'cabin', inspection: 'cabin' },
+  1,
+  true,
+);
+assert(
+  c.meshes
+    .filter((m) => m.userData.vehiclePartId === 'car-headliner')
+    .every((m) => !m.visible),
+);
+assert(
+  c.meshes
+    .filter((m) => m.userData.vehiclePartId === 'car-right-front-door-trim')
+    .some((m) => m.visible),
+);
+c.update(
+  {
+    ...initialVehicleAssembly,
+    system: 'cabin',
+    inspection: 'cabin',
+    selected: 'car-headliner',
+  },
+  1,
+  true,
+);
+assert(
+  c.meshes
+    .filter((m) => m.userData.vehiclePartId === 'car-headliner')
+    .every((m) => m.visible),
+);
+c.update(initialVehicleAssembly, 1, true);
 assert.equal(vehicleStage(0, 0), 0);
 assert.equal(vehicleStage(1, 6), 1);
 assert(vehicleStage(0.3, 0) > vehicleStage(0.3, 5));
@@ -135,6 +220,24 @@ assert(
 );
 assert(Math.abs(area(clipped.inside) - area(reversed.inside)) < 1e-6);
 assert(area(clipped.inside) > 0.4 && area(clipped.outside) > 1);
+// A spatial Z/Y seam must conserve the same area even when UVs are unrelated.
+const spatial = source.clone();
+spatial.rotateY(Math.PI / 2);
+const spatialResult = splitPanelRegion(
+  spatial,
+  boundary.map((p) => new THREE.Vector2(-p.x, p.y)),
+  [2, 1],
+);
+assert(Math.abs(area(spatialResult.inside) - area(clipped.inside)) < 1e-6);
+assert(
+  Math.abs(
+    area(spatialResult.inside) + area(spatialResult.outside) - area(spatial),
+  ) < 1e-6,
+);
+assert.throws(() => splitPanelRegion(source, []), /at least three/);
+spatial.dispose();
+spatialResult.inside.dispose();
+spatialResult.outside.dispose();
 for (const g of [
   source,
   clipped.inside,

@@ -29,7 +29,9 @@ export function createVehicleContext() {
   group.add(chassis.group, bodywork.group, bay.group);
   let view: 'bay' | 'chassis' | 'body' = 'bay',
     hoodAmount = 1,
-    hoodTarget = 1;
+    hoodTarget = 1,
+    trunkAmount = 0,
+    trunkTarget = 0;
   bodywork.setHood(1);
   const outline = new THREE.LineBasicMaterial({
     color: '#a0c6d3',
@@ -229,7 +231,7 @@ export function createVehicleContext() {
     group.add(new THREE.LineSegments(geometry, material));
   }
   const entries = [...chassis.parts, ...bodywork.parts, ...bay.parts];
-  const textures: THREE.Texture[] = [];
+  const textures: THREE.Texture[] = [...bodywork.textures];
   const wheels: { spin: THREE.Object3D; side: number }[] = [];
   for (const side of [-1, 1])
     for (const z of [0, D.wheelbase]) {
@@ -271,9 +273,14 @@ export function createVehicleContext() {
   return {
     group,
     controller,
-    setView(next: 'bay' | 'chassis' | 'body', hoodOpen: boolean) {
+    setView(
+      next: 'bay' | 'chassis' | 'body',
+      hoodOpen: boolean,
+      trunkOpen = false,
+    ) {
       view = next;
       hoodTarget = next === 'bay' || hoodOpen ? 1 : 0;
+      trunkTarget = trunkOpen ? 1 : 0;
       bodywork.group.visible = view !== 'chassis';
     },
     updateAssembly(
@@ -298,7 +305,12 @@ export function createVehicleContext() {
     update(dt: number) {
       hoodAmount = THREE.MathUtils.damp(hoodAmount, hoodTarget, 5, dt);
       bodywork.setHood(hoodAmount);
-      return Math.abs(hoodAmount - hoodTarget) > 0.002;
+      trunkAmount = THREE.MathUtils.damp(trunkAmount, trunkTarget, 5, dt);
+      bodywork.setTrunk(trunkAmount);
+      return (
+        Math.abs(hoodAmount - hoodTarget) > 0.002 ||
+        Math.abs(trunkAmount - trunkTarget) > 0.002
+      );
     },
     dispose() {
       textures.forEach((texture) => texture.dispose());

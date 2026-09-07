@@ -14,6 +14,7 @@ export function createCorollaRear(
   sideRear: number,
   sidePoint: (z: number, y: number, side: number) => P3,
   trunk: THREE.Group,
+  bumper: THREE.Group,
 ) {
   const { paint, black, alloy, mesh, tube, surface, box } = k;
   const part = (
@@ -22,8 +23,9 @@ export function createCorollaRear(
     offset: P3,
     stage: number,
     description: string,
+    parent: THREE.Group = root,
   ) =>
-    k.part(root, {
+    k.part(parent, {
       id: `car-${id}`,
       name,
       system: 'body',
@@ -32,13 +34,6 @@ export function createCorollaRear(
       description,
       material: 'Paint, polymer, glass and metal',
     });
-  const bumper = part(
-    'rear-bumper',
-    'Rear bumper cover',
-    [0, 0.08, 1.3],
-    1,
-    'The sculpted rear bumper wraps around the luggage compartment and houses two tall corner reflectors.',
-  );
   const tailPanel = part(
     'tail-panel',
     'Rear body closing panel',
@@ -52,6 +47,7 @@ export function createCorollaRear(
     [0, -0.1, 1.8],
     0,
     'The broad black lower insert curls under the rear bumper.',
+    bumper,
   );
   let group = bumper;
   const material = (color: string, metalness: number, roughness: number) => {
@@ -179,7 +175,7 @@ export function createCorollaRear(
     [tailPanel, true],
   ] as const) {
     const geometry = clipPanelGeometry(panels.outside, [
-      { axis: 1, value: 0.57, greater },
+      { axis: 1, value: 0.815, greater },
     ]);
     mesh(target, geometry, paint);
   }
@@ -331,6 +327,7 @@ export function createCorollaRear(
       [side * 0.4, -0.05, 1.55],
       0,
       'A tall red reflector is inset at the outside edge of the rear bumper.',
+      bumper,
     );
     mapped(reflectors[i], lensBlack, 0.002);
     mapped(
@@ -369,7 +366,9 @@ export function createCorollaRear(
     ] as const)
       mesh(
         target,
-        clipPanelGeometry(corner.geometry, [{ axis: 1, value: 0.57, greater }]),
+        clipPanelGeometry(corner.geometry, [
+          { axis: 1, value: 0.815, greater },
+        ]),
         paint,
       );
     bumper.remove(corner);
@@ -462,15 +461,6 @@ export function createCorollaRear(
     0.007,
     paint,
   );
-  outlineTube(
-    k,
-    tailPanel,
-    trunkShutLine()
-      .getPoints(32)
-      .map((p) => face(p.x * 0.985, 0.578 + (p.y - 0.578) * 0.985, -0.037)),
-    0.008,
-    black,
-  );
   for (const [r, sx, sy, y] of [
     [0.031, 1.35, 1, 0.914],
     [0.024, 0.48, 1, 0.914],
@@ -484,4 +474,5 @@ export function createCorollaRear(
     );
     badge.scale.set(sx, sy, 1);
   }
+  return { face };
 }

@@ -108,14 +108,34 @@ export function createVehicleAssemblyController(
       options.isolated,
       options.system,
       options.colors,
+      options.inspection,
     ]);
     if (previous !== key) {
       previous = key;
       for (const r of records) {
-        const showSelf =
+        let showSelf =
           options.isolated && options.selected
             ? hasAncestor(r.group, options.selected)
             : options.system === 'all' || r.part.system === options.system;
+        if (
+          options.inspection === 'cabin' &&
+          options.system === 'cabin' &&
+          options.selected !== r.part.id &&
+          [
+            'car-headliner',
+            'car-left-pillar-trim',
+            'car-left-front-door-trim',
+            'car-left-rear-door-trim',
+            'car-left-sun-visor',
+            'car-right-sun-visor',
+            'car-overhead-console',
+            'car-left-front-grab-handle',
+            'car-right-front-grab-handle',
+            'car-left-rear-grab-handle',
+            'car-right-rear-grab-handle',
+          ].includes(r.part.id)
+        )
+          showSelf = false;
         const neededParent =
           options.isolated && options.selected
             ? hasAncestor(byId.get(options.selected)?.group ?? root, r.part.id)
