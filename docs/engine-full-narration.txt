@@ -1,0 +1,47 @@
+HOW THINGS CLICK — ENGINE
+
+200 seconds. Voice direction: warm, curious, conversational English. Clear emphasis on the mechanism; allow short pauses for the close-ups. Avoid a trailer-style shout.
+
+Record each passage into its time window below. Leave remaining time as a visual pause. A single continuous voice file must include those pauses to stay synchronized. Captions use editorial timing; retime them to the final voice performance if needed.
+
+[00:00:00,000 – 00:00:08,000] What turns a spark into motion?
+A tiny spark. A moving piston. A car pulling away. Let’s open this engine and connect the dots.
+
+[00:00:08,000 – 00:00:20,000] Lift the covers.
+First, lift the covers. Above the cylinders sit two camshafts. Along the end, a chain links them to the crankshaft. Below, the sump holds the oil.
+
+[00:00:20,000 – 00:00:36,000] Take the engine apart.
+Now pull the assemblies apart. Covers, cylinder head, pistons, crankshaft: each has a place. Look between the big pieces. Those thin gaskets and small bearings are just as important. This is an exploded explanation, not a repair sequence.
+
+[00:00:36,000 – 00:00:48,000] A closer look at one piston.
+Pick one piston and look closer. Its crown receives the force from expanding gas. The skirt helps guide its travel inside the cylinder. A small component, carrying a remarkable load.
+
+[00:00:48,000 – 00:00:58,000] Put every assembly back.
+Bring the pieces home. The head seals the cylinders, the covers close the engine, and the mechanism is ready to move again.
+
+[00:00:58,000 – 00:01:14,000] Up and down becomes rotation.
+Watch the connecting rods follow the crankpins. Each piston moves up and down, while the crankshaft turns. The cylinders take turns firing: one, three, four, two. Their power strokes keep handing the motion from one cylinder to the next.
+
+[00:01:14,000 – 00:01:28,000] The valves have to keep time.
+Zoom in on the timing chain. In this four-stroke engine, the crankshaft turns twice for every camshaft revolution. The cam lobes open the valves; springs close them. Timing makes the whole sequence possible.
+
+[00:01:28,000 – 00:01:42,000] Follow the fresh charge.
+Follow the cyan air through the intake. The throttle controls the opening, and the intake valves admit the fresh charge. Pink traces the fuel paths. Air and fuel must meet before combustion can do useful work.
+
+[00:01:42,000 – 00:02:00,000] One cylinder. Four strokes.
+Let’s slow down and stay with one cylinder. Intake draws the fresh charge in. Compression squeezes it. Near the top, the spark begins combustion. Expanding gas pushes the piston down: the power stroke. Finally, exhaust clears the cylinder for the next cycle.
+
+[00:02:00,000 – 00:02:12,000] Clear the cylinder. Start again.
+The exhaust valve opens and the rising piston pushes spent gas out. Follow the violet path toward the exhaust manifold. Then the next intake stroke starts the cycle again.
+
+[00:02:12,000 – 00:02:30,000] The moving parts need an oil film.
+Now switch to the amber oil circuit. The pump draws oil from the sump and sends it through the filter. Galleries carry it to the bearings and cylinder head. The oil film reduces contact between moving surfaces before the oil drains back down.
+
+[00:02:30,000 – 00:02:50,000] Give the heat a route out.
+Combustion also produces heat. Follow the blue coolant around the cylinders and through the head. While the engine is cold, the bypass keeps coolant circulating. As it warms, the thermostat opens the radiator route. Heat can then pass from the coolant into the surrounding air.
+
+[00:02:50,000 – 00:03:04,000] Separate systems. One working engine.
+Pull back and close the covers. The engine works because its systems work together: timed motion, a fresh charge, combustion, lubrication and cooling. We have slowed and simplified their behavior so you can see the relationships.
+
+[00:03:04,000 – 00:03:20,000] Now change something yourself.
+But what changes when you move the throttle? That part is yours to explore. Open How Things Click, rotate the engine, remove a part, and trace the flows yourself. The link to the interactive is in the description.

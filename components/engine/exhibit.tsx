@@ -54,9 +54,11 @@ import {
   tourShots,
   exportScript,
   exportSrt,
+  captionAt,
   type TourVariant,
 } from '@/lib/engine/tour';
 import type { SceneOptions } from './scene';
+import { TourAudio } from './tour-audio';
 type EngineApi = ReturnType<(typeof import('./scene'))['createEngineScene']>;
 const initial: SceneOptions = {
   playing: true,
@@ -123,6 +125,18 @@ export default function EngineExhibit({
     [recording, setRecording] = useState(false);
   const recorder = useRef<MediaRecorder | null>(null),
     tourTimeRef = useRef(tourTime);
+  const skipTourFrame = useRef(false);
+  const voice = useRef<TourAudio | null>(null);
+  const [voiceFile, setVoiceFile] = useState<{
+    name: string;
+    duration: number;
+    variant: TourVariant;
+  } | null>(null);
+  const [voiceLoading, setVoiceLoading] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const voiceActive =
+    !!voiceFile && voiceFile.variant === variant && voiceEnabled;
+  useEffect(() => () => voice.current?.dispose(), []);
   useEffect(() => {
     tourTimeRef.current = tourTime;
   }, [tourTime]);
@@ -137,9 +151,10 @@ export default function EngineExhibit({
             ...controls,
             playing: tourPlaying,
             system: sample.shot.system,
-            selected: null,
+            selected: sample.shot.part,
             removed: [],
-            isolated: false,
+            isolated: sample.isolated,
+            carContext: false,
             cutaway: sample.cutaway,
             explode: sample.explode,
             peel: sample.peel,
@@ -216,7 +231,11 @@ export default function EngineExhibit({
       accumulated = 0,
       id = 0;
     function step(now: number) {
-      const dt = Math.min((now - previous) / 1000, 0.1);
+      if (skipTourFrame.current) {
+        previous = now;
+        skipTourFrame.current = false;
+      }
+      const dt = Math.max(0, (now - previous) / 1000);
       previous = now;
       if (!document.hidden) {
         accumulated += dt;
@@ -227,6 +246,7 @@ export default function EngineExhibit({
             tourDuration(variant),
             (tourTimeRef.current ?? 0) + advance,
           );
+          tourTimeRef.current = next;
           setTourTime(next);
           if (next >= tourDuration(variant)) {
             setTourPlaying(false);
@@ -243,7 +263,9 @@ export default function EngineExhibit({
   }, [tourPlaying, variant]);
   useEffect(() => {
     const visibility = () => {
+      skipTourFrame.current = true;
       const media = recorder.current;
+      if (document.hidden) voice.current?.pause();
       if (document.hidden && media?.state === 'recording') media.pause();
       if (!document.hidden && media?.state === 'paused') media.resume();
     };
@@ -252,15 +274,28 @@ export default function EngineExhibit({
   }, []);
   const narrationText = sample?.shot.narration;
   useEffect(() => {
+    voice.current?.sync(
+      tourTime ?? 0,
+      voiceActive && tourPlaying && !document.hidden,
+    );
+  }, [tourTime, tourPlaying, voiceActive]);
+  useEffect(() => {
     if (!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
-    if (narration && tourPlaying && narrationText) {
+    if (narration && !voiceActive && tourPlaying && narrationText) {
       const utterance = new SpeechSynthesisUtterance(narrationText);
       utterance.rate = 1;
       window.speechSynthesis.speak(utterance);
     }
     return () => window.speechSynthesis.cancel();
-  }, [narration, tourPlaying, sample?.index, narrationText, variant]);
+  }, [
+    narration,
+    tourPlaying,
+    sample?.index,
+    narrationText,
+    variant,
+    voiceActive,
+  ]);
   function stopRecording() {
     if (recorder.current && recorder.current.state !== 'inactive')
       recorder.current.stop();
@@ -365,6 +400,8 @@ export default function EngineExhibit({
   }
   function startTour() {
     stopRecording();
+    if (voiceActive) void voice.current?.resume();
+    tourTimeRef.current = 0;
     setTourTime(0);
     setTourPlaying(true);
     setShowHelp(false);
@@ -379,7 +416,7 @@ export default function EngineExhibit({
       setCinema((c) => !c);
     }
   }
-  function recordTour() {
+  async function recordTour() {
     if (!api.current || typeof MediaRecorder === 'undefined') {
       setNotice(
         'Use a desktop Chromium browser to record, or screen-record the presentation view.',
@@ -387,20 +424,25 @@ export default function EngineExhibit({
       return;
     }
     try {
+      if (voiceActive) await voice.current?.resume();
       setNarration(false);
+      tourTimeRef.current = 0;
       setTourTime(0);
       setTourPlaying(true);
       setCinema(true);
       const stream = api.current.captureStream();
+      if (voiceActive && voice.current)
+        stream.addTrack(voice.current.recordingTrack());
       const mime = [
-        'video/webm;codecs=vp9',
-        'video/webm;codecs=vp8',
+        'video/webm;codecs=vp9,opus',
+        'video/webm;codecs=vp8,opus',
         'video/mp4',
       ].find((x) => MediaRecorder.isTypeSupported(x));
       if (!mime) throw new Error('No supported recording format.');
       const media = new MediaRecorder(stream, {
         mimeType: mime,
-        videoBitsPerSecond: 8000000,
+        videoBitsPerSecond: 12000000,
+        audioBitsPerSecond: 192000,
       });
       const chunks: Blob[] = [];
       media.ondataavailable = (e) => {
@@ -408,6 +450,8 @@ export default function EngineExhibit({
       };
       media.onstop = () => {
         setRecording(false);
+        setTourPlaying(false);
+        voice.current?.pause();
         api.current?.stopCapture();
         if (chunks.length)
           downloadFile(
@@ -416,7 +460,9 @@ export default function EngineExhibit({
             mime,
           );
         setNotice(
-          'Silent video saved. Add your narration track and the exported captions in your video editor.',
+          voiceActive
+            ? 'Video saved with your narration and timed captions.'
+            : 'Silent video saved. Add a voice-over file here to include narration in the next recording.',
         );
       };
       media.onerror = () => {
@@ -427,12 +473,40 @@ export default function EngineExhibit({
       media.start(250);
       setRecording(true);
       setNotice(
-        'Recording locally. Keep this tab visible; no microphone is used.',
+        voiceActive
+          ? 'Recording with your voice-over. Keep this tab visible.'
+          : 'Recording silent video locally. Keep this tab visible.',
       );
     } catch (e) {
       api.current?.stopCapture();
       setRecording(false);
+      setTourPlaying(false);
+      voice.current?.pause();
       setNotice(e instanceof Error ? e.message : 'Recording could not start.');
+    }
+  }
+  async function loadVoice(file: File | undefined) {
+    if (!file) return;
+    setVoiceLoading(true);
+    setTourPlaying(false);
+    setVoiceFile(null);
+    try {
+      voice.current ??= new TourAudio();
+      const duration = await voice.current.load(file);
+      if (duration === null) return;
+      setVoiceFile({ name: file.name, duration, variant });
+      setVoiceEnabled(true);
+      setNarration(false);
+      setNotice(
+        'Voice-over loaded for this tour. It plays only when you start the tour and is included when recording.',
+      );
+    } catch {
+      voice.current?.clear();
+      setNotice(
+        'This audio file could not be read. Try an MP3, WAV or M4A file.',
+      );
+    } finally {
+      setVoiceLoading(false);
     }
   }
   const filtered = PARTS.filter(
@@ -853,7 +927,7 @@ export default function EngineExhibit({
                   : 'Metallic materials'}
               </span>
             </div>
-            {selected && (
+            {selected && !touring && (
               <div className="part-inspector">
                 <div className="inspector-heading">
                   <span style={{ color: SYSTEM_COLORS[selected.system] }}>
@@ -901,7 +975,7 @@ export default function EngineExhibit({
                 </span>
                 <div>
                   <h2>{sample.shot.title}</h2>
-                  <p>{sample.shot.narration}</p>
+                  <p>{captionAt(tourTime ?? 0, variant)}</p>
                 </div>
               </div>
             )}
@@ -936,9 +1010,9 @@ export default function EngineExhibit({
                   shown; internal transmission operation is simplified.
                 </p>
                 <p>
-                  Recording is silent. Download the narration script and
-                  captions to add a studio voice track. The optional device
-                  voice plays only after you enable it.
+                  Add a voice-over file to include narration. Download the
+                  script and captions to add a studio voice track. The optional
+                  device voice plays only after you enable it.
                 </p>
                 <a
                   href="https://www.bosch-mobility.com/en/solutions/powertrain/gasoline/gasoline-port-fuel-injection/"
@@ -999,6 +1073,7 @@ export default function EngineExhibit({
                   aria-label={tourPlaying ? 'Pause tour' : 'Resume tour'}
                   disabled={recording}
                   onClick={() => {
+                    if (voiceActive) void voice.current?.resume();
                     if (sample.done) setTourTime(0);
                     setTourPlaying(!tourPlaying);
                   }}
@@ -1215,8 +1290,7 @@ export default function EngineExhibit({
               <div>
                 <strong>One tour. Two ways to explore.</strong>
                 <span>
-                  Play here, or record a silent video with the same shots and
-                  captions.
+                  Directed close-ups, timed captions and optional voice-over.
                 </span>
               </div>
             </div>
@@ -1302,6 +1376,71 @@ export default function EngineExhibit({
                 <Download size={15} />
                 Script
               </Button>
+            </div>
+            <div className="voiceover-panel">
+              <label className="voiceover-upload">
+                <Volume2 size={17} />
+                <span>
+                  {voiceLoading ? 'Reading audio…' : 'Add voice-over'}
+                  <small>MP3, WAV or M4A · stays on your device</small>
+                </span>
+                <input
+                  type="file"
+                  aria-label="Add voice-over audio"
+                  accept="audio/*,.mp3,.wav,.m4a"
+                  disabled={recording || voiceLoading}
+                  onChange={(e) => {
+                    void loadVoice(e.target.files?.[0]);
+                    e.target.value = '';
+                  }}
+                />
+              </label>
+              {voiceFile && voiceFile.variant === variant ? (
+                <>
+                  <label
+                    className="toggle-control"
+                    htmlFor="include-tour-voice"
+                  >
+                    <Switch
+                      id="include-tour-voice"
+                      checked={voiceEnabled}
+                      disabled={recording}
+                      onCheckedChange={setVoiceEnabled}
+                      aria-label="Include voice-over"
+                    />
+                    Include voice-over
+                  </label>
+                  <span className="voiceover-file">
+                    {voiceFile.name} · {timeLabel(voiceFile.duration)}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Remove voice-over"
+                    disabled={recording}
+                    onClick={() => {
+                      voice.current?.clear();
+                      setVoiceFile(null);
+                    }}
+                  >
+                    <X size={16} />
+                  </Button>
+                  {Math.abs(voiceFile.duration - tourDuration(variant)) > 2 && (
+                    <p className="voiceover-warning">
+                      This audio is {timeLabel(voiceFile.duration)}; the tour is{' '}
+                      {timeLabel(tourDuration(variant))}. Match the script’s
+                      time windows for synchronization. Shorter audio leaves
+                      silence; longer audio is trimmed at the end of the tour.
+                    </p>
+                  )}
+                </>
+              ) : (
+                <span className="voiceover-file">
+                  Use the timed script for this{' '}
+                  {timeLabel(tourDuration(variant))} tour. Device voice is a
+                  listening preview and is not recorded.
+                </span>
+              )}
             </div>
           </div>
           <div className="explanation-strip">

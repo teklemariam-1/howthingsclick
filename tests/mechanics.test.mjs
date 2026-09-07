@@ -19,6 +19,7 @@ import {
   tourDuration,
   exportSrt,
   exportScript,
+  tourCaptions,
 } from '../lib/engine/tour.ts';
 
 test('all rods maintain length and piston travel over two revolutions', () => {
@@ -161,4 +162,56 @@ test('direct injection is confined to the illustrative intake/compression window
   }
   assert.equal(flowGate('fuel', 600), false);
   assert.equal(flowGate('direct-fuel', 600), true);
+});
+
+test('camera paths stay continuous at editorial cuts and focus closer for details', () => {
+  for (const variant of ['full', 'teaser']) {
+    let t = 0;
+    for (const shot of tourShots(variant)) {
+      if (t > 0) {
+        const a = sampleTour(t - 0.00001, variant).camera,
+          b = sampleTour(t, variant).camera;
+        for (const key of ['distance', 'yaw', 'elevation'])
+          assert.ok(Math.abs(a[key] - b[key]) < 0.001);
+        a.target.forEach((x, i) =>
+          assert.ok(Math.abs(x - b.target[i]) < 0.001),
+        );
+      }
+      assert.ok(shot.camera[1].distance <= shot.camera[0].distance);
+      t += shot.duration;
+    }
+    for (let time = 0; time <= t; time += 0.2) {
+      const s = sampleTour(time, variant);
+      assert.ok(
+        [
+          ...s.camera.target,
+          s.camera.distance,
+          s.camera.yaw,
+          s.camera.elevation,
+          s.cycle,
+        ].every(Number.isFinite),
+      );
+      assert.ok(s.explode >= 0 && s.explode <= 1);
+    }
+  }
+});
+
+test('captions cover the complete tour without gaps, overflow or missing words', () => {
+  for (const variant of ['full', 'teaser']) {
+    const cues = tourCaptions(variant);
+    let end = 0;
+    for (const cue of cues) {
+      assert.ok(Math.abs(cue.start - end) < 0.00001);
+      assert.ok(cue.end > cue.start);
+      assert.ok(cue.text.split(/\s+/).length <= 10);
+      end = cue.end;
+    }
+    assert.ok(Math.abs(end - tourDuration(variant)) < 0.00001);
+    assert.equal(
+      cues.map((c) => c.text).join(' '),
+      tourShots(variant)
+        .map((s) => s.narration)
+        .join(' '),
+    );
+  }
 });

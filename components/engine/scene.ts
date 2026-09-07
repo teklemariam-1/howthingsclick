@@ -22,7 +22,13 @@ import {
   flowGate,
   frameDeltaSeconds,
 } from '@/lib/engine/mechanics';
-import { sampleTour, type TourVariant } from '@/lib/engine/tour';
+import {
+  sampleTour,
+  captionAt,
+  tourDuration,
+  tourShots,
+  type TourVariant,
+} from '@/lib/engine/tour';
 import { createVehicleContext } from './vehicle';
 import { createVehicleServices } from './vehicle-services';
 import {
@@ -693,8 +699,105 @@ export function createEngineScene(
     pg.add(p);
     pistons.push(p);
     p.position.z = z;
-    cylinder(p, 0.476, 0.42, [0, 0.035, 0], materials.machined);
-    cylinder(p, 0.487, 0.065, [0, 0.278, 0], materials.machined);
+    // A hollow piston with turned ring lands, a shallow crown and pin-boss
+    // windows. Contours are illustrative, not a measured Toyota casting.
+    const profile: [number, number][] = [
+      [0, 0.272],
+      [0.22, 0.272],
+      [0.34, 0.283],
+      [0.44, 0.304],
+      [0.476, 0.308],
+      [0.487, 0.297],
+      [0.487, 0.269],
+      [0.461, 0.265],
+      [0.461, 0.242],
+      [0.482, 0.239],
+      [0.482, 0.231],
+      [0.457, 0.229],
+      [0.457, 0.204],
+      [0.48, 0.201],
+      [0.48, 0.179],
+      [0.452, 0.174],
+      [0.452, 0.135],
+      [0.476, 0.13],
+      [0.476, 0.1],
+      [0.408, 0.1],
+      [0.408, 0.175],
+      [0.31, 0.208],
+      [0, 0.208],
+    ];
+    mesh(
+      p,
+      new THREE.LatheGeometry(
+        profile.map(([r, y]) => new THREE.Vector2(r, y)).reverse(),
+        96,
+      ),
+      materials.machined,
+    );
+    for (const angle of [-0.94, Math.PI - 0.94]) {
+      const skirt = mesh(
+        p,
+        new THREE.CylinderGeometry(
+          0.476,
+          0.464,
+          0.315,
+          48,
+          5,
+          true,
+          angle,
+          1.88,
+        ),
+        materials.machined,
+        [0, -0.0575, 0],
+      );
+      (skirt.material as THREE.MeshStandardMaterial).side = THREE.DoubleSide;
+      const coating = mesh(
+        p,
+        new THREE.CylinderGeometry(
+          0.477,
+          0.467,
+          0.185,
+          48,
+          1,
+          true,
+          angle + 0.16,
+          1.56,
+        ),
+        materials.dark,
+        [0, -0.102, 0],
+      );
+      (coating.material as THREE.MeshStandardMaterial).side = THREE.DoubleSide;
+    }
+    for (const side of [-1, 1]) {
+      const boss = new THREE.Shape();
+      boss.absarc(0, 0, 0.16, 0, Math.PI * 2, false);
+      const bore = new THREE.Path();
+      bore.absarc(0, 0, 0.11, 0, Math.PI * 2, true);
+      boss.holes.push(bore);
+      mesh(
+        p,
+        new THREE.ExtrudeGeometry(boss, {
+          depth: 0.14,
+          bevelEnabled: true,
+          bevelSegments: 2,
+          steps: 1,
+          bevelSize: 0.008,
+          bevelThickness: 0.006,
+          curveSegments: 32,
+        }),
+        materials.machined,
+        [side > 0 ? 0.3 : -0.44, -0.06, 0],
+        [0, Math.PI / 2, 0],
+      );
+      for (const zz of [-0.15, 0.15])
+        box(
+          p,
+          [0.13, 0.19, 0.04],
+          [side * 0.32, 0.048, zz],
+          materials.cast,
+          0.012,
+        );
+    }
     const ringAssembly = makeAssembly(`rings-${n + 1}`, [
       (n % 2 ? 1 : -1) * 2.55,
       3.2,
@@ -2031,7 +2134,11 @@ export function createEngineScene(
               ? SYSTEM_COLORS[part.system]
               : '#000000',
         );
-        mat.emissiveIntensity = selected ? 0.19 : 0.025;
+        mat.emissiveIntensity = selected
+          ? options.tourTime === null
+            ? 0.19
+            : 0.045
+          : 0.025;
         mat.transparent = ghost;
         mat.opacity = ghost ? 0.075 : 1;
         mat.depthWrite = !ghost;
@@ -2299,11 +2406,12 @@ export function createEngineScene(
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     const w = renderer.domElement.width,
       h = renderer.domElement.height;
-    const scale = Math.min(canvas.width / w, (canvas.height - 110) / h);
+    const scale = Math.min(canvas.width / w, (canvas.height - 250) / h);
+    const imageTop = 100 + (canvas.height - 250 - h * scale) / 2;
     ctx.drawImage(
       renderer.domElement,
       (canvas.width - w * scale) / 2,
-      40,
+      imageTop,
       w * scale,
       h * scale,
     );
@@ -2328,36 +2436,126 @@ export function createEngineScene(
       );
     }
     if (sample) {
-      ctx.fillStyle = '#93dace';
-      ctx.font = '600 25px Arial';
-      ctx.fillText(sample.shot.title, 42, canvas.height - 103);
-      ctx.fillStyle = '#e6eef2';
-      ctx.font = '24px Arial';
-      const words = sample.shot.narration.split(' ');
+      const time = options.tourTime ?? 0;
+      ctx.fillStyle = '#a4d9ca';
+      ctx.font = '500 25px Arial';
+      ctx.fillText(sample.shot.title, 310, 43);
+      ctx.textAlign = 'right';
+      ctx.fillStyle = '#a5bab7';
+      ctx.font = '22px Arial';
+      ctx.fillText(
+        `${String(sample.index + 1).padStart(2, '0')} / ${tourShots(options.tourVariant).length}`,
+        canvas.width - 42,
+        43,
+      );
+      ctx.textAlign = 'left';
+      // Brief timed captions instead of a whole paragraph covering the model.
+      const caption = captionAt(time, options.tourVariant);
+      ctx.font = '500 32px Arial';
+      ctx.fillStyle = '#f1f6f5';
+      const words = caption.split(' '),
+        lines: string[] = [];
       let line = '';
-      const lines: string[] = [];
       for (const word of words) {
-        if (ctx.measureText(line + word).width > canvas.width - 84) {
+        if (ctx.measureText(line + word).width > canvas.width - 150) {
           lines.push(line.trim());
           line = '';
         }
         line += word + ' ';
       }
-      lines.push(line.trim());
+      if (line.trim()) lines.push(line.trim());
+      ctx.textAlign = 'center';
       lines
-        .slice(0, 3)
-        .forEach((line, i) =>
-          ctx.fillText(line, 42, canvas.height - 71 + i * 29),
+        .slice(0, 2)
+        .forEach((text, i) =>
+          ctx.fillText(text, canvas.width / 2, canvas.height - 65 + i * 37),
         );
+      ctx.textAlign = 'left';
+      const action =
+        sample.shot.view === 'explode'
+          ? 'DISASSEMBLE'
+          : sample.shot.view === 'assemble'
+            ? 'ASSEMBLE'
+            : sample.shot.view === 'peel'
+              ? 'LIFT COVERS'
+              : sample.shot.view === 'inspect'
+                ? 'INSPECT PART'
+                : sample.shot.view === 'burn'
+                  ? 'SLOW MOTION · FOUR STROKES'
+                  : sample.shot.view === 'cooling'
+                    ? options.warm
+                      ? 'WARM · RADIATOR ROUTE'
+                      : 'COLD · BYPASS ROUTE'
+                    : sample.shot.view === 'invite'
+                      ? 'YOUR TURN · MOVE THE THROTTLE'
+                      : sample.shot.view === 'close'
+                        ? 'CLOSE COVERS'
+                        : 'FOLLOW THE MOTION';
+      ctx.fillStyle = '#a4d9ca';
+      ctx.font = '600 20px Arial';
+      ctx.fillText(action, 42, 86);
+      if (sample.shot.part) {
+        const assembly = assemblies.get(sample.shot.part);
+        if (assembly?.group.visible) {
+          const center = visibleBounds(assembly.group)
+            .getCenter(new THREE.Vector3())
+            .project(camera);
+          if (
+            Math.abs(center.x) < 0.9 &&
+            Math.abs(center.y) < 0.85 &&
+            center.z < 1
+          ) {
+            const x =
+                (canvas.width - w * scale) / 2 +
+                (center.x * 0.5 + 0.5) * w * scale,
+              y = imageTop + (-center.y * 0.5 + 0.5) * h * scale;
+            const name = findPart(sample.shot.part)?.name ?? '';
+            ctx.font = '600 23px Arial';
+            const labelWidth = ctx.measureText(name).width + 28;
+            const lx = Math.min(
+                canvas.width - labelWidth - 30,
+                Math.max(30, x + 45),
+              ),
+              ly = Math.max(125, Math.min(canvas.height - 160, y - 65));
+            ctx.strokeStyle = '#a4d9ca';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(x, y, 7, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x + 7, y);
+            ctx.lineTo(lx, ly + 18);
+            ctx.stroke();
+            ctx.fillStyle = '#142626ed';
+            ctx.fillRect(lx, ly, labelWidth, 39);
+            ctx.fillStyle = '#e6f5ef';
+            ctx.fillText(name, lx + 14, ly + 27);
+          }
+        }
+      }
       if (sample.shot.view === 'invite') {
         ctx.textAlign = 'right';
-        ctx.fillStyle = '#9ce6d6';
-        ctx.font = '600 25px Arial';
-        ctx.fillText('Try it at howthingsclick.com', canvas.width - 42, 43);
+        ctx.fillStyle = '#a4d9ca';
+        ctx.font = '600 23px Arial';
+        ctx.fillText(
+          'Try the interactive · Link in description',
+          canvas.width - 42,
+          86,
+        );
         ctx.textAlign = 'left';
       }
+      ctx.fillStyle = '#28433e';
+      ctx.fillRect(0, canvas.height - 6, canvas.width, 6);
+      ctx.fillStyle = '#a4d9ca';
+      ctx.fillRect(
+        0,
+        canvas.height - 6,
+        canvas.width * Math.min(1, time / tourDuration(options.tourVariant)),
+        6,
+      );
     }
   }
+
   function animate(now: number) {
     if (disposed) return;
     frameId = requestAnimationFrame(animate);
@@ -2440,42 +2638,18 @@ export function createEngineScene(
       frameAssembly(true);
     if (options.tourTime !== null) {
       const s = sampleTour(options.tourTime, options.tourVariant);
-      cycle = options.explode > 0.01 ? 28 : (options.tourTime * 174) % 720;
+      cycle = s.cycle;
       flowClock = options.tourTime;
-      const expanded = s.shot.view === 'explode' || s.shot.view === 'assemble';
-      const radius =
-        (expanded
-          ? 32
-          : s.shot.view === 'peel'
-            ? 24
-            : s.shot.view === 'cooling'
-              ? 19
-              : 17) * aspectScale();
-      const a =
-        -0.92 +
-        (s.shot.view === 'exterior'
-          ? s.u * 0.72
-          : s.shot.view === 'invite'
-            ? s.u * 0.32
-            : 0.1 * Math.sin(s.u * Math.PI));
-      targetGoal = new THREE.Vector3(
-        s.shot.view === 'cooling' ? -1.4 : -0.4,
-        expanded ? 2 : 1.5,
-        0,
-      );
+      targetGoal = new THREE.Vector3(...s.camera.target);
+      const radius = s.camera.distance * aspectScale();
       cameraGoal = targetGoal
         .clone()
         .add(
           new THREE.Vector3(
-            Math.cos(a) * radius,
-            radius * 0.41,
-            Math.sin(a) * radius,
+            Math.cos(s.camera.yaw) * Math.cos(s.camera.elevation) * radius,
+            Math.sin(s.camera.elevation) * radius,
+            Math.sin(s.camera.yaw) * Math.cos(s.camera.elevation) * radius,
           ),
-        );
-      if (carVisible)
-        frameAssembly(
-          true,
-          new THREE.Vector3(-Math.cos(a), 0.41, Math.sin(a)).normalize(),
         );
     } else if (
       options.playing &&
@@ -2507,9 +2681,10 @@ export function createEngineScene(
             stagedSeparation(id, disassemblyProgress),
             shellIds.has(id) ? options.peel : 0,
           );
-      a.amount = reduced.matches
-        ? target
-        : THREE.MathUtils.damp(a.amount, target, 5, dt);
+      a.amount =
+        reduced.matches || options.tourTime !== null
+          ? target
+          : THREE.MathUtils.damp(a.amount, target, 5, dt);
       if (Math.abs(a.amount - target) < 0.0002) a.amount = target;
       if (Math.abs(a.amount - target) > 0.001) settled = false;
       maxAmount = Math.max(maxAmount, a.amount);
@@ -2592,11 +2767,15 @@ export function createEngineScene(
     if (cameraGoal && targetGoal) {
       camera.position.lerp(
         cameraGoal,
-        reduced.matches ? 1 : 1 - Math.exp(-3 * dt),
+        reduced.matches || options.tourTime !== null
+          ? 1
+          : 1 - Math.exp(-3 * dt),
       );
       orbit.target.lerp(
         targetGoal,
-        reduced.matches ? 1 : 1 - Math.exp(-3 * dt),
+        reduced.matches || options.tourTime !== null
+          ? 1
+          : 1 - Math.exp(-3 * dt),
       );
     }
     orbit.update();
@@ -2645,6 +2824,7 @@ export function createEngineScene(
     if (now - reported > 100) {
       onTick(cycle);
       renderer.domElement.dataset.assemblies = String(assemblies.size);
+      renderer.domElement.dataset.tourTime = options.tourTime?.toFixed(2) ?? '';
       renderer.domElement.dataset.cameraSettled = String(
         (!cameraGoal ||
           camera.position.distanceToSquared(cameraGoal) < 0.0025) &&
@@ -2935,8 +3115,8 @@ export function createEngineScene(
     captureStream() {
       if (capture) capture.stream.getTracks().forEach((t) => t.stop());
       const canvas = document.createElement('canvas');
-      canvas.width = 1600;
-      canvas.height = 900;
+      canvas.width = 1920;
+      canvas.height = 1080;
       const ctx = canvas.getContext('2d');
       if (!ctx || !canvas.captureStream)
         throw new Error('Recording is unavailable in this browser.');
