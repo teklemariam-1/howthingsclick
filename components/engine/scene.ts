@@ -1,3 +1,4 @@
+import { drawRecordingBrand } from '@/lib/brand';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
@@ -2410,9 +2411,7 @@ export function createEngineScene(
       w * scale,
       h * scale,
     );
-    ctx.fillStyle = '#eef6fa';
-    ctx.font = '600 26px Arial';
-    ctx.fillText('how things click.', 42, 43);
+    drawRecordingBrand(ctx);
     const sample =
       options.tourTime === null
         ? null

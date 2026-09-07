@@ -1,3 +1,4 @@
+import { BRAND_MARK_PATH } from '@/lib/brand';
 export function BrandMark({ className = '' }: { className?: string }) {
   return (
     <svg
@@ -7,7 +8,7 @@ export function BrandMark({ className = '' }: { className?: string }) {
       aria-hidden="true"
     >
       <path
-        d="M28 10H20C12.268 10 6 16.268 6 24s6.268 14 14 14h8"
+        d={BRAND_MARK_PATH}
         stroke="currentColor"
         strokeWidth="8"
         strokeLinejoin="round"
