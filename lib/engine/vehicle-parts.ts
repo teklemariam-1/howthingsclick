@@ -45,10 +45,10 @@ export function vehicleStage(progress: number, stage: number) {
 
 export const CAR_ENGINE_PART: VehiclePart = {
   id: 'car-engine',
-  name: 'Inline-four engine and cooling pack',
+  name: 'Inline-four engine',
   system: 'powertrain',
   description:
-    'The existing engine exhibit contains 86 inspectable assemblies. Open the engine lab to explore pistons, valves, combustion, lubrication and cooling.',
+    'The transverse inline-four engine lifts out independently of the radiator, reservoir, air cleaner and transmission. Open the engine lab to explore its 86 assemblies, combustion, lubrication and cooling.',
   material: 'Aluminium, steel, polymer and rubber',
   offset: [-4, 12, -3],
   stage: 4,

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { vehiclePart, type VehicleAssembly } from './vehicle-assemblies';
+import { corollaWheelCoverGeometry } from './corolla-wheel-cover';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import {
@@ -329,38 +330,23 @@ export function createRoadWheel(
   ring(rear ? 0.112 : 0.131, 0.00065, 0.06, graphite);
   ring(rear ? 0.127 : 0.143, 0.00065, 0.06, graphite);
   current = coverGroup;
-  const spokes: THREE.BufferGeometry[] = [];
-  for (let i = 0; i < 5; i++)
-    for (const branch of [-1, 1]) {
-      const shape = new THREE.Shape();
-      shape.moveTo(0.037, branch * 0.004);
-      shape.quadraticCurveTo(0.12, branch * 0.014, 0.174, branch * 0.024);
-      shape.quadraticCurveTo(0.195, branch * 0.021, 0.209, branch * 0.009);
-      shape.lineTo(0.209, branch * 0.053);
-      shape.quadraticCurveTo(0.166, branch * 0.069, 0.09, branch * 0.046);
-      shape.lineTo(0.065, branch * 0.039);
-      shape.lineTo(0.034, branch * 0.014);
-      shape.closePath();
-      const g = new THREE.ExtrudeGeometry(shape, {
-        depth: 0.013,
-        bevelEnabled: true,
-        bevelSegments: 2,
-        steps: 1,
-        bevelSize: 0.002,
-        bevelThickness: 0.002,
-        curveSegments: 8,
-      });
-      g.scale(rimScale, rimScale, 1);
-      g.rotateZ((i * Math.PI * 2) / 5);
-      g.translate(0, 0, 0.079);
-      spokes.push(g);
-    }
-  const spokeGeometry = mergeGeometries(spokes);
-  spokes.forEach((g) => g.dispose());
-  if (spokeGeometry) mesh(spokeGeometry, alloy);
-  disk(0.052, 0.016, 0.085, alloy);
-  disk(0.027, 0.005, 0.097, graphite);
-  ring(0.025, 0.0013, 0.1);
+  mesh(corollaWheelCoverGeometry(D.rimDiameter / 2 - 0.006), alloy);
+  disk(0.054, 0.013, 0.09, alloy);
+  disk(0.029, 0.004, 0.099, alloy);
+  ring(0.031, 0.0008, 0.101, polished);
+  for (const [r, sx, sy, y] of [
+    [0.011, 1.35, 1, 0],
+    [0.008, 0.46, 1, 0],
+    [0.008, 1.5, 0.38, 0.0035],
+  ]) {
+    const logo = mesh(
+      new THREE.TorusGeometry(r, 0.0009, 7, 36),
+      graphite,
+      0.104,
+    );
+    logo.scale.set(sx, sy, 1);
+    logo.position.y = y;
+  }
   current = fasteners;
   for (let i = 0; i < 5; i++) {
     const a = (i * Math.PI * 2) / 5,

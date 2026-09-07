@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { ModelKit, P3 } from './vehicle-model';
-import { bodyOutline, bodyPatch } from './body-surface';
+import { headlampProjector } from './lamp-optics';
+import { bodyOutline, bodyPatch, outlineTube } from './body-surface';
 
 // US Corolla LE fascia reconstructed from the exact EchoPark front and corner
 // photographs: broad horizontal slats, hooked lamps, and folded bumper cheeks.
@@ -103,10 +104,11 @@ export function createCorollaFascia(
     return m;
   };
   const trim = material('#181e22', 0.12, 0.4),
-    slats = material('#2a3033', 0.2, 0.32);
+    slats = material('#151c20', 0.06, 0.43);
   const lens = material('#12191d', 0.35, 0.16),
     chrome = material('#cbd3d5', 0.88, 0.17),
     reflector = material('#5c6c72', 0.75, 0.24);
+  slats.clearcoat = 0.25;
   const amber = material('#ba6c13', 0.24, 0.28);
   const outer = new THREE.Shape();
   outer.moveTo(-1, 0.224);
@@ -122,7 +124,9 @@ export function createCorollaFascia(
     [0.45, 0.725],
     [0.66, 0.765],
     [0.98, 0.809],
-    [0.962, 0.671],
+    [0.962, 0.775],
+    [0.87, 0.728],
+    [0.76, 0.64],
     [0.708, 0.61],
     [0.694, 0.674],
     [0.48, 0.676],
@@ -155,24 +159,51 @@ export function createCorollaFascia(
   ]);
   const corners = [-1, 1].map((side) => {
     const s = new THREE.Shape();
-    s.moveTo(side * 0.987, 0.407);
+    s.moveTo(side * 0.872, 0.412);
     s.bezierCurveTo(
-      side * 0.9,
-      0.422,
-      side * 0.789,
-      0.317,
-      side * 0.785,
-      0.247,
+      side * 0.837,
+      0.424,
+      side * 0.803,
+      0.391,
+      side * 0.804,
+      0.364,
     );
-    s.lineTo(side * 0.807, 0.256);
-    s.bezierCurveTo(side * 0.822, 0.307, side * 0.94, 0.39, side * 0.997, 0.38);
+    s.lineTo(side * 0.825, 0.293);
+    s.lineTo(side * 0.844, 0.302);
+    s.lineTo(side * 0.829, 0.365);
+    s.quadraticCurveTo(side * 0.833, 0.393, side * 0.879, 0.39);
     s.closePath();
     return s;
   });
   outer.holes.push(...lamps, grille, upper, ...corners);
   mapped(outer, paint);
   parent = grilleGroup;
-  mapped(grille, black, -0.027);
+  mapped(grille, black, -0.06);
+  const aperture = grille.getPoints(96);
+  // Close the full intake perimeter between the painted mouth and its recessed
+  // backing. Otherwise bright bodywork shows between the slats at oblique angles.
+  surface(
+    parent,
+    (u, v) => {
+      const index = u * (aperture.length - 1),
+        i = Math.min(aperture.length - 2, Math.floor(index));
+      const p = aperture[i].clone().lerp(aperture[i + 1], index - i);
+      return face(p.x, p.y, THREE.MathUtils.lerp(0.001, -0.062, v));
+    },
+    trim,
+    240,
+    6,
+  );
+  const apertureHalfWidth = (y: number) => {
+    let half = 0;
+    for (let i = 0; i < aperture.length - 1; i++) {
+      const a = aperture[i],
+        b = aperture[i + 1];
+      if ((a.y <= y && b.y > y) || (b.y <= y && a.y > y))
+        half = Math.max(half, a.x + ((b.x - a.x) * (y - a.y)) / (b.y - a.y));
+    }
+    return half - 0.01;
+  };
   tube(
     parent,
     grille.getPoints(40).map((p) => face(p.x, p.y, 0.002)),
@@ -180,9 +211,8 @@ export function createCorollaFascia(
     trim,
   );
   // Slat sections catch highlights; the radiator remains recessed behind them.
-  for (let j = 0; j < 9; j++) {
-    const y = 0.272 + j * 0.033,
-      half = 0.664 - (y - 0.272) * 0.7;
+  for (const y of [0.267, 0.294, 0.321, 0.348, 0.375, 0.402, 0.429, 0.55]) {
+    const half = apertureHalfWidth(y + 0.018);
     surface(
       parent,
       (u, v) => {
@@ -191,7 +221,9 @@ export function createCorollaFascia(
         return face(
           x,
           y + bow + 0.012 * (v - 0.5),
-          -0.009 + 0.004 * Math.sin(Math.PI * v),
+          -0.017 -
+            0.025 * Math.sin(Math.PI * u) +
+            0.0035 * Math.sin(Math.PI * v),
         );
       },
       slats,
@@ -201,12 +233,47 @@ export function createCorollaFascia(
   }
   surface(
     parent,
+    (u, v) => {
+      const y = 0.456 + v * 0.071,
+        half = apertureHalfWidth(y);
+      return face(
+        (u * 2 - 1) * half,
+        y,
+        -0.026 - 0.012 * Math.sin(Math.PI * u),
+      );
+    },
+    trim,
+    72,
+    12,
+  );
+  surface(
+    parent,
     (u, v) =>
       face(THREE.MathUtils.lerp(-0.467, 0.467, u), 0.546 + v * 0.025, -0.012),
     trim,
     64,
     5,
   );
+  // The lower intake turns back into the bumper and has actual depth.
+  surface(
+    parent,
+    (u, v) => {
+      const x = (u * 2 - 1) * 0.647,
+        p = face(x, 0.24 + 0.008 * Math.sin(u * Math.PI));
+      return [p[0], p[1] + 0.018 * Math.sin(v * Math.PI), p[2] + v * 0.075];
+    },
+    trim,
+    80,
+    12,
+  );
+  for (const u of [-0.52, -0.26, 0, 0.26, 0.52])
+    k.bar(
+      parent,
+      face(u, 0.285, -0.045),
+      face(u * 0.75, 0.55, -0.045),
+      0.005,
+      trim,
+    );
   mapped(upper, trim, 0.001);
   for (const side of [-1, 1])
     for (let row = 0; row < 2; row++)
@@ -228,8 +295,9 @@ export function createCorollaFascia(
       0,
       'The swept headlamp includes the projector, reflector surfaces and amber side marker.',
     );
-    mapped(lamps[i], lens, -0.003);
-    tube(
+    mapped(lamps[i], lens, -0.042);
+    outlineTube(
+      k,
       parent,
       lamps[i].getPoints().map((p) => face(p.x, p.y, 0.002)),
       0.0023,
@@ -245,7 +313,7 @@ export function createCorollaFascia(
         [0.297, 0.679],
       ].map(([u, y]) => [side * u, y]),
     );
-    mapped(inner, chrome, 0.001);
+    mapped(inner, chrome, -0.022);
     const innerDark = bodyOutline(
       [
         [0.302, 0.697],
@@ -256,80 +324,87 @@ export function createCorollaFascia(
         [0.32, 0.685],
       ].map(([u, y]) => [side * u, y]),
     );
-    mapped(innerDark, reflector, 0.002);
+    mapped(innerDark, reflector, -0.02);
     for (let j = 0; j < 24; j++) {
       const u = 0.32 + j * 0.012;
       const y = 0.692 + (u - 0.32) * 0.136;
       tube(
         parent,
         [
-          face(side * u, y, 0.0035),
-          face(side * (u + 0.008), y + 0.009, 0.0035),
+          face(side * u, y, -0.018),
+          face(side * (u + 0.008), y + 0.009, -0.018),
         ],
         0.0008,
         chrome,
       );
     }
-    const projector = new THREE.Shape();
-    projector.absellipse(
-      side * 0.759,
-      0.731,
-      0.055,
-      0.026,
-      0,
-      Math.PI * 2,
-      false,
-      0,
-    );
-    mapped(projector, chrome, 0.002, 2);
-    const glass = new THREE.Shape();
-    glass.absellipse(
-      side * 0.759,
-      0.731,
-      0.05,
-      0.023,
-      0,
-      Math.PI * 2,
-      false,
-      0,
-    );
-    mapped(glass, lens, 0.004, 2);
-    const sheen = new THREE.Shape();
-    sheen.absellipse(
-      side * 0.759,
-      0.742,
-      0.042,
-      0.005,
-      0,
-      Math.PI * 2,
-      false,
-      0,
-    );
-    mapped(sheen, reflector, 0.005, 2);
+    const projectorCenter = face(side * 0.61, 0.724, -0.004);
+    headlampProjector(k, parent, projectorCenter, side);
     const hook = bodyOutline(
       [
-        [0.967, 0.786],
-        [0.944, 0.752],
-        [0.905, 0.71],
-        [0.755, 0.634],
-        [0.73, 0.642],
-        [0.871, 0.711],
-        [0.934, 0.781],
+        [0.969, 0.795],
+        [0.953, 0.782],
+        [0.877, 0.739],
+        [0.775, 0.653],
+        [0.711, 0.627],
+        [0.713, 0.648],
+        [0.768, 0.677],
+        [0.865, 0.758],
+        [0.949, 0.8],
       ].map(([u, y]) => [side * u, y]),
     );
     mapped(hook, chrome, 0.004);
     const marker = bodyOutline(
       [
-        [0.965, 0.777],
-        [0.946, 0.736],
-        [0.911, 0.698],
-        [0.753, 0.626],
-        [0.755, 0.643],
-        [0.894, 0.704],
-        [0.95, 0.779],
+        [0.963, 0.79],
+        [0.95, 0.782],
+        [0.876, 0.741],
+        [0.774, 0.657],
+        [0.718, 0.633],
+        [0.72, 0.643],
+        [0.769, 0.671],
+        [0.872, 0.752],
+        [0.952, 0.795],
       ].map(([u, y]) => [side * u, y]),
     );
     mapped(marker, amber, 0.006);
+    const edge = lamps[i].getPoints(36);
+    surface(
+      parent,
+      (u, v) => {
+        const idx = u * (edge.length - 1),
+          i = Math.min(edge.length - 2, Math.floor(idx)),
+          t = idx - i;
+        const p = edge[i].clone().lerp(edge[i + 1], t);
+        return face(p.x, p.y, THREE.MathUtils.lerp(-0.046, -0.004, v));
+      },
+      trim,
+      160,
+      5,
+    );
+    const lensMaterial = new THREE.MeshPhysicalMaterial({
+      color: '#dae6e8',
+      metalness: 0,
+      roughness: 0.07,
+      transparent: true,
+      opacity: 0.12,
+      clearcoat: 1,
+      clearcoatRoughness: 0.04,
+      side: THREE.DoubleSide,
+      envMapIntensity: 1.2,
+    });
+    k.materials.push(lensMaterial);
+    const cover = k.part(parent, {
+      id: `car-${side < 0 ? 'left' : 'right'}-headlamp-lens`,
+      name: `${side < 0 ? 'Left' : 'Right'} headlamp outer lens`,
+      system: 'body',
+      offset: [side * 0.12, 0.05, -0.3],
+      stage: 0,
+      material: 'Clear polycarbonate',
+      description:
+        'The shaped outer polycarbonate lens seals the projector and reflector optics from water and dust.',
+    });
+    bodyPatch(k, cover, lamps[i], lensMaterial, (u, y) => face(u, y, 0.01));
     parent = bumper;
     mapped(corners[i], trim, -0.003);
     surface(

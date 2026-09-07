@@ -41,9 +41,9 @@ export function createCorollaShell(
   );
   let group = frame;
   const doors = new Map<string, THREE.Group>();
-  paint.color.set('#e5e8e6');
+  paint.color.set('#edf0ed');
   paint.metalness = 0.12;
-  paint.roughness = 0.31;
+  paint.roughness = 0.25;
   paint.clearcoatRoughness = 0.24;
   paint.side = THREE.DoubleSide;
   black.side = THREE.DoubleSide;
@@ -101,11 +101,20 @@ export function createCorollaShell(
   const bodyWidth = (z: number) => profile(widths, z);
   function sidePoint(z: number, y: number, side: number): P3 {
     const t = THREE.MathUtils.clamp((y - 0.2) / (shoulder(z) - 0.2), 0, 1);
+    const doorWeight =
+      THREE.MathUtils.smoothstep(z, 0.36, 0.65) *
+      (1 - THREE.MathUtils.smoothstep(z, 2.45, 2.94));
+    const sillCrease = 0.318 + 0.065 * ((z - 1.5) / 1.18) ** 2;
+    const doorStamp =
+      doorWeight *
+      (0.009 * Math.exp(-(((y - sillCrease) / 0.065) ** 2)) -
+        0.012 * Math.exp(-(((y - sillCrease - 0.09) / 0.11) ** 2)));
     const sculpt =
       -0.063 * (1 - t) ** 2 +
       0.026 * Math.sin(t * Math.PI) -
       0.022 * Math.exp(-(((t - 0.27) / 0.095) ** 2)) +
-      0.004 * Math.exp(-(((t - 0.76) / 0.1) ** 2));
+      0.009 * Math.exp(-(((t - 0.76) / 0.1) ** 2)) +
+      doorStamp;
     const toe = 0.105 * (1 - THREE.MathUtils.smoothstep(y, 0.22, 0.54));
     const frontReturn =
       1 - THREE.MathUtils.smoothstep(z, sideFront, sideFront + 0.23);
@@ -321,7 +330,7 @@ export function createCorollaShell(
       [frontDoor, frontShape, 'front'],
       [rearDoor, rearShape, 'rear'],
     ] as const) {
-      bodyPatch(k, target, shape, paint, (z, y) => sidePoint(z, y, side));
+      bodyPatch(k, target, shape, paint, (z, y) => sidePoint(z, y, side), 4);
       createDoorHardware(k, target, side, which === 'front', shape, sidePoint);
       const inner = part(
         `${sideName}-${which}-door-trim`,
@@ -801,10 +810,30 @@ export function createCorollaShell(
       z,
     ];
   };
-  surface(group, trunkPoint, paint, 72, 60);
+  const deck = surface(group, trunkPoint, paint, 72, 60);
+  const leftQuarter = k.parts.find(
+      (p) => p.part.id === 'car-left-quarter',
+    )!.group,
+    rightQuarter = k.parts.find(
+      (p) => p.part.id === 'car-right-quarter',
+    )!.group;
+  for (const [target, limits] of [
+    [
+      trunk,
+      [
+        { axis: 0, value: -0.725, greater: true },
+        { axis: 0, value: 0.725, greater: false },
+      ],
+    ],
+    [leftQuarter, [{ axis: 0, value: -0.725, greater: false }]],
+    [rightQuarter, [{ axis: 0, value: 0.725, greater: true }]],
+  ] as const)
+    mesh(target, clipPanelGeometry(deck.geometry, [...limits]), paint);
+  trunk.remove(deck);
+  deck.geometry.dispose();
   for (const side of [-1, 1]) {
     surface(
-      group,
+      side < 0 ? leftQuarter : rightQuarter,
       (u, v) => {
         const inner = trunkPoint(u, (side + 1) / 2);
         const outer = sidePoint(inner[2], shoulder(inner[2]), side);

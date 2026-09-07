@@ -3,8 +3,9 @@ import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import badgeFont from './corolla-badge-font.json';
 import type { ModelKit, P3 } from './vehicle-model';
-import { bodyOutline, bodyPatch } from './body-surface';
-import { clipPanelGeometry } from './panel-clipping';
+import { bodyOutline, bodyPatch, outlineTube } from './body-surface';
+import { trunkShutLine } from '../../lib/engine/corolla-panel-lines';
+import { clipPanelGeometry, splitPanelRegion } from './panel-clipping';
 
 export function createCorollaRear(
   k: ModelKit,
@@ -170,37 +171,24 @@ export function createCorollaRear(
   );
   outer.holes.push(valance, ...lamps, ...reflectors);
   const painted = mapped(outer, paint);
-  for (const [target, limits] of [
-    [bumper, [{ axis: 1, value: 0.574, greater: false }]],
-    [
-      trunk,
-      [
-        { axis: 1, value: 0.574, greater: true },
-        { axis: 0, value: -0.725, greater: true },
-        { axis: 0, value: 0.725, greater: false },
-      ],
-    ],
-    [
-      tailPanel,
-      [
-        { axis: 1, value: 0.574, greater: true },
-        { axis: 0, value: -0.725, greater: false },
-      ],
-    ],
-    [
-      tailPanel,
-      [
-        { axis: 1, value: 0.574, greater: true },
-        { axis: 0, value: 0.725, greater: true },
-      ],
-    ],
-  ] as const)
-    mesh(target, clipPanelGeometry(painted.geometry, [...limits]), paint);
+  const boundary = trunkShutLine().getPoints(16);
+  const panels = splitPanelRegion(painted.geometry, boundary);
+  mesh(trunk, panels.inside, paint);
+  for (const [target, greater] of [
+    [bumper, false],
+    [tailPanel, true],
+  ] as const) {
+    const geometry = clipPanelGeometry(panels.outside, [
+      { axis: 1, value: 0.57, greater },
+    ]);
+    mesh(target, geometry, paint);
+  }
+  panels.outside.dispose();
   bumper.remove(painted);
   painted.geometry.dispose();
   group = trunk;
   // Close the curved deck edge all the way across the upper rear panel.
-  surface(
+  const deckEdge = surface(
     group,
     (u, v) => {
       const x = (u * 2 - 1) * 0.839,
@@ -215,6 +203,20 @@ export function createCorollaRear(
     100,
     8,
   );
+  for (const [target, limits] of [
+    [
+      trunk,
+      [
+        { axis: 0, value: -0.725, greater: true },
+        { axis: 0, value: 0.725, greater: false },
+      ],
+    ],
+    [tailPanel, [{ axis: 0, value: -0.725, greater: false }]],
+    [tailPanel, [{ axis: 0, value: 0.725, greater: true }]],
+  ] as const)
+    mesh(target, clipPanelGeometry(deckEdge.geometry, [...limits]), paint);
+  trunk.remove(deckEdge);
+  deckEdge.geometry.dispose();
   group = valanceGroup;
   mapped(valance, valanceMat, -0.009);
   tube(
@@ -291,6 +293,38 @@ export function createCorollaRear(
         j % 3 === 0 ? lensBlack : alloy,
       );
     }
+    const innerLamp = k.part(trunk, {
+      id: `car-${side < 0 ? 'left' : 'right'}-inner-tail-lamp`,
+      name: `${side < 0 ? 'Left' : 'Right'} trunk lamp`,
+      system: 'body',
+      offset: [side * 0.18, 0.2, 0.38],
+      stage: 0,
+      description:
+        'The inner rear-light section is attached to the trunk lid and separates from the outer quarter-panel lamp.',
+      material: 'Polycarbonate, polymer and metal',
+    });
+    const lampMeshes = lampGroup.children.filter(
+      (object): object is THREE.Mesh => object instanceof THREE.Mesh,
+    );
+    for (const object of lampMeshes) {
+      object.updateMatrix();
+      const source = object.geometry.clone().applyMatrix4(object.matrix);
+      const inner = clipPanelGeometry(source, [
+        { axis: 0, value: side * 0.725, greater: side < 0 },
+      ]);
+      const outer = clipPanelGeometry(source, [
+        { axis: 0, value: side * 0.725, greater: side > 0 },
+      ]);
+      if (inner.getAttribute('position').count)
+        mesh(innerLamp, inner, object.material as THREE.Material);
+      else inner.dispose();
+      if (outer.getAttribute('position').count)
+        mesh(lampGroup, outer, object.material as THREE.Material);
+      else outer.dispose();
+      lampGroup.remove(object);
+      object.geometry.dispose();
+      source.dispose();
+    }
     group = part(
       `${side < 0 ? 'left' : 'right'}-rear-reflector`,
       `${side < 0 ? 'Left' : 'Right'} rear reflector`,
@@ -313,7 +347,7 @@ export function createCorollaRear(
     );
     group = bumper;
     // Rear corner returns meet the quarter-panel edge with the same contour.
-    surface(
+    const corner = surface(
       group,
       (u, v) => {
         const y = 0.3 + u * 0.641,
@@ -329,6 +363,17 @@ export function createCorollaRear(
       48,
       16,
     );
+    for (const [target, greater] of [
+      [bumper, false],
+      [tailPanel, true],
+    ] as const)
+      mesh(
+        target,
+        clipPanelGeometry(corner.geometry, [{ axis: 1, value: 0.57, greater }]),
+        paint,
+      );
+    bumper.remove(corner);
+    corner.geometry.dispose();
     group = lampGroup;
     const sideLamp = new THREE.Shape();
     sideLamp.moveTo(3.17, 0.917);
@@ -398,29 +443,33 @@ export function createCorollaRear(
     mesh(group, letters, alloy);
   }
   // Continuous U-shaped trunk shut line passes around the lamp and plate recess.
-  const seam: P3[] = [];
-  for (const [x, y] of [
-    [-0.725, 0.938],
-    [-0.724, 0.823],
-    [-0.701, 0.71],
-    [-0.655, 0.604],
-    [-0.565, 0.576],
-    [0, 0.574],
-    [0.565, 0.576],
-    [0.655, 0.604],
-    [0.701, 0.71],
-    [0.724, 0.823],
-    [0.725, 0.938],
-  ])
-    seam.push([x, y, 0]);
-  const seamCurve = new THREE.CatmullRomCurve3(
-    seam.map((p) => new THREE.Vector3(...p)),
-  );
-  tube(
-    group,
-    seamCurve.getPoints(160).map((p) => face(p.x, p.y, 0.003)),
-    0.0016,
+  outlineTube(
+    k,
+    trunk,
+    trunkShutLine()
+      .getPoints(32)
+      .map((p) => face(p.x, p.y, 0.002)),
+    0.0014,
     k.steel,
+  );
+  // Folded edge and weather seal make the opening readable with the lid removed.
+  outlineTube(
+    k,
+    trunk,
+    trunkShutLine()
+      .getPoints(32)
+      .map((p) => face(p.x * 0.997, p.y, -0.012)),
+    0.007,
+    paint,
+  );
+  outlineTube(
+    k,
+    tailPanel,
+    trunkShutLine()
+      .getPoints(32)
+      .map((p) => face(p.x * 0.985, 0.578 + (p.y - 0.578) * 0.985, -0.037)),
+    0.008,
+    black,
   );
   for (const [r, sx, sy, y] of [
     [0.031, 1.35, 1, 0.914],

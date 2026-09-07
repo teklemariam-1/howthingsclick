@@ -27,3 +27,13 @@ Source: https://www.toyota.com/content/dam/toyota/brochures/pdf/2025/corolla_ebr
 - Still required before the full goal is complete: further exterior matching, curved inner body surfaces and luggage tub, more accurate panel boundaries at the rear lamps/trunk, complete cooling/HVAC separation from the engine module, and a visual/mechanical review of the newly exposed hardware. Do not treat the assembly count as a claim that every production fastener and internal component has been modeled.
 
 Verified for this checkpoint: model tests passed for 174 car assemblies / 395 meshes; whole-car browser checks passed on desktop and 390 px mobile with no page errors; keyboard assembly and individual return overrides passed; a 1600×900 WebM recording (692,346 bytes in the short check), SRT download, tour replay and navigation to/from the engine lab passed. Existing engine assembly, hood, combustion flows and oil-only separation checks passed.
+
+## Exterior and service separation revision
+
+- 178 body/chassis/cabin assemblies, four independently removable engine-bay service assemblies, and the engine module: 183 selectable assemblies in the car explorer.
+- The actual detachable trunk surface now follows the curved visible shut line. Inner rear lamps follow the lid; outer lamps and quarter-panel shoulders stay with the body. UV partition tests check area conservation and reversed winding.
+- Headlamps have recessed optical housings, projector lenses and removable clear covers. The tapered side profile and grille slat/band layout were revised against the exact front and side photos. Wheel covers have sculpted paired vanes and a raised centre emblem.
+- Radiator/fan, coolant hoses, expansion reservoir and air cleaner use independent car-mode transforms/materials while preserving their original engine-lab counterparts. The simplified engine-lab transmission is hidden when the detailed vehicle CVT is shown.
+- Fixed the Perspective button retaining the previously selected viewing direction; added overhead camera clearance for the controls.
+- Browser checks passed for whole-car controls, independent radiator removal/return, trunk and engine removal, mobile layout, engine flows, tour recording and caption export. Short recording check produced a 954,588-byte WebM. Material/transform independence and nested trunk-lamp motion are covered by model tests.
+- Remaining fidelity work: bumper/quarter curvature, mirror and glazing profiles, detailed inner trunk/body stampings, cabin/HVAC geometry and mechanically verified hidden connections. The exterior remains a procedural approximation; the photographs are not sufficient evidence to claim a factory-exact model. The full goal remains active.

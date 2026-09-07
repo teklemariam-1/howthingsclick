@@ -23,6 +23,7 @@ import {
 } from '@/lib/engine/mechanics';
 import { sampleTour, type TourVariant } from '@/lib/engine/tour';
 import { createVehicleContext } from './vehicle';
+import { createVehicleServices } from './vehicle-services';
 import {
   CAR_ENGINE_PART,
   vehicleStage,
@@ -903,6 +904,7 @@ export function createEngineScene(
   for (const z of [-1.48, 1.48])
     box(radiator, [0.33, 2.81, 0.12], [-3.25, 1.12, z], materials.black);
   const fan = new THREE.Group();
+  fan.name = 'radiator-electric-fan';
   fan.position.set(-3.02, 1.1, 0);
   radiator.add(fan);
   cylinder(fan, 0.2, 0.19, [0, 0, 0], materials.black, 'x');
@@ -1626,6 +1628,32 @@ export function createEngineScene(
     }
   });
 
+  const services = createVehicleServices(assemblies);
+  scene.add(services.group);
+  const serviceFan = services.group.getObjectByName('radiator-electric-fan');
+  const carRecord = (id: string) =>
+    vehicle.controller.byId.get(id) ?? services.controller.byId.get(id);
+  const carRecords = [
+    ...vehicle.controller.records,
+    ...services.controller.records,
+  ];
+  function visibleBounds(subject: THREE.Object3D) {
+    const result = new THREE.Box3();
+    subject.updateMatrixWorld(true);
+    subject.traverseVisible((o) => {
+      if (
+        o instanceof THREE.Mesh &&
+        !(o.material instanceof THREE.ShaderMaterial)
+      ) {
+        if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
+        result.union(
+          o.geometry.boundingBox!.clone().applyMatrix4(o.matrixWorld),
+        );
+      }
+    });
+    return result;
+  }
+
   const processRoot = new THREE.Group();
   root.add(processRoot);
   type Flow = {
@@ -1948,7 +1976,7 @@ export function createEngineScene(
       const part = options.vehicleAssembly
         ? id === CAR_ENGINE_PART.id
           ? CAR_ENGINE_PART
-          : vehicle.controller.byId.get(id)?.part
+          : carRecord(id)?.part
         : findPart(id);
       if (!part) continue;
       const b = document.createElement('button');
@@ -2123,7 +2151,11 @@ export function createEngineScene(
     const hit = raycaster
       .intersectObjects(
         options.vehicleAssembly
-          ? [...vehicle.controller.meshes, ...meshes]
+          ? [
+              ...vehicle.controller.meshes,
+              ...services.controller.meshes,
+              ...meshes,
+            ]
           : meshes,
         false,
       )
@@ -2200,7 +2232,8 @@ export function createEngineScene(
           );
         }
       });
-      if (root.visible) bounds.union(new THREE.Box3().setFromObject(root));
+      if (root.visible) bounds.union(visibleBounds(root));
+      if (services.group.visible) bounds.union(visibleBounds(services.group));
       if (bounds.isEmpty()) bounds.setFromObject(subject);
     } else bounds.setFromObject(subject);
     const center = bounds.getCenter(new THREE.Vector3());
@@ -2230,7 +2263,13 @@ export function createEngineScene(
       .add(
         direction
           .clone()
-          .multiplyScalar(Math.max(12, distance * (vehicleView ? 1.04 : 1.06))),
+          .multiplyScalar(
+            Math.max(
+              12,
+              distance *
+                (vehicleView ? (direction.y > 0.85 ? 1.18 : 1.07) : 1.06),
+            ),
+          ),
       );
   }
   const stopCamera = () => {
@@ -2323,6 +2362,19 @@ export function createEngineScene(
       reduced.matches,
     );
     const carOptions = options.vehicleAssembly;
+    services.group.visible = !!carOptions;
+    if (carOptions) {
+      const serviceMotion = services.controller.update(
+        carOptions,
+        dt,
+        reduced.matches,
+      );
+      carAssembly.moving ||= serviceMotion.moving;
+      carAssembly.maxAmount = Math.max(
+        carAssembly.maxAmount,
+        serviceMotion.maxAmount,
+      );
+    }
     const carEngineTarget = carOptions
       ? carOptions.returned?.includes('car-engine')
         ? 0
@@ -2428,6 +2480,7 @@ export function createEngineScene(
       options.tourTime === null ? wheelAngle : -options.tourTime * 0.8,
     );
     updatePose();
+    if (serviceFan) serviceFan.rotation.copy(fan.rotation);
     if (reduced.matches || options.tourTime !== null)
       disassemblyProgress = options.explode;
     else
@@ -2455,6 +2508,17 @@ export function createEngineScene(
           options.isolated && options.selected
             ? options.selected === id
             : !options.cutaway || a.amount > 0.015;
+      // The whole-car model owns the detailed CVT. Its case must not overlap
+      // the engine lab's simplified transmission and bellhousing.
+      if (id === 'transaxle' || id === 'bellhousing')
+        a.group.visible =
+          !carVisible &&
+          (!options.isolated || !options.selected || options.selected === id) &&
+          (!shellIds.has(id) || !options.cutaway || a.amount > 0.015);
+      if (services.sourceIds.has(id))
+        a.group.visible =
+          !carOptions &&
+          (!options.isolated || !options.selected || options.selected === id);
     }
     cutObjects.forEach((m) => {
       const a = assemblies.get((m as THREE.Mesh).userData.partId);
@@ -2532,7 +2596,7 @@ export function createEngineScene(
       const a = options.vehicleAssembly
         ? id === 'car-engine'
           ? { group: root }
-          : vehicle.controller.byId.get(id)
+          : carRecord(id)
         : assemblies.get(id);
       if (!a || !a.group.visible) {
         b.hidden = true;
@@ -2581,9 +2645,7 @@ export function createEngineScene(
       renderer.domElement.dataset.carVisible = String(carVisible);
       renderer.domElement.dataset.wheelAngle = wheelAngle.toFixed(4);
       renderer.domElement.dataset.vehicleView = options.vehicleView;
-      renderer.domElement.dataset.carAssemblies = String(
-        vehicle.controller.records.length + 1,
-      );
+      renderer.domElement.dataset.carAssemblies = String(carRecords.length + 1);
       renderer.domElement.dataset.carSeparation =
         carAssembly.maxAmount.toFixed(3);
       renderer.domElement.dataset.carSettled = String(
@@ -2599,10 +2661,7 @@ export function createEngineScene(
   frameId = requestAnimationFrame(animate);
   return {
     getVehicleParts() {
-      return [
-        ...vehicle.controller.records.map((r) => r.part),
-        CAR_ENGINE_PART,
-      ];
+      return [...carRecords.map((r) => r.part), CAR_ENGINE_PART];
     },
     setOptions(next: SceneOptions) {
       const prev = options;
@@ -2639,6 +2698,7 @@ export function createEngineScene(
         far: litVehicle ? 150 : 40,
       });
       key.shadow.camera.updateProjectionMatrix();
+      key.shadow.normalBias = litVehicle ? 0.065 : 0.025;
       renderer.toneMappingExposure =
         litVehicle && next.vehicleView === 'body' ? 0.84 : 1.02;
 
@@ -2743,8 +2803,10 @@ export function createEngineScene(
         const id = options.vehicleAssembly.selected;
         const b =
           id === 'car-engine'
-            ? new THREE.Box3().setFromObject(root)
-            : vehicle.controller.bounds(id);
+            ? visibleBounds(root)
+            : carRecord(id)
+              ? new THREE.Box3().setFromObject(carRecord(id)!.group)
+              : null;
         if (b && !b.isEmpty()) {
           const center = b.getCenter(new THREE.Vector3());
           const size = b.getSize(new THREE.Vector3()).length();
@@ -2799,7 +2861,7 @@ export function createEngineScene(
                     ? new THREE.Vector3(0.001, 1, 0).normalize()
                     : options.vehicleView === 'bay'
                       ? new THREE.Vector3(-1, 1.25, -0.94).normalize()
-                      : undefined,
+                      : new THREE.Vector3(-1, 0.25, -1.55).normalize(),
           );
       }
       orbit.update();
