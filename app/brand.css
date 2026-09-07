@@ -1,0 +1,54 @@
+.htc-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  color: #20251f;
+  font-family: 'Manrope', Arial, sans-serif;
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: -1.05px;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+.htc-brand svg {
+  width: 37px;
+  height: 37px;
+  flex-shrink: 0;
+}
+.htc-brand strong {
+  font-weight: 800;
+}
+.htc-brand-inverse,
+.wordmark > .htc-brand-inverse,
+.car-brand > .htc-brand-inverse {
+  color: #edf2e8;
+}
+.wordmark .htc-brand,
+.car-brand .htc-brand {
+  font-size: 21px;
+}
+.wordmark .htc-brand svg,
+.car-brand .htc-brand svg {
+  width: 31px;
+  height: 31px;
+}
+@media (max-width: 520px) {
+  .htc-brand {
+    font-size: 19px;
+    gap: 7px;
+    letter-spacing: -0.8px;
+  }
+  .htc-brand svg {
+    width: 29px;
+    height: 29px;
+  }
+  .wordmark .htc-brand,
+  .car-brand .htc-brand {
+    font-size: 18px;
+  }
+  .wordmark .htc-brand svg,
+  .car-brand .htc-brand svg {
+    width: 26px;
+    height: 26px;
+  }
+}

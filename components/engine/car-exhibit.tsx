@@ -1,6 +1,7 @@
 'use client';
+import PageLink from '@/components/page-link';
 import './car-exhibit.css';
-import Link from 'next/link';
+import Brand from '@/components/brand';
 import EngineExhibit from './exhibit';
 import { Button } from '@/components/ui/button';
 import { CarSlider as Slider } from './car-slider';
@@ -297,9 +298,9 @@ export default function CarExhibit() {
       {engineOpen && <EngineExhibit onBack={returnToCar} />}
       <div className="car-exhibit" ref={shell} hidden={engineOpen}>
         <header className="car-header">
-          <Link className="car-brand" href="/">
-            how things <em>click.</em>
-          </Link>
+          <PageLink className="car-brand" href="/">
+            <Brand inverse />
+          </PageLink>
           <span className="car-header-note">CURIOUS BY DESIGN</span>
           <nav
             className="car-engine-link car-mode-nav"

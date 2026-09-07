@@ -1,6 +1,7 @@
 'use client';
+import PageLink from '@/components/page-link';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
+import Brand from '@/components/brand';
 import {
   ArrowUpRight,
   Box,
@@ -524,13 +525,21 @@ export default function EngineExhibit({
   return (
     <main className={`engine-app ${cinema ? 'cinema-mode' : ''}`} ref={exhibit}>
       <header className="site-topbar">
-        <Link className="wordmark" href="/" aria-label="How Things Click home">
-          how things <span>click.</span>
-        </Link>
+        <PageLink
+          className="wordmark"
+          href="/"
+          aria-label="How Things Click home"
+        >
+          <Brand inverse />
+        </PageLink>
         <div className="topbar-middle">
           <span className="section-index">01 / MACHINES</span>
           <span className="topbar-divider" />
-          {onBack ? <span>Whole car</span> : <Link href="/">Whole car</Link>}
+          {onBack ? (
+            <span>Whole car</span>
+          ) : (
+            <PageLink href="/car">Whole car</PageLink>
+          )}
           <span> / Engine lab</span>
         </div>
         {onBack ? (
@@ -1006,21 +1015,21 @@ export default function EngineExhibit({
                   script to prepare a studio voice track. The optional device
                   voice plays only after you enable it.
                 </p>
-                <a
+                <PageLink
                   href="https://www.bosch-mobility.com/en/solutions/powertrain/gasoline/gasoline-port-fuel-injection/"
                   target="_blank"
                   rel="noreferrer"
                 >
                   Port injection · Bosch <ArrowUpRight size={13} />
-                </a>
-                <a
+                </PageLink>
+                <PageLink
                   href="https://www.energy.gov/cmei/vehicles/articles/internal-combustion-engine-basics"
                   target="_blank"
                   rel="noreferrer"
                 >
                   Engine principles · US Department of Energy{' '}
                   <ArrowUpRight size={13} />
-                </a>
+                </PageLink>
               </div>
             )}
             {showParts && (
