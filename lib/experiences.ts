@@ -1,5 +1,19 @@
 export const experiences = [
   {
+    id: 'self-driving',
+    number: '03',
+    category: 'Vehicles',
+    title: 'Inside a self-driving car',
+    description:
+      'Open the car. Follow camera signals through the computer to steering, braking and propulsion.',
+    detail: 'Cameras · Onboard computing · Control',
+    image: '/images/self-driving-thumbnail-v1.webp',
+    alt: 'Who’s driving? A gold Cybercab cutaway connected to its AI computer — 3D explained.',
+    href: '/self-driving',
+    keywords:
+      'tesla cybercab self driving driverless autonomous ai camera vision pedestrian robotaxi perception prediction planning',
+  },
+  {
     id: 'engine',
     number: '01',
     category: 'Engines',
@@ -7,8 +21,8 @@ export const experiences = [
     description:
       'Follow the air, watch the spark, and see how four strokes turn fuel into motion.',
     detail: 'Combustion · Moving parts · Oil & cooling',
-    image: '/images/engine-exploded.png',
-    alt: 'The actual four-cylinder engine model with its assemblies separated',
+    image: '/images/engine-thumbnail-v1.webp',
+    alt: 'Inside an engine: a detailed cutaway with glowing combustion and moving pistons — interactive 3D.',
     href: '/engine',
     keywords:
       'piston crankshaft intake exhaust fuel gasoline spark combustion oil cooling mechanics motor',

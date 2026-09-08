@@ -1,0 +1,25 @@
+No steering wheel. No pedals. So how does this car know when to turn, when to stop, and what might step into its path?
+
+These butterfly doors swing outward and upward. Inside, both seats are for passengers. The driving happens elsewhere. Let’s follow an image all the way to movement.
+
+Beneath the body, cameras feed an onboard computer. The computer interprets the scene and commands the car. Measurements return, closing the loop. This is a simplified engineering model, not a reconstruction of Tesla’s private software.
+
+A camera begins with light, focused onto an image sensor. Successive frames carry clues about depth and motion. Measurements of the car’s own movement add context. But cameras cannot see through a parked van. Hidden space remains uncertain.
+
+Lift the cover. Processors run a model trained before the journey. Memory holds its learned parameters and recent information. Training changes the model; inference applies it to new observations. These calculations run onboard, fast enough to keep updating as the world changes.
+
+The system needs a useful picture of the world: road boundaries, moving objects, and its own position. Watch the pedestrian appear as the view clears. The colored map makes those ideas visible. Our demonstration uses known geometry; a real vehicle must estimate it.
+
+Seeing an object is only the beginning. Where might it go next? Planning combines that prediction with a path and a speed. Passing behind a pedestrian can be reasonable; arriving at the same place at the same time is the problem.
+
+A digital command cannot power a motor. It tells a steering controller what movement is wanted. A gate driver switches six power transistors in a typical three-phase inverter. Changing the pulses regulates winding current and motor torque. Position and current measurements return to the controller. We’ve slowed the switching down so you can see it.
+
+The planned trajectory becomes a target wheel angle. The controller compares it with the measured angle and commands the steering actuator. Watch the rack and tie rods turn the wheels. Now disturb their angle. Feedback reveals the error, and the controller corrects it.
+
+Steering sets direction. Propulsion needs torque. The inverter controls current in the drive motor. Magnetic forces turn its rotor. Gears and a differential pass torque through the shafts to the wheels. Speed feedback adjusts the demand. The battery supplies energy, while cooling carries heat away.
+
+Put the loop on the road. The van hides part of the pavement. In this experiment, the car approaches cautiously. As the pedestrian becomes visible, watch the decision change: slow down, yield, then continue when the crossing is clear.
+
+Now the lane is blocked. With the neighboring lane clear in our scenario, the path bends around the cones. Watch the front wheels: turn into the bend, then unwind. The route, speed, and physical steering have to agree throughout the maneuver.
+
+Bring it all back together: sense, interpret, plan, act, and measure again. But what changes if the pedestrian steps out later? Or the target speed goes up? Try it yourself at How Things Click dot com, slash self-driving. Subscribe for the next thing we take apart.

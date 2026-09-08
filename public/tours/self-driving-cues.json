@@ -1,0 +1,135 @@
+{
+  "duration": 270,
+  "cues": [
+    {
+      "chapter": 1,
+      "title": "How does a car drive itself?",
+      "at": 0,
+      "end": 12,
+      "voiceAt": 0.6,
+      "voiceEnd": 11.5,
+      "words": 24,
+      "narration": "No steering wheel. No pedals. So how does this car know when to turn, when to stop, and what might step into its path?"
+    },
+    {
+      "chapter": 2,
+      "title": "A cabin built for passengers",
+      "at": 12,
+      "end": 24,
+      "voiceAt": 12.5,
+      "voiceEnd": 23.5,
+      "words": 26,
+      "narration": "These butterfly doors swing outward and upward. Inside, both seats are for passengers. The driving happens elsewhere. Let’s follow an image all the way to movement."
+    },
+    {
+      "chapter": 3,
+      "title": "Peel back the body",
+      "at": 24,
+      "end": 42,
+      "voiceAt": 25,
+      "voiceEnd": 41,
+      "words": 35,
+      "narration": "Beneath the body, cameras feed an onboard computer. The computer interprets the scene and commands the car. Measurements return, closing the loop. This is a simplified engineering model, not a reconstruction of Tesla’s private software."
+    },
+    {
+      "chapter": 4,
+      "title": "Start with light",
+      "at": 42,
+      "end": 62,
+      "voiceAt": 42.8,
+      "voiceEnd": 61,
+      "words": 38,
+      "narration": "A camera begins with light, focused onto an image sensor. Successive frames carry clues about depth and motion. Measurements of the car’s own movement add context. But cameras cannot see through a parked van. Hidden space remains uncertain."
+    },
+    {
+      "chapter": 5,
+      "title": "Inside the onboard computer",
+      "at": 62,
+      "end": 86,
+      "voiceAt": 63,
+      "voiceEnd": 84,
+      "words": 42,
+      "narration": "Lift the cover. Processors run a model trained before the journey. Memory holds its learned parameters and recent information. Training changes the model; inference applies it to new observations. These calculations run onboard, fast enough to keep updating as the world changes."
+    },
+    {
+      "chapter": 6,
+      "title": "Build a picture of the world",
+      "at": 86,
+      "end": 108,
+      "voiceAt": 86.8,
+      "voiceEnd": 107,
+      "words": 43,
+      "narration": "The system needs a useful picture of the world: road boundaries, moving objects, and its own position. Watch the pedestrian appear as the view clears. The colored map makes those ideas visible. Our demonstration uses known geometry; a real vehicle must estimate it."
+    },
+    {
+      "chapter": 7,
+      "title": "Choose where—and when—to move",
+      "at": 108,
+      "end": 130,
+      "voiceAt": 108.8,
+      "voiceEnd": 129,
+      "words": 41,
+      "narration": "Seeing an object is only the beginning. Where might it go next? Planning combines that prediction with a path and a speed. Passing behind a pedestrian can be reasonable; arriving at the same place at the same time is the problem."
+    },
+    {
+      "chapter": 8,
+      "title": "A small command controls motor power",
+      "at": 130,
+      "end": 160,
+      "voiceAt": 131,
+      "voiceEnd": 158.5,
+      "words": 55,
+      "narration": "A digital command cannot power a motor. It tells a steering controller what movement is wanted. A gate driver switches six power transistors in a typical three-phase inverter. Changing the pulses regulates winding current and motor torque. Position and current measurements return to the controller. We’ve slowed the switching down so you can see it."
+    },
+    {
+      "chapter": 9,
+      "title": "Turn commands into forces",
+      "at": 160,
+      "end": 182,
+      "voiceAt": 160.8,
+      "voiceEnd": 181,
+      "words": 43,
+      "narration": "The planned trajectory becomes a target wheel angle. The controller compares it with the measured angle and commands the steering actuator. Watch the rack and tie rods turn the wheels. Now disturb their angle. Feedback reveals the error, and the controller corrects it."
+    },
+    {
+      "chapter": 10,
+      "title": "Supply power. Carry heat away.",
+      "at": 182,
+      "end": 204,
+      "voiceAt": 182.8,
+      "voiceEnd": 203,
+      "words": 45,
+      "narration": "Steering sets direction. Propulsion needs torque. The inverter controls current in the drive motor. Magnetic forces turn its rotor. Gears and a differential pass torque through the shafts to the wheels. Speed feedback adjusts the demand. The battery supplies energy, while cooling carries heat away."
+    },
+    {
+      "chapter": 11,
+      "title": "The hidden pedestrian",
+      "at": 204,
+      "end": 226,
+      "voiceAt": 204.8,
+      "voiceEnd": 224.5,
+      "words": 39,
+      "narration": "Put the loop on the road. The van hides part of the pavement. In this experiment, the car approaches cautiously. As the pedestrian becomes visible, watch the decision change: slow down, yield, then continue when the crossing is clear."
+    },
+    {
+      "chapter": 12,
+      "title": "Watch the wheels follow the path",
+      "at": 226,
+      "end": 248,
+      "voiceAt": 226.8,
+      "voiceEnd": 247,
+      "words": 41,
+      "narration": "Now the lane is blocked. With the neighboring lane clear in our scenario, the path bends around the cones. Watch the front wheels: turn into the bend, then unwind. The route, speed, and physical steering have to agree throughout the maneuver."
+    },
+    {
+      "chapter": 13,
+      "title": "Your turn to experiment",
+      "at": 248,
+      "end": 270,
+      "voiceAt": 248.8,
+      "voiceEnd": 269.5,
+      "words": 46,
+      "narration": "Bring it all back together: sense, interpret, plan, act, and measure again. But what changes if the pedestrian steps out later? Or the target speed goes up? Try it yourself at How Things Click dot com, slash self-driving. Subscribe for the next thing we take apart."
+    }
+  ]
+}

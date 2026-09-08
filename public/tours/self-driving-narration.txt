@@ -1,0 +1,113 @@
+HOW THINGS CLICK — HOW DOES A SELF-DRIVING CAR WORK?
+MASTER TOUR: 4:30 / 1920 x 1080 / 13 shots
+
+VOICE DIRECTION
+Warm, curious and precise. Talk to one interested viewer. Let the opening questions breathe.
+Use conversational emphasis, not a trailer voice. Read only the narration paragraphs.
+Aim for roughly 130–145 words per minute within the marked windows. Leave the remaining space silent.
+Pronunciation: Cybercab = SY-ber-cab. Inference = IN-fer-ence. Trajectory = truh-JEK-tuh-ree.
+The colored lines and hardware placements are educational illustrations. Do not imply that this is Tesla source code or a validated autonomy system.
+
+TIMING
+All timestamps are absolute positions on the demo timeline: HOURS:MINUTES:SECONDS,MILLISECONDS.
+SCENE marks the animation chapter. NARRATION marks when the voice starts and finishes within that scene.
+Generate/read each chapter separately. Read only the narration paragraph, never the timestamps or directions.
+Place each reading at its NARRATION IN point in Shotcut or another editor. Preserve the before/after silence.
+If a reading exceeds its VO OUT, re-record slightly faster or tighten pauses. Do not silently truncate it.
+Export one exactly 4:30 WAV or MP3 master; upload it with Add narration in the lab.
+Timestamps are editing cues, not automatic TTS commands. Assemble the audio to these timings before uploading.
+Pasting the entire voice-only text into TTS does NOT preserve these chapter timings by itself.
+No burned narration captions. The export retains branding and technical labels.
+
+01 | How does a car drive itself?
+SCENE [00:00:00,000 – 00:00:12,000]
+SILENCE BEFORE [00:00:00,000 – 00:00:00,600] · 0.6 seconds
+NARRATION IN/OUT [00:00:00,600 – 00:00:11,500] · 10.9 seconds · 24 words
+No steering wheel. No pedals. So how does this car know when to turn, when to stop, and what might step into its path?
+SILENCE AFTER [00:00:11,500 – 00:00:12,000] · 0.5 seconds
+
+02 | A cabin built for passengers
+SCENE [00:00:12,000 – 00:00:24,000]
+SILENCE BEFORE [00:00:12,000 – 00:00:12,500] · 0.5 seconds
+NARRATION IN/OUT [00:00:12,500 – 00:00:23,500] · 11.0 seconds · 26 words
+These butterfly doors swing outward and upward. Inside, both seats are for passengers. The driving happens elsewhere. Let’s follow an image all the way to movement.
+SILENCE AFTER [00:00:23,500 – 00:00:24,000] · 0.5 seconds
+
+03 | Peel back the body
+SCENE [00:00:24,000 – 00:00:42,000]
+SILENCE BEFORE [00:00:24,000 – 00:00:25,000] · 1.0 seconds
+NARRATION IN/OUT [00:00:25,000 – 00:00:41,000] · 16.0 seconds · 35 words
+Beneath the body, cameras feed an onboard computer. The computer interprets the scene and commands the car. Measurements return, closing the loop. This is a simplified engineering model, not a reconstruction of Tesla’s private software.
+SILENCE AFTER [00:00:41,000 – 00:00:42,000] · 1.0 seconds
+
+04 | Start with light
+SCENE [00:00:42,000 – 00:01:02,000]
+SILENCE BEFORE [00:00:42,000 – 00:00:42,800] · 0.8 seconds
+NARRATION IN/OUT [00:00:42,800 – 00:01:01,000] · 18.2 seconds · 38 words
+A camera begins with light, focused onto an image sensor. Successive frames carry clues about depth and motion. Measurements of the car’s own movement add context. But cameras cannot see through a parked van. Hidden space remains uncertain.
+SILENCE AFTER [00:01:01,000 – 00:01:02,000] · 1.0 seconds
+
+05 | Inside the onboard computer
+SCENE [00:01:02,000 – 00:01:26,000]
+SILENCE BEFORE [00:01:02,000 – 00:01:03,000] · 1.0 seconds
+NARRATION IN/OUT [00:01:03,000 – 00:01:24,000] · 21.0 seconds · 42 words
+Lift the cover. Processors run a model trained before the journey. Memory holds its learned parameters and recent information. Training changes the model; inference applies it to new observations. These calculations run onboard, fast enough to keep updating as the world changes.
+SILENCE AFTER [00:01:24,000 – 00:01:26,000] · 2.0 seconds
+
+06 | Build a picture of the world
+SCENE [00:01:26,000 – 00:01:48,000]
+SILENCE BEFORE [00:01:26,000 – 00:01:26,800] · 0.8 seconds
+NARRATION IN/OUT [00:01:26,800 – 00:01:47,000] · 20.2 seconds · 43 words
+The system needs a useful picture of the world: road boundaries, moving objects, and its own position. Watch the pedestrian appear as the view clears. The colored map makes those ideas visible. Our demonstration uses known geometry; a real vehicle must estimate it.
+SILENCE AFTER [00:01:47,000 – 00:01:48,000] · 1.0 seconds
+
+07 | Choose where—and when—to move
+SCENE [00:01:48,000 – 00:02:10,000]
+SILENCE BEFORE [00:01:48,000 – 00:01:48,800] · 0.8 seconds
+NARRATION IN/OUT [00:01:48,800 – 00:02:09,000] · 20.2 seconds · 41 words
+Seeing an object is only the beginning. Where might it go next? Planning combines that prediction with a path and a speed. Passing behind a pedestrian can be reasonable; arriving at the same place at the same time is the problem.
+SILENCE AFTER [00:02:09,000 – 00:02:10,000] · 1.0 seconds
+
+08 | A small command controls motor power
+SCENE [00:02:10,000 – 00:02:40,000]
+SILENCE BEFORE [00:02:10,000 – 00:02:11,000] · 1.0 seconds
+NARRATION IN/OUT [00:02:11,000 – 00:02:38,500] · 27.5 seconds · 55 words
+A digital command cannot power a motor. It tells a steering controller what movement is wanted. A gate driver switches six power transistors in a typical three-phase inverter. Changing the pulses regulates winding current and motor torque. Position and current measurements return to the controller. We’ve slowed the switching down so you can see it.
+SILENCE AFTER [00:02:38,500 – 00:02:40,000] · 1.5 seconds
+
+09 | Turn commands into forces
+SCENE [00:02:40,000 – 00:03:02,000]
+SILENCE BEFORE [00:02:40,000 – 00:02:40,800] · 0.8 seconds
+NARRATION IN/OUT [00:02:40,800 – 00:03:01,000] · 20.2 seconds · 43 words
+The planned trajectory becomes a target wheel angle. The controller compares it with the measured angle and commands the steering actuator. Watch the rack and tie rods turn the wheels. Now disturb their angle. Feedback reveals the error, and the controller corrects it.
+SILENCE AFTER [00:03:01,000 – 00:03:02,000] · 1.0 seconds
+
+10 | Supply power. Carry heat away.
+SCENE [00:03:02,000 – 00:03:24,000]
+SILENCE BEFORE [00:03:02,000 – 00:03:02,800] · 0.8 seconds
+NARRATION IN/OUT [00:03:02,800 – 00:03:23,000] · 20.2 seconds · 45 words
+Steering sets direction. Propulsion needs torque. The inverter controls current in the drive motor. Magnetic forces turn its rotor. Gears and a differential pass torque through the shafts to the wheels. Speed feedback adjusts the demand. The battery supplies energy, while cooling carries heat away.
+SILENCE AFTER [00:03:23,000 – 00:03:24,000] · 1.0 seconds
+
+11 | The hidden pedestrian
+SCENE [00:03:24,000 – 00:03:46,000]
+SILENCE BEFORE [00:03:24,000 – 00:03:24,800] · 0.8 seconds
+NARRATION IN/OUT [00:03:24,800 – 00:03:44,500] · 19.7 seconds · 39 words
+Put the loop on the road. The van hides part of the pavement. In this experiment, the car approaches cautiously. As the pedestrian becomes visible, watch the decision change: slow down, yield, then continue when the crossing is clear.
+SILENCE AFTER [00:03:44,500 – 00:03:46,000] · 1.5 seconds
+
+12 | Watch the wheels follow the path
+SCENE [00:03:46,000 – 00:04:08,000]
+SILENCE BEFORE [00:03:46,000 – 00:03:46,800] · 0.8 seconds
+NARRATION IN/OUT [00:03:46,800 – 00:04:07,000] · 20.2 seconds · 41 words
+Now the lane is blocked. With the neighboring lane clear in our scenario, the path bends around the cones. Watch the front wheels: turn into the bend, then unwind. The route, speed, and physical steering have to agree throughout the maneuver.
+SILENCE AFTER [00:04:07,000 – 00:04:08,000] · 1.0 seconds
+
+13 | Your turn to experiment
+SCENE [00:04:08,000 – 00:04:30,000]
+SILENCE BEFORE [00:04:08,000 – 00:04:08,800] · 0.8 seconds
+NARRATION IN/OUT [00:04:08,800 – 00:04:29,500] · 20.7 seconds · 46 words
+Bring it all back together: sense, interpret, plan, act, and measure again. But what changes if the pedestrian steps out later? Or the target speed goes up? Try it yourself at How Things Click dot com, slash self-driving. Subscribe for the next thing we take apart.
+SILENCE AFTER [00:04:29,500 – 00:04:30,000] · 0.5 seconds
+
+Generated from lib/self-driving/tour.ts. Regenerate after changing the tour.

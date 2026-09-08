@@ -1,0 +1,23 @@
+HOW THINGS CLICK — SELF-DRIVING VIDEO
+
+TITLE
+How Does a Self-Driving Car Actually Drive? (3D Explained)
+
+DESCRIPTION
+No driver. No steering wheel. So what actually turns the wheels?
+
+Go inside a Cybercab-inspired 3D model and follow the chain from cameras and AI to the electronics that control steering, braking, and acceleration. Watch the car respond to a hidden pedestrian, steer around roadworks, and use feedback to correct its movement.
+
+Explore more interactive 3D labs at How Things Click:
+https://www.howthingsclick.com/
+
+Subscribe for more visual explanations of how everyday technology works.
+
+Educational visualization; not Tesla's proprietary software or exact hardware layout.
+
+#SelfDrivingCars #Cybercab #HowThingsWork
+
+UPLOAD NOTE — NOT PART OF THE DESCRIPTION
+The /self-driving URL returned HTTP 404 when checked on September 8, 2026. The description therefore links to the homepage. Once the self-driving lab is deployed and verified, replace that call to action with:
+Try the interactive 3D lab:
+https://www.howthingsclick.com/self-driving

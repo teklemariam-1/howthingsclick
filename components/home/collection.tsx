@@ -100,21 +100,18 @@ export default function Collection() {
                     src={item.image}
                     alt={item.alt}
                     loading="lazy"
-                    width="1200"
-                    height="650"
+                    width={1672}
+                    height={941}
                   />
-                  <span className="experience-format">
-                    <Box size={12} /> Interactive 3D
-                  </span>
-                  <span className="experience-launch" aria-hidden="true">
-                    <ArrowUpRight size={23} />
-                  </span>
                 </div>
                 <div className="experience-content">
                   <div className="experience-kicker">
                     <span>{item.category}</span>
                     <span>EXPLORATION {item.number}</span>
                   </div>
+                  <span className="experience-format">
+                    <Box size={12} /> Interactive 3D
+                  </span>
                   <h3>{item.title}</h3>
                   <p>{item.description}</p>
                   <div className="experience-bottom">
@@ -129,7 +126,7 @@ export default function Collection() {
             <div className="collection-empty">
               <Search size={28} />
               <h3>No experiences found.</h3>
-              <p>Try “engine”, “car”, or a system like “cooling”.</p>
+              <p>Try “engine”, “self-driving”, or a system like “cooling”.</p>
               <button type="button" onClick={clear}>
                 Show all experiences <ArrowUpRight size={16} />
               </button>
