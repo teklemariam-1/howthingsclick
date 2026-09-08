@@ -6,7 +6,6 @@ import { ArrowUpRight, Box, Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { experiences } from '@/lib/experiences';
-import CybercabPreview from '@/components/self-driving/preview';
 export default function Collection() {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('All');
@@ -96,30 +95,23 @@ export default function Collection() {
                 key={item.id}
               >
                 <div className="experience-image">
-                  {item.id === 'self-driving' ? (
-                    <CybercabPreview />
-                  ) : (
-                    <Image
-                      unoptimized
-                      src={item.image}
-                      alt={item.alt}
-                      loading="lazy"
-                      width="1200"
-                      height="650"
-                    />
-                  )}
-                  <span className="experience-format">
-                    <Box size={12} /> Interactive 3D
-                  </span>
-                  <span className="experience-launch" aria-hidden="true">
-                    <ArrowUpRight size={23} />
-                  </span>
+                  <Image
+                    unoptimized
+                    src={item.image}
+                    alt={item.alt}
+                    loading="lazy"
+                    width={1672}
+                    height={941}
+                  />
                 </div>
                 <div className="experience-content">
                   <div className="experience-kicker">
                     <span>{item.category}</span>
                     <span>EXPLORATION {item.number}</span>
                   </div>
+                  <span className="experience-format">
+                    <Box size={12} /> Interactive 3D
+                  </span>
                   <h3>{item.title}</h3>
                   <p>{item.description}</p>
                   <div className="experience-bottom">
