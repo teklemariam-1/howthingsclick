@@ -1,34 +1,71 @@
-HOW THINGS CLICK — INSIDE A SELF-DRIVING CAR
-Four-minute guided tour. Read each chapter into its time slot.
-Voice remains off until the visitor chooses playback. No narration captions.
-This script explains the educational model, not Tesla's proprietary software.
+HOW THINGS CLICK — HOW DOES A SELF-DRIVING CAR WORK?
+MASTER TOUR: 4:30 / 1920 x 1080 / 13 shots
 
-00:00–00:18 | AN IMAGE BECOMES MOTION
-There is no driver at the wheel. So what actually turns a camera image into a turn, a stop, or a smooth acceleration? Let's open the car and follow the engineering. The key is a loop: observe the world, choose a motion, act, and measure what happened.
+VOICE DIRECTION
+Warm, curious and precise. Talk to one interested viewer. Let the opening questions breathe.
+Use conversational emphasis, not a trailer voice. Read only the narration paragraphs.
+Aim for roughly 130–145 words per minute within the marked windows. Leave the remaining space silent.
+Pronunciation: Cybercab = SY-ber-cab. Inference = IN-fer-ence. Trajectory = truh-JEK-tuh-ree.
+The colored lines and hardware placements are educational illustrations. Do not imply that this is Tesla source code or a validated autonomy system.
 
-00:18–00:42 | START WITH MEASUREMENTS
-Start with light. A lens focuses the scene onto an image sensor. But a picture alone does not tell a car what to do. Multiple views and successive frames provide evidence about roads and moving objects. Measurements of the vehicle's own motion help separate a moving pedestrian from a moving camera. Blue represents information flowing inward.
+TIMING
+Each VO window is an absolute position in the 4:30 timeline. Generate/read each chapter separately.
+Place that reading at its VO IN point in Shotcut or another editor. Leave the gaps as silence.
+If a reading exceeds its VO OUT, re-record slightly faster or tighten pauses. Do not silently truncate it.
+Export one exactly 4:30 WAV or MP3 master; upload it with Add narration in the lab.
+Pasting the entire voice-only text into TTS does NOT preserve these chapter timings by itself.
+No burned narration captions. The export retains branding and technical labels.
 
-00:42–01:08 | INSIDE THE COMPUTER
-Now follow that information into the onboard computer. Under the cooling cover, processors perform inference: applying a model that has already been trained. Memory holds the model and recent observations. This board illustrates the packaging; it is not a factory board diagram. There is also a time budget. During any delay between sensing and acting, the car keeps covering distance.
+01 | 0:00–0:12 | How does a car drive itself?
+VO 0:00.6 → 0:11.5 (24 words)
+No steering wheel. No pedals. So how does this car know when to turn, when to stop, and what might step into its path?
 
-01:08–01:32 | REPRESENT THE WORLD
-What does the evidence mean? The system needs a representation of space and motion, including where the car is. Our virtual instrument shows a simplified version. The van blocks part of the scene. Gray means occluded, not empty. A hidden pedestrian should not magically appear as a detection. Our demonstration calculates visibility from geometry; a real vision system must infer much more from images.
+02 | 0:12–0:24 | A cabin built for passengers
+VO 0:12.5 → 0:23.5 (26 words)
+These butterfly doors swing outward and upward. Inside, both seats are for passengers. The driving happens elsewhere. Let’s follow an image all the way to movement.
 
-01:32–01:56 | PLAN A TRAJECTORY
-Seeing an object is only the beginning. Where might it go next? The amber line extends the pedestrian's current motion. That is one possible future, not a promise. The planner needs both a route and a speed. In this example, an approaching pedestrian creates a stop boundary. The car waits for its driving corridor to clear.
+03 | 0:24–0:42 | Peel back the body
+VO 0:25.0 → 0:41.0 (35 words)
+Beneath the body, cameras feed an onboard computer. The computer interprets the scene and commands the car. Measurements return, closing the loop. This is a simplified engineering model, not a reconstruction of Tesla’s private software.
 
-01:56–02:24 | COMMANDS BECOME FORCES
-A planned path cannot turn a wheel by itself. Actuators have to produce physical force. Steering changes the front wheel angle. Propulsion and braking change speed. Now look at the return path: measured motion goes back into the controller. It compares the result with the target and corrects the command. This feedback continues as the road bends, even when the path ahead already looks settled.
+04 | 0:42–1:02 | Start with light
+VO 0:42.8 → 1:01.0 (38 words)
+A camera begins with light, focused onto an image sensor. Successive frames carry clues about depth and motion. Measurements of the car’s own movement add context. But cameras cannot see through a parked van. Hidden space remains uncertain.
 
-02:24–02:44 | POWER THE LOOP
-All of that work needs energy. Tesla documents a floor-mounted high-voltage battery, a low-voltage electrical system, and a front drive unit with an integrated inverter. The inverter switches current to drive the motor. Electronics need power too, and heat must be removed. Orange and teal separate energy and cooling functions in this illustration.
+05 | 1:02–1:26 | Inside the onboard computer
+VO 1:03.0 → 1:24.0 (42 words)
+Lift the cover. Processors run a model trained before the journey. Memory holds its learned parameters and recent information. Training changes the model; inference applies it to new observations. These calculations run onboard, fast enough to keep updating as the world changes.
 
-02:44–03:12 | PUT THE LOOP ON THE ROAD
-Now put those systems back together. A parked van hides part of the crossing. The model slows before it has a clear view. Watch the pedestrian become visible, then watch the vehicle yield. The observation changes the plan, and the plan changes the physical movement. This is the connection we want to understand—not simply a car moving along a road.
+06 | 1:26–1:48 | Build a picture of the world
+VO 1:26.8 → 1:47.0 (43 words)
+The system needs a useful picture of the world: road boundaries, moving objects, and its own position. Watch the pedestrian appear as the view clears. The colored map makes those ideas visible. Our demonstration uses known geometry; a real vehicle must estimate it.
 
-03:12–03:38 | CHANGE THE PATH
-What if the lane itself is blocked? Here the adjacent lane is clear. The green path bends around the cones and returns to the original lane. The front wheels steer into the curve, straighten, then steer the other way. Our rules make this example easy to inspect. Production systems must handle uncertainty and far more complicated traffic.
+07 | 1:48–2:10 | Choose where—and when—to move
+VO 1:48.8 → 2:09.0 (41 words)
+Seeing an object is only the beginning. Where might it go next? Planning combines that prediction with a path and a speed. Passing behind a pedestrian can be reasonable; arriving at the same place at the same time is the problem.
 
-03:38–04:00 | TAKE CONTROL OF THE EXPERIMENT
-You have followed the loop from light to motion. Now open it yourself. Select a system, separate the parts, pause a decision, or change the conditions. These stages explain useful functions; modern neural networks can combine several of them. Explore the interactive lab at howthingsclick dot com slash self-driving, and make the engineering click.
+08 | 2:10–2:40 | A small command controls motor power
+VO 2:11.0 → 2:38.5 (55 words)
+A digital command cannot power a motor. It tells a steering controller what movement is wanted. A gate driver switches six power transistors in a typical three-phase inverter. Changing the pulses regulates winding current and motor torque. Position and current measurements return to the controller. We’ve slowed the switching down so you can see it.
+
+09 | 2:40–3:02 | Turn commands into forces
+VO 2:40.8 → 3:01.0 (43 words)
+The planned trajectory becomes a target wheel angle. The controller compares it with the measured angle and commands the steering actuator. Watch the rack and tie rods turn the wheels. Now disturb their angle. Feedback reveals the error, and the controller corrects it.
+
+10 | 3:02–3:24 | Supply power. Carry heat away.
+VO 3:02.8 → 3:23.0 (45 words)
+Steering sets direction. Propulsion needs torque. The inverter controls current in the drive motor. Magnetic forces turn its rotor. Gears and a differential pass torque through the shafts to the wheels. Speed feedback adjusts the demand. The battery supplies energy, while cooling carries heat away.
+
+11 | 3:24–3:46 | The hidden pedestrian
+VO 3:24.8 → 3:44.5 (39 words)
+Put the loop on the road. The van hides part of the pavement. In this experiment, the car approaches cautiously. As the pedestrian becomes visible, watch the decision change: slow down, yield, then continue when the crossing is clear.
+
+12 | 3:46–4:08 | Watch the wheels follow the path
+VO 3:46.8 → 4:07.0 (41 words)
+Now the lane is blocked. With the neighboring lane clear in our scenario, the path bends around the cones. Watch the front wheels: turn into the bend, then unwind. The route, speed, and physical steering have to agree throughout the maneuver.
+
+13 | 4:08–4:30 | Your turn to experiment
+VO 4:08.8 → 4:29.5 (46 words)
+Bring it all back together: sense, interpret, plan, act, and measure again. But what changes if the pedestrian steps out later? Or the target speed goes up? Try it yourself at How Things Click dot com, slash self-driving. Subscribe for the next thing we take apart.
+
+Generated from lib/self-driving/tour.ts. Regenerate after changing the tour.

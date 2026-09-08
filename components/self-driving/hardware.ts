@@ -1,5 +1,9 @@
 import * as T from 'three';
 import { createSoftwareDisplay } from './software-display';
+import { createSteeringRig } from './steering-rig';
+import { createMotorController } from './motor-controller';
+import type { ControlDetail } from '@/lib/self-driving/motor-driver';
+import type { SteeringSample } from '@/lib/self-driving/steering';
 import { box, cylinder, line, material, tube } from './geometry';
 import {
   engineeringTelemetry,
@@ -11,6 +15,7 @@ type V3 = [number, number, number];
 export function createAutonomyHardware() {
   const group = new T.Group();
   group.name = 'Educational autonomy hardware cutaway';
+  const electronics = createMotorController(group);
   const software = createSoftwareDisplay();
   group.add(software.group);
   const picks: T.Object3D[] = [];
@@ -230,16 +235,18 @@ export function createAutonomyHardware() {
   for (const side of [-1, 1])
     cylinder(lv, 0.015, 0.015, 0.016, [side * 0.103, 0.127, 0], copper, 12);
   tag(power, 'power', '48 V · LOW-VOLTAGE SUPPLY', [1.06, 1, -0.5]);
-  // Conceptual heat exchanger and coolant path; colors describe function, not fluid color.
-  const cooler = box(power, [0.07, 0.3, 1.2], [2.16, 0.18, 0], metal, 0.015);
-  for (let i = 0; i < 17; i++)
+  // Generic EV thermal packaging, recessed behind the nose; not Cybercab factory CAD.
+  const cooler = box(power, [0.085, 0.22, 0.86], [2.08, 0.18, 0], dark, 0.018);
+  cooler.name = 'EV coolant heat exchanger (illustrative)';
+  for (let i = 0; i < 13; i++)
     box(
       cooler,
-      [0.012, 0.008, 1.14],
-      [0.045, -0.13 + i * 0.016, 0],
-      dark,
-      0.002,
+      [0.009, 0.004, 0.76],
+      [0.048, -0.087 + i * 0.014, 0],
+      metal,
+      0.001,
     );
+  tag(power, 'power', 'EV COOLING · illustrative layout', [1.95, 0.54, 0.35]);
   const thermal = material('#55b7ac', 0.45, 0.4);
   tube(
     power,
@@ -263,9 +270,22 @@ export function createAutonomyHardware() {
   casing.rotation.x = Math.PI / 2;
   const rotor = cylinder(motor, 0.1, 0.1, 0.54, [0, 0, 0], copper, 32);
   rotor.rotation.x = Math.PI / 2;
+  const motorCaps: T.Mesh[] = [];
+  for (let i = 0; i < 16; i++) {
+    const a = (i * Math.PI) / 8;
+    const bar = box(
+      rotor,
+      [0.014, 0.43, 0.011],
+      [Math.cos(a) * 0.102, 0, Math.sin(a) * 0.102],
+      mats.power,
+      0.002,
+    );
+    bar.rotation.y = -a;
+  }
   for (const z of [-0.28, 0.28]) {
     const cap = cylinder(motor, 0.158, 0.158, 0.021, [0, 0, z], dark, 32);
     cap.rotation.x = Math.PI / 2;
+    motorCaps.push(cap);
     for (let i = 0; i < 10; i++) {
       const a = (i * Math.PI) / 5;
       const b = cylinder(
@@ -296,28 +316,8 @@ export function createAutonomyHardware() {
       0.002,
     );
   tag(control, 'control', 'FRONT DRIVE · INVERTER', [1.5, 0.98, -0.5]);
-  const rack = box(control, [0.095, 0.095, 0.92], [0.96, 0.4, 0], metal, 0.025);
-  const rackMotor = cylinder(
-    control,
-    0.054,
-    0.054,
-    0.27,
-    [0.88, 0.43, -0.18],
-    mats.control,
-    24,
-  );
-  rackMotor.rotation.z = Math.PI / 2;
+  const steeringRig = createSteeringRig(control);
   for (const side of [-1, 1]) {
-    tube(
-      control,
-      [
-        [0.97, 0.4, side * 0.4],
-        [1.07, 0.37, side * 0.58],
-        [1.36, 0.36, side * 0.72],
-      ],
-      0.018,
-      metal,
-    );
     const axle = cylinder(
       control,
       0.022,
@@ -486,7 +486,9 @@ export function createAutonomyHardware() {
   return {
     group,
     picks,
-    anchor(id: SystemId) {
+    anchor(id: SystemId, detail: ControlDetail = 'mechanism') {
+      if (id === 'control' && detail === 'electronics')
+        return electronics.group.getWorldPosition(new T.Vector3());
       const m =
         modules[id === 'perception' || id === 'planning' ? 'compute' : id];
       if (id === 'control')
@@ -505,15 +507,22 @@ export function createAutonomyHardware() {
       id: SystemId,
       assembly: Assembly,
       delta: number,
+      pose?: { explode: number; lid: number },
+      steering?: SteeringSample,
+      detail: ControlDetail = 'mechanism',
     ) {
       group.visible = assembly !== 'assembled';
+      const electronicsOnly = id === 'control' && detail === 'electronics';
+      for (const m of Object.values(modules)) m.visible = !electronicsOnly;
       software.update(f, s, id);
-      explode = T.MathUtils.damp(
-        explode,
-        assembly === 'exploded' ? 1 : 0,
-        5,
-        delta,
+      electronics.update(
+        f.time,
+        steering,
+        id === 'control' && detail === 'electronics',
       );
+      explode =
+        pose?.explode ??
+        T.MathUtils.damp(explode, assembly === 'exploded' ? 1 : 0, 5, delta);
       for (const [key, m] of Object.entries(modules))
         m.position
           .copy(bases.get(m)!)
@@ -521,30 +530,43 @@ export function createAutonomyHardware() {
       const active = id === 'perception' || id === 'planning' ? 'compute' : id;
       for (const [key, m] of Object.entries(mats))
         m.emissiveIntensity = key === active ? 0.5 : 0.12;
-      lid.position.y = T.MathUtils.damp(
-        lid.position.y,
-        id === 'compute' ? 0.24 : assembly === 'exploded' ? 0.16 : 0,
-        5,
-        delta,
-      );
+      lid.position.y =
+        pose?.lid ??
+        T.MathUtils.damp(
+          lid.position.y,
+          id === 'compute' ? 0.24 : assembly === 'exploded' ? 0.16 : 0,
+          5,
+          delta,
+        );
       lid.visible = id !== 'perception' && id !== 'planning';
       field.visible = id === 'sensors';
       labels.forEach(({ id: key, sprite }) => {
-        sprite.visible = id === 'overview' || key === active;
+        sprite.visible = key === active && id !== 'control';
+        if (key === 'compute') sprite.scale.set(0.45, 0.0675, 1);
       });
       const telemetry = engineeringTelemetry(f, s);
       rotor.rotation.y = f.x / 0.382;
       casing.material = metal;
-      casing.visible = id !== 'control' || assembly !== 'exploded';
-      rack.position.z = telemetry.steering * 0.04;
+      casing.visible =
+        id !== 'power' && (id !== 'control' || assembly !== 'exploded');
+      motorCaps.forEach((cap) => {
+        cap.visible = id !== 'power';
+      });
+      steeringRig.update(
+        steering?.measured ?? telemetry.steering,
+        f.time,
+        id === 'control',
+        steering,
+      );
       mats.control.emissiveIntensity =
         active === 'control' ? 0.3 + telemetry.brake * 0.8 : 0.12;
       wireMeshes.forEach((w) => {
-        w.visible = assembly !== 'exploded';
+        w.visible = assembly !== 'exploded' && !electronicsOnly;
       });
       for (const link of links) {
         link.dots.forEach((dot, i) => {
           dot.visible =
+            !electronicsOnly &&
             assembly !== 'exploded' &&
             (id === 'overview' || link.kind === active || active === 'compute');
           dot.position.copy(

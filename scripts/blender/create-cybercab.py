@@ -121,7 +121,10 @@ for side in [-1,1]:
    x=lerp(x0,x1,i/n);cx=1.4 if front else -1.39;d=x-cx;r=.411
    base=.268 if front else .268+.164*smooth((-x-1.78)/.45)
    lower=max(base,.385+math.sqrt(max(0,r*r-d*d))) if abs(d)<r else base
-   if front:row=sample(hood,x);height=row[1];width=row[2]
+   if front:
+    row=sample(hood,x);blend_nose=smooth((x-1.82)/.425)
+    height=row[1]+.012*blend_nose
+    width=lerp(row[2],lateral(height,x),blend_nose)
    else:
     if x< -1.33:row=roof(x);height=row[1];width=row[2]
     else:
@@ -156,6 +159,15 @@ for side in [-1,1]:
  for i in range(72):
   for j in range(5):a=start+i*6+j;faces.append((a,a+1,a+7,a+6))
  mesh('body_fender_'+str(side),verts,faces,gold)
+ # The hood seam ends inside the headlamp. A convex shoulder continues to the
+ # outer fender instead of squeezing the whole corner into the hood's shut line.
+ def nose_shoulder(u,v):
+  x=lerp(1.82,2.245,u);row=sample(hood,x);blend_nose=smooth((x-1.82)/.425)
+  upper=row[1]+.012*blend_nose
+  width=lerp(row[2],lateral(upper,x),blend_nose)
+  z=lerp(row[2],width,v);y=row[1]+.012*blend_nose*smooth(v)
+  return [x-.15*(z/.82)**5*smooth((x-1.95)/.295),y,side*z]
+ grid('detail_front_shoulder_'+str(side),54,7,nose_shoulder,gold)
  # Wheel-well liners add depth instead of a razor-thin cut edge.
  for cx in [-1.39,1.4]:
   def arch(u,v,cx=cx):
@@ -169,9 +181,13 @@ for side in [-1,1]:
  grid('detail_rocker_'+str(side),48,8,rocker,trim)
  # Fine hood shut line / cowl.
  tube('detail_hood_edge_'+str(side),[[x-.15*(w/.82)**5*smooth((x-1.95)/.295),y+.002,side*w] for x,y,w,b in [cat(hood,i/80) for i in range(81)]],.002,trim)
+def nose_height(z):
+ if abs(z)<=.724:return .667+.009*(1-(z/.724)**2)
+ return .667+.012*smooth((abs(z)-.724)/(lateral(.679,2.245)-.724))
+
 def front(u,v):
- y=lerp(.268,.667,v);w=lerp(lateral(y,2.245),.724,smooth((y-(.667-.105))/.105))
- z=(u*2-1)*w;y+=.009*(1-(u*2-1)**2)*v**8
+ y=lerp(.268,.679,v);z=(u*2-1)*lateral(y,2.245)
+ y=lerp(.268,nose_height(z),v)
  return [2.245-.15*(abs(z)/.82)**5,y,z]
 def rear_width(y):return lerp(lateral(y,-2.23),.819,smooth((y-(.942-.105))/.105))
 def rear(u,v):
@@ -180,10 +196,10 @@ def rear(u,v):
  return [-2.23+.10*(abs(z)/.85)**5,y,z]
 grid('body_front',84,30,front,gold);grid('body_rear',84,30,rear,gold)
 def front_light(u,v):
- z=lerp(-.717,.717,u);h=.667+.009*(1-(z/.724)**2)-.018
+ z=lerp(-.842,.842,u);h=nose_height(z)-.018
  return [2.250-.15*(abs(z)/.82)**5,h+(v-.5)*.018,z]
 grid('detail_headlight',96,3,front_light,white,solid=.002)
-grid('detail_headlight_recess',96,3,lambda u,v:[front_light(u,v)[0]-.003,.667+.009*(1-(lerp(-.722,.722,u)/.724)**2)-.018+(v-.5)*.030,lerp(-.722,.722,u)],trim,solid=.002)
+grid('detail_headlight_recess',96,3,lambda u,v:[front_light(u,v)[0]-.003,nose_height(lerp(-.842,.842,u))-.018+(v-.5)*.030,lerp(-.842,.842,u)],trim,solid=.002)
 def rear_light(u,v):
  z=lerp(-.795,.795,u)
  return [-2.242+.10*(abs(z)/.85)**5,.879+(v-.5)*.018,z]

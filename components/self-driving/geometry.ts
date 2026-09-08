@@ -1,6 +1,8 @@
 import * as T from 'three';
 import { createRoadWheel, WHEEL_RADIUS } from './wheel';
 import { createCabinMaterials } from './cabin-materials';
+import { cybercabDoorRotation } from './door-motion';
+import { roadWheelAngle } from '@/lib/self-driving/steering';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 export const material = (color: string, metalness = 0, roughness = 0.7) =>
   new T.MeshStandardMaterial({ color, metalness, roughness });
@@ -396,7 +398,12 @@ export function createCybercab() {
     );
     l.rotation.z = Math.PI / 2;
   }
-  const wheels: { steer: T.Group; roll: T.Group; front: boolean }[] = [];
+  const wheels: {
+    steer: T.Group;
+    roll: T.Group;
+    front: boolean;
+    side: number;
+  }[] = [];
   const wheelCovers: T.Object3D[] = [];
   for (const x of [-1.39, 1.4])
     for (const side of [-1, 1]) {
@@ -408,7 +415,8 @@ export function createCybercab() {
       const wheel = createRoadWheel(side, gold);
       roll.add(wheel.group);
       wheelCovers.push(wheel.cover);
-      wheels.push({ steer, roll, front: x > 0 });
+      steer.name = (x > 0 ? 'front' : 'rear') + '_wheel_pivot_' + side;
+      wheels.push({ steer, roll, front: x > 0, side });
     }
   const wheelRoots = new Set(wheels.map((w) => w.steer));
   const bodyRoots = group.children.filter((o) => !wheelRoots.has(o as T.Group));
@@ -513,11 +521,10 @@ export function createCybercab() {
     update(distance: number, steering: number, opening: number) {
       for (const w of wheels) {
         w.roll.rotation.z = -distance / WHEEL_RADIUS;
-        w.steer.rotation.y = w.front ? -steering : 0;
+        w.steer.rotation.y = w.front ? -roadWheelAngle(steering, w.side) : 0;
       }
       for (const d of doors) {
-        d.hinge.rotation.x = -d.side * opening * 0.85;
-        d.hinge.rotation.z = -opening * 0.69;
+        d.hinge.quaternion.copy(cybercabDoorRotation(d.side, opening));
       }
       red.emissiveIntensity = 1.8;
       (cloneCache.get(red) as T.MeshStandardMaterial).emissiveIntensity = 1.8;

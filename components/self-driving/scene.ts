@@ -2,6 +2,11 @@ import * as T from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { createVehicleStudioEnvironment } from '@/components/engine/vehicle-studio';
 import { drawRecordingBrand } from '@/lib/brand';
+import type { TourPose } from '@/lib/self-driving/tour';
+import type { SteeringSample } from '@/lib/self-driving/steering';
+import type { ControlDetail } from '@/lib/self-driving/motor-driver';
+import { drawSteeringReadout } from './steering-readout';
+import { createPedestrian } from './pedestrian';
 import {
   laneAt,
   blockedByVan,
@@ -24,7 +29,9 @@ export interface Display {
   camera: CameraView;
   doors: boolean;
   night: boolean;
-  tourOrbit?: number;
+  tourPose?: TourPose;
+  steering?: SteeringSample;
+  controlDetail?: ControlDetail;
   engineering?: boolean;
   system?: SystemId;
   assembly?: Assembly;
@@ -271,43 +278,11 @@ export function createDrivingScene(
       const hub = cylinder(van, 0.19, 0.19, 0.21, [x, 0.34, z], curb, 20);
       hub.rotation.x = Math.PI / 2;
     }
-  const pedestrian = new T.Group();
+  const person = createPedestrian(() => dead);
+  const pedestrian = person.group;
   world.add(pedestrian);
-  const jacket = material('#dc9262', 0, 0.9),
-    pants = material('#2b3d47', 0, 0.95),
-    skin = material('#ba8564', 0, 0.85),
-    shoe = material('#b7bcb2', 0, 0.88);
-  const torso = new T.Mesh(new T.CapsuleGeometry(0.17, 0.36, 5, 12), jacket);
-  torso.position.y = 1.12;
-  torso.scale.z = 0.78;
-  pedestrian.add(torso);
-  const head = new T.Mesh(new T.SphereGeometry(0.12, 16, 12), skin);
-  head.position.set(0, 1.55, 0);
-  pedestrian.add(head);
-  const hair = new T.Mesh(
-    new T.SphereGeometry(0.122, 16, 8, 0, Math.PI * 2, 0, Math.PI * 0.55),
-    dark,
-  );
-  hair.position.copy(head.position);
-  pedestrian.add(hair);
-  const limbs: T.Group[] = [];
-  for (const side of [-1, 1]) {
-    const leg = new T.Group();
-    leg.position.set(side * 0.105, 0.91, 0);
-    pedestrian.add(leg);
-    cylinder(leg, 0.066, 0.045, 0.68, [0, -0.32, 0], pants, 10);
-    box(leg, [0.13, 0.1, 0.23], [0, -0.7, 0.04], shoe, 0.04);
-    limbs.push(leg);
-    const arm = new T.Group();
-    arm.position.set(side * 0.21, 1.31, 0);
-    pedestrian.add(arm);
-    cylinder(arm, 0.053, 0.045, 0.46, [0, -0.22, 0], jacket, 10);
-    const hand = new T.Mesh(new T.SphereGeometry(0.05, 10, 8), skin);
-    hand.position.y = -0.47;
-    arm.add(hand);
-    limbs.push(arm);
-  }
   const roadworks = new T.Group();
+  const coneOrange = material('#dc9262', 0, 0.9);
   world.add(roadworks);
   for (const [x, z] of [
     [1, 1.6],
@@ -318,7 +293,7 @@ export function createDrivingScene(
     [7, 1.6],
   ]) {
     box(roadworks, [0.46, 0.045, 0.46], [x, 0.03, z], dark, 0.02);
-    cylinder(roadworks, 0.045, 0.17, 0.52, [x, 0.3, z], jacket, 16);
+    cylinder(roadworks, 0.045, 0.17, 0.52, [x, 0.3, z], coneOrange, 16);
     cylinder(roadworks, 0.085, 0.11, 0.105, [x, 0.4, z], paint, 16);
   }
   box(
@@ -353,11 +328,7 @@ export function createDrivingScene(
     lights.push(m);
   }
   const car = createCybercab();
-  const detailReady = car
-    .loadDetailed(() => dead)
-    .catch(() => {
-      /* Keep the interactive fallback if the asset cannot load. */
-    });
+  const detailReady = Promise.all([car.loadDetailed(() => dead), person.ready]);
   scene.add(car.group);
   const hardware = createAutonomyHardware();
   scene.add(hardware.group);
@@ -371,6 +342,7 @@ export function createDrivingScene(
   const pointerUp = (e: PointerEvent) => {
     if (
       !lastDisplay?.engineering ||
+      lastDisplay.tourPose !== undefined ||
       lastDisplay.assembly === 'assembled' ||
       Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5
     )
@@ -381,9 +353,14 @@ export function createDrivingScene(
       (-(e.clientY - rect.top) / rect.height) * 2 + 1,
     );
     raycaster.setFromCamera(pointer, camera);
-    const hit = raycaster
-      .intersectObjects(hardware.picks, false)
-      .find((h) => h.object.visible);
+    const hit = raycaster.intersectObjects(hardware.picks, false).find((h) => {
+      let o: T.Object3D | null = h.object;
+      while (o) {
+        if (!o.visible) return false;
+        o = o.parent;
+      }
+      return true;
+    });
     if (hit) onSelect?.(hit.object.userData.system as SystemId);
   };
   renderer.domElement.addEventListener('pointerdown', pointerDown);
@@ -468,6 +445,17 @@ export function createDrivingScene(
   output.width = 1920;
   output.height = 1080;
   const out = output.getContext('2d')!;
+  const hud = document.createElement('canvas');
+  hud.setAttribute('aria-hidden', 'true');
+  Object.assign(hud.style, {
+    position: 'absolute',
+    inset: '0',
+    width: '100%',
+    height: '100%',
+    pointerEvents: 'none',
+  });
+  host.appendChild(hud);
+  const hudContext = hud.getContext('2d')!;
   function resize() {
     if (dead) return;
     const w = recording ? 1920 : Math.max(1, host.clientWidth),
@@ -476,6 +464,8 @@ export function createDrivingScene(
       recording ? 1 : Math.min(window.devicePixelRatio, 1.7),
     );
     renderer.setSize(w, h, false);
+    hud.width = w;
+    hud.height = h;
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     focusKey = '';
@@ -499,6 +489,12 @@ export function createDrivingScene(
     sun.intensity = d.night ? 0.7 : 3.6;
     renderer.toneMappingExposure = d.night ? 0.9 : 1.25;
     car.group.position.set(f.x, 0, f.z);
+    car.group.visible = !(
+      engineering &&
+      id === 'control' &&
+      d.controlDetail === 'electronics' &&
+      assembly !== 'assembled'
+    );
     const yaw = Math.atan2(
       laneAt(f.x + 0.1, d.settings.scenario) -
         laneAt(f.x - 0.1, d.settings.scenario),
@@ -506,30 +502,40 @@ export function createDrivingScene(
     );
     car.group.rotation.y = engineering ? 0 : -yaw;
     hardware.group.position.set(f.x, 0, f.z);
-    hardware.update(d.frame, d.settings, id, assembly, delta);
+    hardware.update(
+      d.frame,
+      d.settings,
+      id,
+      assembly,
+      delta,
+      d.tourPose,
+      d.steering,
+      d.controlDetail,
+    );
     hardware.group.visible = engineering && assembly !== 'assembled';
-    revealAmount = T.MathUtils.damp(
-      revealAmount,
-      engineering && assembly !== 'assembled' ? 1 : 0,
-      5,
-      delta,
-    );
-    explodeAmount = T.MathUtils.damp(
-      explodeAmount,
-      engineering && assembly === 'exploded' ? 1 : 0,
-      5,
-      delta,
-    );
+    revealAmount =
+      d.tourPose?.reveal ??
+      T.MathUtils.damp(
+        revealAmount,
+        engineering && assembly !== 'assembled' ? 1 : 0,
+        5,
+        delta,
+      );
+    explodeAmount =
+      d.tourPose?.explode ??
+      T.MathUtils.damp(
+        explodeAmount,
+        engineering && assembly === 'exploded' ? 1 : 0,
+        5,
+        delta,
+      );
     car.reveal(revealAmount, explodeAmount);
-    openAmount = T.MathUtils.damp(
-      openAmount,
-      d.doors && inspect ? 1 : 0,
-      4,
-      delta,
-    );
+    openAmount =
+      d.tourPose?.doors ??
+      T.MathUtils.damp(openAmount, d.doors && inspect ? 1 : 0, 4, delta);
     car.update(
-      d.frame.x + 17,
-      steeringAt(d.frame.x, d.settings.scenario),
+      d.steering ? 0 : d.frame.x + 17,
+      d.steering?.measured ?? steeringAt(d.frame.x, d.settings.scenario),
       openAmount,
     );
     car.brake(f.acceleration < -0.3 || (f.yielding && f.speed < 0.2));
@@ -538,12 +544,7 @@ export function createDrivingScene(
     roadworks.visible = d.settings.scenario === 'roadworks';
     trafficLight.visible = d.settings.scenario === 'signal';
     pedestrian.position.set(5, 0, f.pedestrianZ);
-    const moving = f.time > d.settings.pedestrianDelay && f.pedestrianZ < 6.2;
-    limbs.forEach((l, i) => {
-      l.rotation.x = moving
-        ? Math.sin(f.time * 7 + (i > 1 ? Math.PI : 0)) * (i % 2 ? 0.4 : 0.55)
-        : 0;
-    });
+    person.update(f.time, d.settings.pedestrianDelay);
     lights.forEach((m, i) => {
       const lit = i === (f.signal === 'red' ? 0 : 2);
       m.emissiveIntensity = lit ? 4 : 0;
@@ -610,103 +611,145 @@ export function createDrivingScene(
     path.computeBoundingSphere();
     stop.visible = !inspect && d.view === 'planning' && f.yielding;
     stop.position.x = d.settings.scenario === 'signal' ? 2 : 3.4;
-    target.set(f.x + (inspect ? 0 : 3), inspect ? 0.7 : 0.55, f.z);
-    const nextFocus = engineering
-      ? id + '-' + assembly
-      : d.camera === 'cabin'
-        ? 'cabin'
-        : 'road';
-    if (d.camera === 'cabin' && !engineering)
-      target.set(f.x - 0.22, 0.84, f.z - 0.08);
-    if (focusKey !== nextFocus) {
-      focusKey = nextFocus;
-      focusing = 1.2;
-      currentMode = null;
-    }
-    if (currentMode !== d.camera) {
-      currentMode = d.camera;
-      camera.fov = d.camera === 'cabin' && !engineering ? 60 : 42;
-      camera.updateProjectionMatrix();
+    if (!d.tourPose) {
+      target.set(f.x + (inspect ? 0 : 3), inspect ? 0.7 : 0.55, f.z);
+      const nextFocus = engineering
+        ? id + '-' + assembly + '-' + d.controlDetail
+        : d.camera === 'cabin'
+          ? 'cabin'
+          : 'road';
       if (d.camera === 'cabin' && !engineering)
-        cameraGoal.set(f.x + 0.18, 1.19, f.z + 1.52);
-      else if (inspect) cameraGoal.set(f.x + 5.6, 3.4, f.z + 6.2);
-      else if (d.camera === 'overhead') cameraGoal.set(f.x + 1, 22, f.z + 0.1);
-      else if (d.camera === 'bumper') cameraGoal.set(f.x + 1.62, 1.08, f.z);
-      else cameraGoal.set(f.x + 11, 8.5, f.z + 14);
-      if (!engineering) {
-        camera.position.copy(cameraGoal);
-        controls.target.copy(target);
+        target.set(f.x - 0.22, 0.84, f.z - 0.08);
+      if (focusKey !== nextFocus) {
+        focusKey = nextFocus;
+        focusing = 1.2;
+        currentMode = null;
       }
-    } else if (!inspect && d.camera !== 'bumper') {
-      const dx = f.x - lastX,
-        dz = f.z - lastZ;
-      camera.position.x += dx;
-      camera.position.z += dz;
-      controls.target.x += dx;
-      controls.target.z += dz;
-    }
-    if (d.camera === 'bumper' && !engineering) {
-      camera.position.set(f.x + 1.62, 1.08, f.z);
-      controls.target.set(f.x + 16, 1.08, f.z);
-      controls.enabled = false;
-    } else {
-      controls.enabled = d.tourOrbit === undefined;
-      if (d.tourOrbit !== undefined && !engineering) {
-        const angle =
-          (inspect ? 0.65 : 0.65) + d.tourOrbit * (inspect ? 1.4 : 0.15);
-        const r = inspect ? 7.5 : d.camera === 'overhead' ? 1 : 16;
-        cameraGoal.set(
-          f.x + Math.cos(angle) * r,
-          inspect ? 3.4 : d.camera === 'overhead' ? 22 : 8.8,
-          f.z + Math.sin(angle) * r,
+      if (currentMode !== d.camera) {
+        currentMode = d.camera;
+        camera.fov = d.camera === 'cabin' && !engineering ? 60 : 42;
+        camera.updateProjectionMatrix();
+        if (d.camera === 'cabin' && !engineering)
+          cameraGoal.set(f.x + 0.18, 1.19, f.z + 1.52);
+        else if (inspect) cameraGoal.set(f.x + 5.6, 3.4, f.z + 6.2);
+        else if (d.camera === 'overhead')
+          cameraGoal.set(f.x + 1, 22, f.z + 0.1);
+        else if (d.camera === 'bumper') cameraGoal.set(f.x + 1.62, 1.08, f.z);
+        else cameraGoal.set(f.x + 11, 8.5, f.z + 14);
+        if (!engineering) {
+          camera.position.copy(cameraGoal);
+          controls.target.copy(target);
+        }
+      } else if (!inspect && d.camera !== 'bumper') {
+        const dx = f.x - lastX,
+          dz = f.z - lastZ;
+        camera.position.x += dx;
+        camera.position.z += dz;
+        controls.target.x += dx;
+        controls.target.z += dz;
+      }
+      if (d.camera === 'bumper' && !engineering) {
+        camera.position.set(f.x + 1.62, 1.08, f.z);
+        controls.target.set(f.x + 16, 1.08, f.z);
+        controls.enabled = false;
+      } else {
+        controls.enabled = true;
+      }
+      if (engineering) {
+        const wide =
+          id === 'overview' || id === 'power' || assembly === 'assembled';
+        target.copy(
+          wide
+            ? new T.Vector3(0, assembly === 'exploded' ? 0.85 : 0.6, 0)
+            : hardware.anchor(id, d.controlDetail),
         );
-        camera.position.lerp(cameraGoal, 0.065);
-        controls.target.lerp(target, 0.065);
+        const baseDistance = wide
+          ? assembly === 'exploded'
+            ? 7.5
+            : 6.8
+          : id === 'compute'
+            ? 2.25
+            : id === 'control'
+              ? d.controlDetail === 'electronics'
+                ? 2.65
+                : 3.1
+              : 4.4;
+        const r =
+          baseDistance * Math.max(1, Math.min(1.7, 1.15 / camera.aspect));
+        const a =
+          id === 'control'
+            ? d.controlDetail === 'electronics'
+              ? 1.28
+              : 2.12
+            : 0.74;
+        cameraOffset.set(Math.cos(a) * r, r * 0.55, Math.sin(a) * r);
+        if (focusing > 0) {
+          cameraGoal.copy(target).add(cameraOffset);
+          camera.position.lerp(cameraGoal, Math.min(1, delta * 5));
+          controls.target.lerp(target, Math.min(1, delta * 5));
+          focusing -= delta;
+        }
+        controls.minDistance = id === 'compute' ? 1 : 2;
+        controls.maxDistance = 16;
+      } else {
+        controls.minDistance = d.camera === 'cabin' ? 0.35 : 3.8;
+        controls.maxDistance = d.camera === 'cabin' ? 5 : 40;
       }
-    }
-    if (engineering) {
-      const wide =
-        id === 'overview' || id === 'power' || assembly === 'assembled';
-      target.copy(
-        wide
-          ? new T.Vector3(0, assembly === 'exploded' ? 0.85 : 0.6, 0)
-          : hardware.anchor(id),
-      );
-      const baseDistance = wide
-        ? assembly === 'exploded'
-          ? 7.5
-          : 6.8
-        : id === 'compute'
-          ? 2.25
-          : id === 'control'
-            ? 4.2
-            : 4.4;
-      const r = baseDistance * Math.max(1, Math.min(1.7, 1.15 / camera.aspect));
-      const a = 0.74 + (d.tourOrbit ?? 0) * 0.8;
-      cameraOffset.set(Math.cos(a) * r, r * 0.55, Math.sin(a) * r);
-      if (focusing > 0 || d.tourOrbit !== undefined) {
-        cameraGoal.copy(target).add(cameraOffset);
-        camera.position.lerp(cameraGoal, Math.min(1, delta * 5));
-        controls.target.lerp(target, Math.min(1, delta * 5));
-        focusing -= delta;
-      }
-      controls.minDistance = id === 'compute' ? 1 : 2;
-      controls.maxDistance = 16;
+      controls.update();
     } else {
-      controls.minDistance = d.camera === 'cabin' ? 0.35 : 3.8;
-      controls.maxDistance = d.camera === 'cabin' ? 5 : 40;
+      // Every shot is a pure sample of tour time, including seeks and the first export frame.
+      const p = d.tourPose;
+      controls.enabled = false;
+      target.set(...p.target);
+      if (p.anchor === 'system')
+        target.add(hardware.anchor(id, d.controlDetail));
+      else target.add(new T.Vector3(f.x, 0, f.z));
+      const r = p.distance * Math.max(1, Math.min(1.7, 1.15 / camera.aspect));
+      camera.position
+        .copy(target)
+        .add(
+          new T.Vector3(
+            Math.cos(p.yaw) * Math.cos(p.elevation) * r,
+            Math.sin(p.elevation) * r,
+            Math.sin(p.yaw) * Math.cos(p.elevation) * r,
+          ),
+        );
+      camera.fov = p.fov;
+      camera.updateProjectionMatrix();
+      camera.lookAt(target);
+      controls.target.copy(target);
+      currentMode = null;
+      focusKey = '';
     }
     lastX = f.x;
     lastZ = f.z;
     sun.target.position.set(f.x, 0, 0);
     sun.position.set(f.x - 12, 25, 16);
-    controls.update();
     renderer.render(scene, camera);
+    hudContext.clearRect(0, 0, hud.width, hud.height);
+    if (d.steering)
+      drawSteeringReadout(
+        hudContext,
+        d.steering,
+        hud.width,
+        hud.height,
+        d.controlDetail,
+        d.frame.time,
+      );
     if (recording) {
       out.fillStyle = '#10191f';
       out.fillRect(0, 0, 1920, 1080);
       out.drawImage(renderer.domElement, 0, 0, 1920, 1080);
       drawRecordingBrand(out);
+      if (d.steering)
+        drawSteeringReadout(
+          out,
+          d.steering,
+          1920,
+          1080,
+          d.controlDetail,
+          d.frame.time,
+        );
       out.save();
       out.fillStyle = '#d5ef78';
       out.font = '500 19px Arial';
@@ -722,9 +765,10 @@ export function createDrivingScene(
       currentMode = null;
       focusKey = '';
     },
-    startCapture() {
+    startCapture(firstFrame: Display) {
       recording = true;
       resize();
+      update(firstFrame, 0);
       return output.captureStream(30);
     },
     endCapture() {
@@ -737,6 +781,7 @@ export function createDrivingScene(
       renderer.domElement.removeEventListener('pointerdown', pointerDown);
       renderer.domElement.removeEventListener('pointerup', pointerUp);
       controls.dispose();
+      person.dispose();
       const geometries = new Set<T.BufferGeometry>(),
         materials = new Set<T.Material>();
       scene.traverse((o) => {
@@ -762,6 +807,7 @@ export function createDrivingScene(
       sun.shadow.map?.dispose();
       renderer.dispose();
       renderer.domElement.remove();
+      hud.remove();
     },
   };
 }

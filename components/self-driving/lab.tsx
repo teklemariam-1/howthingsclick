@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -37,6 +37,9 @@ import {
 } from '@/lib/self-driving/simulation';
 import { TOUR_DURATION, TOUR, tourAt } from '@/lib/self-driving/tour';
 import type { DrivingScene } from './scene';
+import { PlaybackClock } from '@/lib/self-driving/playback';
+import { steeringExperimentAt } from '@/lib/self-driving/steering';
+import type { ControlDetail } from '@/lib/self-driving/motor-driver';
 import EngineeringPanel, { EngineeringSteps } from './engineering-panel';
 import {
   systemInfo,
@@ -103,7 +106,9 @@ export default function SelfDrivingLab() {
     [time, setTime] = useState(0),
     [rate, setRate] = useState(1),
     [doors, setDoors] = useState(false),
-    [night, setNight] = useState(false);
+    [night, setNight] = useState(false),
+    [steeringAmplitude, setSteeringAmplitude] = useState(18),
+    [controlDetail, setControlDetail] = useState<ControlDetail>('mechanism');
   const [ready, setReady] = useState(false),
     [error, setError] = useState(''),
     [notice, setNotice] = useState(''),
@@ -130,7 +135,7 @@ export default function SelfDrivingLab() {
     [],
   );
   const [frame, setFrame] = useState(() => frames[0]);
-  const clock = useRef({ time: 0, playing: false, tour: false, rate: 1 });
+  const clock = useRef(new PlaybackClock());
   const state = useRef({
     settings,
     view,
@@ -141,7 +146,28 @@ export default function SelfDrivingLab() {
     engineering,
     system,
     assembly,
+    steeringAmplitude,
+    controlDetail,
   });
+  const setPlayback = useCallback((active: boolean) => {
+    clock.current.setPlaying(active, performance.now());
+    setPlaying(active);
+    if (media.current?.state === 'recording' && !active) media.current.pause();
+    else if (media.current?.state === 'paused' && active)
+      media.current.resume();
+    if (clock.current.tour) voice.current?.sync(clock.current.time, active);
+    else voice.current?.pause();
+  }, []);
+  const seek = useCallback((t: number) => {
+    clock.current.seek(
+      t,
+      performance.now(),
+      clock.current.tour ? TOUR_DURATION : DURATION,
+    );
+    setTime(clock.current.time);
+    if (clock.current.tour)
+      voice.current?.sync(clock.current.time, clock.current.playing);
+  }, []);
   useEffect(() => {
     state.current = {
       settings,
@@ -153,6 +179,8 @@ export default function SelfDrivingLab() {
       engineering,
       system,
       assembly,
+      steeringAmplitude,
+      controlDetail,
     };
   }, [
     settings,
@@ -164,32 +192,41 @@ export default function SelfDrivingLab() {
     engineering,
     system,
     assembly,
+    steeringAmplitude,
+    controlDetail,
   ]);
   useEffect(() => {
-    clock.current.playing = playing;
-    clock.current.tour = tour;
     clock.current.rate = rate;
-    if (media.current?.state === 'recording' && !playing) media.current.pause();
-    else if (media.current?.state === 'paused' && playing)
-      media.current.resume();
-    if (!playing) voice.current?.pause();
-  }, [playing, tour, rate]);
+  }, [rate]);
   useEffect(() => {
     mounted.current = true;
     let cancelled = false,
       raf = 0,
-      previous = 0,
       lastUi = 0;
     import('./scene')
       .then(({ createDrivingScene }) => {
         if (cancelled || !host.current) return;
         try {
           api.current = createDrivingScene(host.current, (id) => {
-            if (!clock.current.tour) setSystem(id);
+            if (!clock.current.tour) {
+              setSystem(id);
+              if (id === 'control') {
+                setAssembly('cutaway');
+                seek(0);
+                setPlayback(true);
+              }
+            }
           });
-          void api.current.ready.then(() => {
-            if (!cancelled) setReady(true);
-          });
+          void api.current.ready
+            .then(() => {
+              if (!cancelled) setReady(true);
+            })
+            .catch(() => {
+              if (!cancelled)
+                setError(
+                  'A detailed 3D asset could not load. Reload the page before recording.',
+                );
+            });
         } catch (e) {
           setError(
             'The 3D scene could not start. Try a browser with WebGL enabled.',
@@ -199,13 +236,10 @@ export default function SelfDrivingLab() {
         }
         function animate(now: number) {
           if (cancelled) return;
-          const dt = previous ? Math.min((now - previous) / 1000, 0.08) : 0;
-          previous = now;
           const c = clock.current,
             s = state.current,
             max = c.tour ? TOUR_DURATION : DURATION;
-          if (c.playing && !document.hidden)
-            c.time = Math.min(max, c.time + dt * (c.tour ? 1 : c.rate));
+          const dt = c.advance(now, max, !document.hidden);
           const ts = c.tour ? tourAt(c.time) : null,
             shown = ts
               ? frameAt(tours[ts.settings.scenario], ts.time)
@@ -217,8 +251,14 @@ export default function SelfDrivingLab() {
               view: ts?.view ?? s.view,
               camera: ts?.camera ?? s.camera,
               doors: ts?.doors ?? s.doors,
-              night: s.night,
-              tourOrbit: ts?.orbit,
+              night: ts ? false : s.night,
+              tourPose: ts?.pose,
+              controlDetail: ts?.controlDetail ?? s.controlDetail,
+              steering: ts
+                ? ts.steering
+                : s.engineering && s.system === 'control'
+                  ? steeringExperimentAt(c.time, s.steeringAmplitude)
+                  : undefined,
               engineering: ts?.engineering ?? s.engineering,
               system: ts?.system ?? s.system,
               assembly: ts?.assembly ?? s.assembly,
@@ -233,7 +273,7 @@ export default function SelfDrivingLab() {
             lastUi = now;
           }
           if (c.playing && c.time >= max) {
-            c.playing = false;
+            c.setPlaying(false, now);
             setPlaying(false);
             voice.current?.pause();
             if (media.current && media.current.state !== 'inactive')
@@ -248,9 +288,15 @@ export default function SelfDrivingLab() {
       );
     const hide = () => {
       if (document.hidden) {
-        clock.current.playing = false;
+        clock.current.setPlaying(false, performance.now());
         setPlaying(false);
         voice.current?.pause();
+        if (media.current?.state === 'recording') {
+          media.current.pause();
+          setNotice(
+            'Recording paused because the tab was hidden. Press Play to resume the video and narration together.',
+          );
+        }
       }
     };
     document.addEventListener('visibilitychange', hide);
@@ -271,15 +317,12 @@ export default function SelfDrivingLab() {
       api.current = null;
       if (downloadUrl.current) URL.revokeObjectURL(downloadUrl.current);
     };
-  }, [tours]);
-  function seek(t: number) {
-    clock.current.time = t;
-    setTime(t);
-  }
+  }, [tours, seek, setPlayback]);
   function changeSettings(patch: Partial<Settings>) {
     if (recording) return;
     setTour(false);
     clock.current.tour = false;
+    voice.current?.pause();
     setSettings((s) => ({ ...s, ...patch }));
     seek(0);
     api.current?.resetCamera();
@@ -288,31 +331,31 @@ export default function SelfDrivingLab() {
     if (recording) return;
     setTour(false);
     clock.current.tour = false;
-    setPlaying(false);
-    voice.current?.pause();
+    setPlayback(false);
     seek(0);
     api.current?.resetCamera();
   }
-  function play() {
-    if (time >= (tour ? TOUR_DURATION : DURATION)) seek(0);
-    if (!playing) void voice.current?.resume();
-    setPlaying((p) => !p);
+  async function play() {
+    if (clock.current.time >= (clock.current.tour ? TOUR_DURATION : DURATION))
+      seek(0);
+    if (!clock.current.playing) await voice.current?.resume();
+    setPlayback(!clock.current.playing);
   }
   function startTour() {
     if (!ready) return;
-    seek(0);
     clock.current.tour = true;
+    seek(0);
     setTour(true);
+    clock.current.rate = 1;
     setRate(1);
-    setPlaying(true);
+    setPlayback(true);
     void voice.current?.resume();
     api.current?.resetCamera();
   }
   function stopRecording() {
     const r = media.current;
     if (r && r.state !== 'inactive') r.stop();
-    setPlaying(false);
-    voice.current?.pause();
+    setPlayback(false);
   }
   async function record() {
     if (!api.current || typeof MediaRecorder === 'undefined') {
@@ -324,7 +367,28 @@ export default function SelfDrivingLab() {
     let stream: MediaStream | null = null;
     try {
       await voice.current?.resume();
-      stream = api.current.startCapture();
+      setPlayback(false);
+      // Stage the opening pose while the encoder starts. The normal RAF must
+      // not overwrite the first captured frame with the previous manual view.
+      clock.current.tour = true;
+      clock.current.rate = 1;
+      setTour(true);
+      setRate(1);
+      seek(0);
+      const first = tourAt(0);
+      const firstDisplay = {
+        frame: frameAt(tours[first.settings.scenario], first.time),
+        settings: first.settings,
+        view: first.view,
+        camera: first.camera,
+        doors: first.doors,
+        night: false,
+        tourPose: first.pose,
+        engineering: first.engineering,
+        system: first.system,
+        assembly: first.assembly,
+      };
+      stream = api.current.startCapture(firstDisplay);
       if (voice.current && voiceName)
         stream.addTrack(voice.current.recordingTrack());
       const mime = [
@@ -352,7 +416,7 @@ export default function SelfDrivingLab() {
         media.current = null;
         if (!mounted.current) return;
         setRecording(false);
-        setPlaying(false);
+        setPlayback(false);
         if (!chunks.length) {
           setNotice('No video frames were captured. Please try again.');
           return;
@@ -368,20 +432,34 @@ export default function SelfDrivingLab() {
             (mime.startsWith('video/mp4') ? 'mp4' : 'webm'),
         });
         setNotice(
-          'Recording ready. Save the video below. The export has branding and no narration captions.',
+          (clock.current.time >= TOUR_DURATION
+            ? 'Full tour ready.'
+            : 'Preview clip ready (' + timeText(clock.current.time) + ').') +
+            ' Save the video below. The export has branding and no narration captions.',
         );
       };
       media.current = recorder;
+      recorder.onstart = () => {
+        startTour();
+        api.current?.update(firstDisplay, 0);
+      };
       recorder.start(1000);
       setRecording(true);
       setDownload(null);
       setNotice(
-        'Recording the four-minute tour. Keep this tab visible; playback pauses when it is hidden.',
+        'Recording the 4:30 tour. Keep this tab visible. Pause stops the video and narration together.',
       );
-      startTour();
     } catch (e) {
+      const failed = media.current;
+      if (failed && failed.state !== 'inactive') {
+        failed.onstop = null;
+        failed.stop();
+      }
+      media.current = null;
       stream?.getTracks().forEach((t) => t.stop());
       api.current?.endCapture();
+      setRecording(false);
+      setPlayback(false);
       setNotice(
         'Recording could not start in this browser. Try a desktop Chromium browser.',
       );
@@ -399,7 +477,12 @@ export default function SelfDrivingLab() {
       setNotice(
         'Narration loaded (' +
           timeText(duration) +
-          '). It will play only when you start the tour.',
+          '). It will play only when you start the tour.' +
+          (Math.abs(duration - TOUR_DURATION) > 1
+            ? ' This tour is ' +
+              timeText(TOUR_DURATION) +
+              '. Use the timed script to place the chapter readings; the audio will not be stretched automatically.'
+            : ''),
       );
     } catch {
       setNotice('This audio file could not be read. Try MP3 or WAV.');
@@ -449,7 +532,7 @@ export default function SelfDrivingLab() {
         >
           <Play size={16} />
           {tour ? 'Back to exploring' : 'Take the guided tour'}
-          <small>4 min</small>
+          <small>{timeText(TOUR_DURATION)}</small>
         </button>
       </div>
       <main className="sd-layout">
@@ -486,6 +569,10 @@ export default function SelfDrivingLab() {
                 if (tour) leaveTour();
                 setSystem(id);
                 setAssembly('cutaway');
+                if (id === 'control') {
+                  seek(0);
+                  setPlayback(true);
+                }
               }}
             />
           )}
@@ -546,7 +633,7 @@ export default function SelfDrivingLab() {
                   onClick={() => {
                     setEngineering(false);
                     setCamera('cabin');
-                    setPlaying(false);
+                    setPlayback(false);
                     setDoors(true);
                   }}
                 >
@@ -576,7 +663,14 @@ export default function SelfDrivingLab() {
                   <Maximize2 size={16} />
                 </button>
               </div>
-              <div className="sd-telemetry">
+              <div
+                className="sd-telemetry"
+                style={
+                  shownEngineering && shownSystem === 'control'
+                    ? { display: 'none' }
+                    : undefined
+                }
+              >
                 <strong>
                   {Math.round(frame.speed * 3.6)}
                   <small>km/h</small>
@@ -587,8 +681,14 @@ export default function SelfDrivingLab() {
                 </span>
               </div>
               <div className="sd-orbit-hint">
-                {shownEngineering ? 'Click hardware to inspect · ' : ''}Drag to
-                orbit · Scroll to zoom
+                {tour ? (
+                  'Guided camera · Pause or select a chapter to inspect'
+                ) : (
+                  <>
+                    {shownEngineering ? 'Click hardware to inspect · ' : ''}Drag
+                    to orbit · Scroll to zoom
+                  </>
+                )}
               </div>
             </div>
             {shownEngineering ? (
@@ -596,8 +696,10 @@ export default function SelfDrivingLab() {
                 <span style={{ background: activeSystem.color }} />
                 <p>
                   <strong>{activeSystem.title}</strong>
-                  {activeSystem.input} → {activeSystem.output}. Press play to
-                  follow the live scenario through the hardware.
+                  {activeSystem.input} → {activeSystem.output}.{' '}
+                  {shownSystem === 'control'
+                    ? 'Watch the stationary steering bench correct an angle error.'
+                    : 'Press play to follow the live scenario through the hardware.'}
                 </p>
               </div>
             ) : (
@@ -693,6 +795,27 @@ export default function SelfDrivingLab() {
               settings={settings}
               assembly={assembly}
               onAssembly={setAssembly}
+              steering={
+                system === 'control'
+                  ? steeringExperimentAt(time, steeringAmplitude)
+                  : undefined
+              }
+              steeringAmplitude={steeringAmplitude}
+              controlDetail={controlDetail}
+              onControlDetail={(detail) => {
+                setControlDetail(detail);
+                seek(0);
+                setPlayback(true);
+              }}
+              onSteeringChange={(amplitude) => {
+                setSteeringAmplitude(amplitude);
+                seek(0);
+                setPlayback(true);
+              }}
+              onReplaySteering={() => {
+                seek(0);
+                setPlayback(true);
+              }}
               onSettings={changeSettings}
               onRoad={() => {
                 setEngineering(false);
@@ -790,7 +913,8 @@ export default function SelfDrivingLab() {
                     aria-pressed={camera === id}
                     onClick={() => {
                       setCamera(id);
-                      if (id === 'vehicle' || id === 'cabin') setPlaying(false);
+                      if (id === 'vehicle' || id === 'cabin')
+                        setPlayback(false);
                       if (id === 'cabin') setDoors(true);
                     }}
                   >
@@ -817,7 +941,14 @@ export default function SelfDrivingLab() {
               </div>
             </>
           )}
-          <div className="sd-decision">
+          <div
+            className="sd-decision"
+            style={
+              shownEngineering && shownSystem === 'control'
+                ? { display: 'none' }
+                : undefined
+            }
+          >
             <span className="sd-decision-label">THE CURRENT DECISION</span>
             <h3>{frame.phase}</h3>
             <p>{frame.reason}</p>
@@ -831,9 +962,9 @@ export default function SelfDrivingLab() {
         </summary>
         <div className="sd-studio-inner">
           <p>
-            Record the same four-minute tour for YouTube. The export includes
-            the channel logo and website, with no narration captions. Audio
-            stays off until you start the tour.
+            Record the same 4:30 tour for YouTube. The export includes the
+            channel logo and website, with no narration captions. Audio stays
+            off until you start the tour.
           </p>
           <div className="sd-studio-actions">
             <label className="sd-file">
@@ -868,7 +999,13 @@ export default function SelfDrivingLab() {
               {recording ? 'Stop and save' : 'Record tour'}
             </button>
             <PageLink href="/tours/self-driving-narration.txt" download>
-              <Download size={16} /> Narration script
+              <Download size={16} /> Timed narration
+            </PageLink>
+            <PageLink href="/tours/self-driving-voice-only.txt" download>
+              <Download size={16} /> Voice-only text
+            </PageLink>
+            <PageLink href="/tours/self-driving-production.md" download>
+              <Download size={16} /> YouTube recording guide
             </PageLink>
             {download && (
               <a
@@ -880,7 +1017,29 @@ export default function SelfDrivingLab() {
               </a>
             )}
           </div>
+          {recording && (
+            <output className="sd-notice">
+              {playing ? 'Recording' : 'Recording paused'} · {timeText(time)} /
+              {timeText(TOUR_DURATION)}
+            </output>
+          )}
           {notice && <output className="sd-notice">{notice}</output>}
+          {download && (
+            // User requested caption-free exports; the timed narration transcript is linked above.
+            // oxlint-disable-next-line jsx-a11y/media-has-caption
+            <video
+              controls
+              preload="metadata"
+              src={download.url}
+              aria-label="Recorded self-driving tour preview"
+              style={{
+                width: '100%',
+                maxWidth: 960,
+                marginTop: 16,
+                borderRadius: 12,
+              }}
+            />
+          )}
         </div>
       </details>
       <footer className="sd-footer">

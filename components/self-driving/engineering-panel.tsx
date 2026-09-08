@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import type { SteeringSample } from '@/lib/self-driving/steering';
+import type { ControlDetail } from '@/lib/self-driving/motor-driver';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import {
@@ -179,6 +181,12 @@ export default function EngineeringPanel({
   onAssembly,
   onSettings,
   onRoad,
+  steering,
+  steeringAmplitude,
+  onSteeringChange,
+  onReplaySteering,
+  controlDetail,
+  onControlDetail,
 }: {
   system: SystemId;
   frame: Frame;
@@ -187,6 +195,12 @@ export default function EngineeringPanel({
   onAssembly: (v: Assembly) => void;
   onSettings: (v: Partial<Settings>) => void;
   onRoad: () => void;
+  steering?: SteeringSample;
+  steeringAmplitude: number;
+  onSteeringChange: (v: number) => void;
+  onReplaySteering: () => void;
+  controlDetail: ControlDetail;
+  onControlDetail: (v: ControlDetail) => void;
 }) {
   const info = systemInfo(system),
     t = engineeringTelemetry(frame, settings);
@@ -287,7 +301,7 @@ export default function EngineeringPanel({
           </p>
         </>
       )}
-      {(system === 'control' || system === 'overview') && (
+      {system === 'overview' && (
         <>
           <dl className="sd-engineering-metrics">
             <div>
@@ -324,6 +338,90 @@ export default function EngineeringPanel({
             target speed − measured speed → acceleration
           </p>
         </>
+      )}
+      {system === 'control' && steering && (
+        <div className="sd-experiment">
+          <div className="sd-assembly" aria-label="Steering detail">
+            <button
+              aria-pressed={controlDetail === 'mechanism'}
+              onClick={() => onControlDetail('mechanism')}
+            >
+              Rack & wheels
+            </button>
+            <button
+              aria-pressed={controlDetail === 'electronics'}
+              onClick={() => onControlDetail('electronics')}
+            >
+              Controller & transistors
+            </button>
+          </div>
+          <h3>From a decision to wheel movement</h3>
+          {controlDetail === 'electronics' && (
+            <div className="sd-power-chain">
+              <b>Small command → controlled motor power</b>
+              <span>Driving computer → steering ECU → gate driver</span>
+              <span>
+                Battery → six switching transistors → three motor windings
+              </span>
+              <span>Position + current feedback → controller</span>
+              <small>
+                Switching is slowed down. PWM helps regulate current; torque
+                also depends on current, rotor position and load. This is a
+                typical brushless-motor architecture, not a Cybercab circuit
+                diagram.
+              </small>
+            </div>
+          )}
+          <ol className="sd-control-chain">
+            <li>
+              <strong>Trajectory → target.</strong> The planned path and vehicle
+              state become a requested wheel angle.
+            </li>
+            <li>
+              <strong>Target − measurement → command.</strong> The controller
+              compares the requested angle with the sensed angle.
+            </li>
+            <li>
+              <strong>Electric actuator → rack → tie rods.</strong> The actuator
+              moves the rack; the linkage turns the wheel knuckles.
+            </li>
+            <li>
+              <strong>Measurement → correction.</strong> Angle and motion
+              feedback return to the controller. Watch it recover after the
+              disturbance.
+            </li>
+          </ol>
+          <Knob
+            label="Requested turn"
+            value={steeringAmplitude}
+            min={5}
+            max={25}
+            unit="°"
+            onChange={onSteeringChange}
+          />
+          <dl className="sd-engineering-metrics">
+            <div>
+              <dt>Requested wheel angle</dt>
+              <dd>{((steering.target * 180) / Math.PI).toFixed(1)}°</dd>
+            </div>
+            <div>
+              <dt>Measured wheel angle</dt>
+              <dd>{((steering.measured * 180) / Math.PI).toFixed(1)}°</dd>
+            </div>
+            <div>
+              <dt>Remaining error</dt>
+              <dd>{((steering.error * 180) / Math.PI).toFixed(2)}°</dd>
+            </div>
+          </dl>
+          <button className="sd-primary" onClick={onReplaySteering}>
+            Replay the correction
+          </button>
+          <p className="sd-small-note">
+            A stationary steering experiment: turn, reverse, recover from an
+            angle disturbance, then center. The rack, controller and response
+            are illustrative. The road test uses its own planned path.
+          </p>
+        </div>
       )}
       {system === 'power' && (
         <>

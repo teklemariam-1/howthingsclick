@@ -9,7 +9,7 @@ Exterior, cutaway and exploded modes preserve the same moving assemblies. The In
 
 Three road tests provide inputs to the hardware explanation: an occluded pedestrian, traffic signals, and a clear adjacent lane around a closure. Timing, speed, layers, timeline, pause, and replay are adjustable. A separate processing-delay experiment uses constant-deceleration stopping-distance mathematics; it is explicitly independent of the street controller.
 
-The four-minute tour focuses first on the engineering, then demonstrates it on the road. Local 1080p recording includes branding and technical instrument/part labels, without narration captions. Audio is optional, local and off by default.
+The four-minute-thirty-second tour focuses first on the engineering, then demonstrates it on the road. Local 1080p recording includes branding and technical instrument/part labels, without narration captions. Audio is optional, local and off by default.
 
 ## Accuracy and boundaries
 This is an original educational reconstruction, not factory CAD or a certified vehicle model. Tesla's reference guide supports the floor-mounted 400 V battery, 48 V low-voltage system, and front drive unit containing the inverter. Individual PCB components, sensor count, detailed actuator packaging, wire routes, thermal circuits and manufacturing geometry are illustrative.
@@ -32,6 +32,24 @@ Rebuild the original display using scripts/blender/create-cabin-screen.py with P
 - Petersen reference exhibit: https://www.petersen.org/vehicle-spotlights/2024-tesla-cybercab-prototype
 - Autoware architecture, including end-to-end alternatives: https://autowarefoundation.github.io/autoware-documentation/1.5.0/design/autoware-architecture-v2/roadmap/autonomous-driving-stack-architecture/
 - Autoware feedback control: https://autowarefoundation.gitlab.io/autoware.auto/AutowareAuto/controller-design.html
+
+## Tour, controls and pedestrian revision
+
+The 4:30 tour contains thirteen shots and uses absolute camera/assembly keyframes. Scrubbing to a shot gives the same camera and exploded pose as uninterrupted playback. It opens the doors outward and upward, pushes into the cabin, separates and restores the body, opens the computer and follows the control loop. Door rotation was fitted visually to Tesla's rider-guide illustration; it is not a measured hinge mechanism.
+
+The Act view has two connected teaching views: Controller & transistors shows a generic steering ECU, gate driver, six-switch bridge, phase windings and slowed PWM traces; Rack & wheels shows measured versus requested angle, a rack and tie rods, different inner/outer wheel angles and correction after a disturbance. The electronic waveform is a normalized illustration with a switching dead band, not a simulation of Tesla's circuit, actual PWM frequency, battery current, production safeguards or redundancy.
+
+A compact generic EV heat exchanger is recessed inside the nose. Electric vehicles need thermal management; Tesla's maintenance guidance includes radiator cleaning. The exact Cybercab thermal packaging is not established by these references.
+
+The front corner now continues from the hood seam through a separate convex shoulder to the outer fender. This removes the earlier narrowing that produced the dent beside the headlamp. The lighting strip and front fascia follow the same contour. It is a reference-informed reconstruction.
+
+The pedestrian uses the MIT-licensed Microsoft Rocketbox Male_Adult_01 mesh and retargeted walk/idle clips. Both clips and compressed textures are in public/models/pedestrian.glb; attribution and the license are in public/models/pedestrian-credits.md and public/licenses/microsoft-rocketbox-MIT.txt. The model is normalized to 1.74 m. Pose comes from absolute route time and distance, with idle/walk blending, grounded feet and no residual planar root motion. scripts/blender/create-pedestrian.py is the repeatable conversion source.
+
+Additional references:
+- Tesla door operation: https://www.tesla.com/robotaxi/riderguides/cybercab/en_us/GUID-EF6607DD-3EEA-4733-8134-CF8C8D8FE859.html
+- TI electric power steering architecture: https://www.ti.com/solution/electric-power-steering-eps
+- Tesla thermal-system maintenance: https://www.tesla.com/support/vehicle-maintenance
+- Microsoft Rocketbox character and animation library: https://github.com/microsoft/Microsoft-Rocketbox
 
 ## Recording and deployment
 Keep the recording tab visible; hiding it pauses playback. MP4 is preferred when supported, with WebM fallback. A supplied audio file does not retime the tour automatically: record each script chapter into its allocated slot. Technical labels and virtual instruments are intentional; narration captions are not burned into the export.
