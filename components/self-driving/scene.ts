@@ -7,6 +7,7 @@ import type { SteeringSample } from '@/lib/self-driving/steering';
 import type { ControlDetail } from '@/lib/self-driving/motor-driver';
 import { drawSteeringReadout } from './steering-readout';
 import { drawDecisionReadout } from './decision-readout';
+import { createRouteRibbon } from './route-ribbon';
 import { decisionLayout } from '@/lib/self-driving/decision';
 import { createPedestrian } from './pedestrian';
 import {
@@ -412,17 +413,9 @@ export function createDrivingScene(
     dot.rotation.x = -Math.PI / 2;
     trail.add(dot);
   }
-  const path = new T.InstancedMesh(
-    new T.BoxGeometry(0.24, 0.018, 0.055),
-    new T.MeshBasicMaterial({
-      color: '#d5ef78',
-      transparent: true,
-      opacity: 0.85,
-    }),
-    72,
-  );
+  const ribbon = createRouteRibbon();
+  const path = ribbon.group;
   scene.add(path);
-  const dummy = new T.Object3D();
   const stop = box(
     scene,
     [0.07, 0.018, 2.8],
@@ -604,25 +597,7 @@ export function createDrivingScene(
     );
     path.visible =
       !inspect && (d.view === 'planning' || d.view === 'prediction' || linked);
-    const end = f.yielding
-      ? d.settings.scenario === 'signal'
-        ? 2
-        : 3.4
-      : f.x + 21;
-    for (let i = 0; i < 72; i++) {
-      const x = f.x + 2.25 + i * 0.25;
-      dummy.position.set(x, 0.04, laneAt(x, d.settings.scenario));
-      dummy.rotation.y = -Math.atan2(
-        laneAt(x + 0.1, d.settings.scenario) -
-          laneAt(x - 0.1, d.settings.scenario),
-        0.2,
-      );
-      dummy.scale.setScalar(x < end ? 1 : 0);
-      dummy.updateMatrix();
-      path.setMatrixAt(i, dummy.matrix);
-    }
-    path.instanceMatrix.needsUpdate = true;
-    path.computeBoundingSphere();
+    if (path.visible) ribbon.update(f, d.settings);
     stop.visible = !inspect && (d.view === 'planning' || linked) && f.yielding;
     stop.position.x = d.settings.scenario === 'signal' ? 2 : 3.4;
     if (!d.tourPose) {

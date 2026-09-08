@@ -9,6 +9,7 @@ import {
   type Settings,
 } from '@/lib/self-driving/simulation';
 import { roadWheelAngle } from '@/lib/self-driving/steering';
+import { routeAppearance, routeSamples } from '@/lib/self-driving/route';
 
 type Rect = { x: number; y: number; w: number; h: number };
 const COLORS = {
@@ -273,11 +274,32 @@ function drawMap(
     }
   }
   const boundary = s.scenario === 'signal' ? 2.05 : 3.4;
-  const end = f.yielding ? boundary : f.x + 28;
-  const route: [number, number][] = [];
-  for (let x = f.x + 2.1; x < end; x += 0.3)
-    route.push([x, laneAt(x, s.scenario)]);
-  stroke(route, COLORS.path, 2.5 * u);
+  const samples = routeSamples(f, s),
+    routeColor = routeAppearance(f, s).color;
+  if (samples.length) {
+    ctx.beginPath();
+    for (const side of [-1, 1]) {
+      const edge = side === -1 ? samples : [...samples].reverse();
+      edge.forEach((p, i) => {
+        const q = point(
+          Math.min(samples[samples.length - 1].x, p.x + p.nx * 1.12 * side),
+          p.z + p.nz * 1.12 * side,
+        );
+        if (side === -1 && i === 0) ctx.moveTo(...q);
+        else ctx.lineTo(...q);
+      });
+    }
+    ctx.closePath();
+    ctx.fillStyle = routeColor;
+    ctx.globalAlpha = 0.35;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    stroke(
+      samples.map((p) => [p.x, p.z]),
+      routeColor,
+      1.2 * u,
+    );
+  }
   if (f.yielding)
     stroke(
       [

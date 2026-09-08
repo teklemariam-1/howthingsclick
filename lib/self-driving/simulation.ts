@@ -60,7 +60,7 @@ export const VIEW_INFO: Record<
   linked: {
     title: 'One moment. The whole decision.',
     description:
-      'Compare the 3D road with the observed world, planned route and wheel response. Gray space is unknown.',
+      'Compare the 3D road with the observed world and wheel response. Blue route: travel. Gold: caution. Gray space: unknown.',
     color: '#71dceb',
   },
   street: {
@@ -84,7 +84,7 @@ export const VIEW_INFO: Record<
   planning: {
     title: 'Which path can the car take?',
     description:
-      'The green corridor shows the chosen route. A red boundary marks where to stop.',
+      'The filled corridor shows the chosen route: blue for travel, gold for caution. A red boundary marks where to stop.',
     color: '#d5ef78',
   },
 };
