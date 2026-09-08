@@ -1,0 +1,34 @@
+HOW THINGS CLICK — INSIDE A SELF-DRIVING CAR
+Four-minute guided tour. Read each chapter into its time slot.
+Voice remains off until the visitor chooses playback. No narration captions.
+This script explains the educational model, not Tesla's proprietary software.
+
+00:00–00:18 | AN IMAGE BECOMES MOTION
+There is no driver at the wheel. So what actually turns a camera image into a turn, a stop, or a smooth acceleration? Let's open the car and follow the engineering. The key is a loop: observe the world, choose a motion, act, and measure what happened.
+
+00:18–00:42 | START WITH MEASUREMENTS
+Start with light. A lens focuses the scene onto an image sensor. But a picture alone does not tell a car what to do. Multiple views and successive frames provide evidence about roads and moving objects. Measurements of the vehicle's own motion help separate a moving pedestrian from a moving camera. Blue represents information flowing inward.
+
+00:42–01:08 | INSIDE THE COMPUTER
+Now follow that information into the onboard computer. Under the cooling cover, processors perform inference: applying a model that has already been trained. Memory holds the model and recent observations. This board illustrates the packaging; it is not a factory board diagram. There is also a time budget. During any delay between sensing and acting, the car keeps covering distance.
+
+01:08–01:32 | REPRESENT THE WORLD
+What does the evidence mean? The system needs a representation of space and motion, including where the car is. Our virtual instrument shows a simplified version. The van blocks part of the scene. Gray means occluded, not empty. A hidden pedestrian should not magically appear as a detection. Our demonstration calculates visibility from geometry; a real vision system must infer much more from images.
+
+01:32–01:56 | PLAN A TRAJECTORY
+Seeing an object is only the beginning. Where might it go next? The amber line extends the pedestrian's current motion. That is one possible future, not a promise. The planner needs both a route and a speed. In this example, an approaching pedestrian creates a stop boundary. The car waits for its driving corridor to clear.
+
+01:56–02:24 | COMMANDS BECOME FORCES
+A planned path cannot turn a wheel by itself. Actuators have to produce physical force. Steering changes the front wheel angle. Propulsion and braking change speed. Now look at the return path: measured motion goes back into the controller. It compares the result with the target and corrects the command. This feedback continues as the road bends, even when the path ahead already looks settled.
+
+02:24–02:44 | POWER THE LOOP
+All of that work needs energy. Tesla documents a floor-mounted high-voltage battery, a low-voltage electrical system, and a front drive unit with an integrated inverter. The inverter switches current to drive the motor. Electronics need power too, and heat must be removed. Orange and teal separate energy and cooling functions in this illustration.
+
+02:44–03:12 | PUT THE LOOP ON THE ROAD
+Now put those systems back together. A parked van hides part of the crossing. The model slows before it has a clear view. Watch the pedestrian become visible, then watch the vehicle yield. The observation changes the plan, and the plan changes the physical movement. This is the connection we want to understand—not simply a car moving along a road.
+
+03:12–03:38 | CHANGE THE PATH
+What if the lane itself is blocked? Here the adjacent lane is clear. The green path bends around the cones and returns to the original lane. The front wheels steer into the curve, straighten, then steer the other way. Our rules make this example easy to inspect. Production systems must handle uncertainty and far more complicated traffic.
+
+03:38–04:00 | TAKE CONTROL OF THE EXPERIMENT
+You have followed the loop from light to motion. Now open it yourself. Select a system, separate the parts, pause a decision, or change the conditions. These stages explain useful functions; modern neural networks can combine several of them. Explore the interactive lab at howthingsclick dot com slash self-driving, and make the engineering click.

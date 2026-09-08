@@ -6,6 +6,7 @@ import { ArrowUpRight, Box, Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { experiences } from '@/lib/experiences';
+import CybercabPreview from '@/components/self-driving/preview';
 export default function Collection() {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('All');
@@ -95,14 +96,18 @@ export default function Collection() {
                 key={item.id}
               >
                 <div className="experience-image">
-                  <Image
-                    unoptimized
-                    src={item.image}
-                    alt={item.alt}
-                    loading="lazy"
-                    width="1200"
-                    height="650"
-                  />
+                  {item.id === 'self-driving' ? (
+                    <CybercabPreview />
+                  ) : (
+                    <Image
+                      unoptimized
+                      src={item.image}
+                      alt={item.alt}
+                      loading="lazy"
+                      width="1200"
+                      height="650"
+                    />
+                  )}
                   <span className="experience-format">
                     <Box size={12} /> Interactive 3D
                   </span>
@@ -129,7 +134,7 @@ export default function Collection() {
             <div className="collection-empty">
               <Search size={28} />
               <h3>No experiences found.</h3>
-              <p>Try “engine”, “car”, or a system like “cooling”.</p>
+              <p>Try “engine”, “self-driving”, or a system like “cooling”.</p>
               <button type="button" onClick={clear}>
                 Show all experiences <ArrowUpRight size={16} />
               </button>

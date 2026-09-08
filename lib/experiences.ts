@@ -1,5 +1,19 @@
 export const experiences = [
   {
+    id: 'self-driving',
+    number: '03',
+    category: 'Vehicles',
+    title: 'Inside a self-driving car',
+    description:
+      'Open the car. Follow camera signals through the computer to steering, braking and propulsion.',
+    detail: 'Cameras · Onboard computing · Control',
+    image: '',
+    alt: 'The Cybercab-inspired model in the interactive self-driving lab',
+    href: '/self-driving',
+    keywords:
+      'tesla cybercab self driving driverless autonomous ai camera vision pedestrian robotaxi perception prediction planning',
+  },
+  {
     id: 'engine',
     number: '01',
     category: 'Engines',
