@@ -489,7 +489,7 @@ export function createDrivingScene(
       id = d.system ?? 'overview',
       assembly = d.assembly ?? 'cutaway';
     const f = engineering ? { ...d.frame, x: 0, z: 0 } : d.frame,
-      inspect = engineering || d.camera === 'vehicle';
+      inspect = engineering || d.camera === 'vehicle' || d.camera === 'cabin';
     world.visible = !inspect;
     plinth.visible = inspect;
     plinth.position.x = f.x;
@@ -611,7 +611,13 @@ export function createDrivingScene(
     stop.visible = !inspect && d.view === 'planning' && f.yielding;
     stop.position.x = d.settings.scenario === 'signal' ? 2 : 3.4;
     target.set(f.x + (inspect ? 0 : 3), inspect ? 0.7 : 0.55, f.z);
-    const nextFocus = engineering ? id + '-' + assembly : 'road';
+    const nextFocus = engineering
+      ? id + '-' + assembly
+      : d.camera === 'cabin'
+        ? 'cabin'
+        : 'road';
+    if (d.camera === 'cabin' && !engineering)
+      target.set(f.x - 0.22, 0.84, f.z - 0.08);
     if (focusKey !== nextFocus) {
       focusKey = nextFocus;
       focusing = 1.2;
@@ -619,7 +625,11 @@ export function createDrivingScene(
     }
     if (currentMode !== d.camera) {
       currentMode = d.camera;
-      if (inspect) cameraGoal.set(f.x + 5.6, 3.4, f.z + 6.2);
+      camera.fov = d.camera === 'cabin' && !engineering ? 60 : 42;
+      camera.updateProjectionMatrix();
+      if (d.camera === 'cabin' && !engineering)
+        cameraGoal.set(f.x + 0.18, 1.19, f.z + 1.52);
+      else if (inspect) cameraGoal.set(f.x + 5.6, 3.4, f.z + 6.2);
       else if (d.camera === 'overhead') cameraGoal.set(f.x + 1, 22, f.z + 0.1);
       else if (d.camera === 'bumper') cameraGoal.set(f.x + 1.62, 1.08, f.z);
       else cameraGoal.set(f.x + 11, 8.5, f.z + 14);
@@ -683,8 +693,8 @@ export function createDrivingScene(
       controls.minDistance = id === 'compute' ? 1 : 2;
       controls.maxDistance = 16;
     } else {
-      controls.minDistance = 3.8;
-      controls.maxDistance = 40;
+      controls.minDistance = d.camera === 'cabin' ? 0.35 : 3.8;
+      controls.maxDistance = d.camera === 'cabin' ? 5 : 40;
     }
     lastX = f.x;
     lastZ = f.z;

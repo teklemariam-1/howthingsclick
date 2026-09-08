@@ -1,4 +1,6 @@
 import * as T from 'three';
+import { createRoadWheel, WHEEL_RADIUS } from './wheel';
+import { createCabinMaterials } from './cabin-materials';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 export const material = (color: string, metalness = 0, roughness = 0.7) =>
   new T.MeshStandardMaterial({ color, metalness, roughness });
@@ -104,13 +106,15 @@ export function createCybercab() {
     clearcoatRoughness: 0.28,
     side: T.DoubleSide,
   });
-  const satin = material('#a8926d', 0.72, 0.4),
-    black = material('#111a1d', 0.12, 0.4),
-    rubber = material('#16191b', 0, 0.91);
+  const black = material('#111a1d', 0.12, 0.4);
+  black.side = T.DoubleSide;
   const glass = new T.MeshPhysicalMaterial({
-    color: '#15232a',
-    metalness: 0.5,
-    roughness: 0.13,
+    color: '#243d33',
+    metalness: 0.12,
+    roughness: 0.12,
+    transmission: 0.22,
+    thickness: 0.004,
+    ior: 1.52,
     clearcoat: 1,
     side: T.DoubleSide,
   });
@@ -121,14 +125,17 @@ export function createCybercab() {
     color: '#e7faff',
     emissive: '#d1f5ff',
     emissiveIntensity: 2.8,
+    side: T.DoubleSide,
   });
   const red = new T.MeshStandardMaterial({
     color: '#ff3936',
     emissive: '#fa1919',
     emissiveIntensity: 2,
+    side: T.DoubleSide,
   });
   box(group, [3.94, 0.19, 1.65], [0, 0.25, 0], black, 0.055);
-  box(group, [1.95, 0.1, 1.51], [-0.15, 0.43, 0], cabin, 0.055);
+  box(group, [1.95, 0.1, 1.51], [-0.15, 0.43, 0], cabin, 0.055).name =
+    'legacy_cabin_floor';
   let skinIndex = 0;
   function skin(rows: number[][], mat: T.Material) {
     const pts: number[][] = [],
@@ -267,6 +274,10 @@ export function createCybercab() {
     box(door, [0.34, 0.043, 0.035], [-0.5, 0.87, side * 0.813], chrome, 0.012);
     door.children[0].name = 'body_door_' + side;
     door.children[1].name = 'body_window_' + side;
+    door.children[2].name = 'legacy_door_seal_a_' + side;
+    door.children[3].name = 'legacy_door_seal_b_' + side;
+    door.children[4].name = 'legacy_door_panel_' + side;
+    door.children[5].name = 'legacy_door_handle_' + side;
     doors.push({ hinge, side });
     line(
       group,
@@ -276,8 +287,14 @@ export function createCybercab() {
         [0.04, 1.405, side * 0.65],
       ],
       '#433c30',
-    );
-    box(group, [2.24, 0.057, 0.085], [-0.09, 0.27, side * 0.852], black, 0.016);
+    ).name = 'legacy_roof_' + side;
+    box(
+      group,
+      [2.24, 0.057, 0.085],
+      [-0.09, 0.27, side * 0.852],
+      black,
+      0.016,
+    ).name = 'legacy_rocker_' + side;
     // Camera apertures are illustrative; exact sensor layout varies by reference revision.
     for (const x of [1.14, -1.59]) {
       const lens = cylinder(
@@ -302,6 +319,7 @@ export function createCybercab() {
       optic.rotation.x = Math.PI / 2;
     }
   }
+  const cabinStart = group.children.length;
   for (const sx of [-0.41, 0.41]) {
     box(group, [0.62, 0.13, 0.52], [-0.13, 0.49, sx], seatMat, 0.08);
     const back = box(
@@ -331,6 +349,9 @@ export function createCybercab() {
     material('#285563', 0.2, 0.2),
     0.007,
   );
+  group.children.slice(cabinStart).forEach((o, i) => {
+    o.name = 'legacy_cabin_' + i;
+  });
   const frontFascia = box(
     group,
     [0.075, 0.25, 1.61],
@@ -341,8 +362,10 @@ export function createCybercab() {
   frontFascia.geometry.translate(2.16, 0.47, 0);
   frontFascia.position.set(0, 0, 0);
   frontFascia.name = 'body_front';
-  box(group, [0.08, 0.12, 1.59], [2.17, 0.26, 0], black, 0.025);
-  box(group, [0.065, 0.035, 1.67], [2.181, 0.705, 0], white, 0.013);
+  box(group, [0.08, 0.12, 1.59], [2.17, 0.26, 0], black, 0.025).name =
+    'legacy_front_valance';
+  box(group, [0.065, 0.035, 1.67], [2.181, 0.705, 0], white, 0.013).name =
+    'legacy_front_light';
   const rearFascia = box(
     group,
     [0.065, 0.33, 1.62],
@@ -353,17 +376,21 @@ export function createCybercab() {
   rearFascia.geometry.translate(-2.18, 0.59, 0);
   rearFascia.position.set(0, 0, 0);
   rearFascia.name = 'body_rear';
-  box(group, [0.078, 0.14, 1.62], [-2.2, 0.27, 0], black, 0.02);
-  box(group, [0.07, 0.055, 1.64], [-2.217, 0.875, 0], black, 0.012);
-  box(group, [0.075, 0.024, 1.56], [-2.226, 0.87, 0], red, 0.01);
-  box(group, [0.087, 0.078, 0.19], [-2.23, 0.69, 0], black, 0.01);
+  box(group, [0.078, 0.14, 1.62], [-2.2, 0.27, 0], black, 0.02).name =
+    'legacy_rear_valance';
+  box(group, [0.07, 0.055, 1.64], [-2.217, 0.875, 0], black, 0.012).name =
+    'legacy_rear_applique';
+  box(group, [0.075, 0.024, 1.56], [-2.226, 0.87, 0], red, 0.01).name =
+    'legacy_rear_light';
+  box(group, [0.087, 0.078, 0.19], [-2.23, 0.69, 0], black, 0.01).name =
+    'legacy_rear_plate';
   for (const x of [-2.23, 2.23]) {
     const l = cylinder(
       group,
       0.022,
       0.022,
       0.017,
-      [x, x > 0 ? 0.62 : 0.82, 0],
+      [x, x > 0 ? 0.62 : 0.912, 0],
       glass,
       20,
     );
@@ -374,72 +401,13 @@ export function createCybercab() {
   for (const x of [-1.39, 1.4])
     for (const side of [-1, 1]) {
       const steer = new T.Group();
-      steer.position.set(x, 0.385, side * 0.73);
+      steer.position.set(x, WHEEL_RADIUS + 0.003, side * 0.73);
       group.add(steer);
       const roll = new T.Group();
       steer.add(roll);
-      const points = [
-        new T.Vector2(0.282, -0.1),
-        new T.Vector2(0.342, -0.097),
-        new T.Vector2(0.373, -0.075),
-        new T.Vector2(0.382, -0.022),
-        new T.Vector2(0.382, 0.022),
-        new T.Vector2(0.373, 0.075),
-        new T.Vector2(0.342, 0.097),
-        new T.Vector2(0.282, 0.1),
-      ];
-      const tire = new T.Mesh(new T.LatheGeometry(points, 64), rubber);
-      tire.rotation.x = Math.PI / 2;
-      roll.add(tire);
-      tire.castShadow = true;
-      const disc = cylinder(
-        roll,
-        0.345,
-        0.345,
-        0.023,
-        [0, 0, side * 0.106],
-        gold,
-        64,
-      );
-      disc.rotation.x = Math.PI / 2;
-      const recess = cylinder(
-        roll,
-        0.254,
-        0.286,
-        0.018,
-        [0, 0, side * 0.122],
-        satin,
-        64,
-      );
-      recess.rotation.x = Math.PI / 2;
-      const hub = cylinder(
-        roll,
-        0.031,
-        0.06,
-        0.017,
-        [0, 0, side * 0.136],
-        gold,
-        32,
-      );
-      hub.rotation.x = Math.PI / 2;
-      const ring = new T.Mesh(new T.TorusGeometry(0.335, 0.0035, 6, 64), black);
-      ring.position.z = side * 0.121;
-      roll.add(ring);
-      wheelCovers.push(disc, recess, hub, ring);
-      const blocks = new T.InstancedMesh(
-          new T.BoxGeometry(0.01, 0.028, 0.15),
-          rubber,
-          64,
-        ),
-        dummy = new T.Object3D();
-      for (let i = 0; i < 64; i++) {
-        const a = (i * Math.PI) / 32;
-        dummy.position.set(Math.sin(a) * 0.38, Math.cos(a) * 0.38, 0);
-        dummy.rotation.z = -a;
-        dummy.updateMatrix();
-        blocks.setMatrixAt(i, dummy.matrix);
-      }
-      roll.add(blocks);
+      const wheel = createRoadWheel(side, gold);
+      roll.add(wheel.group);
+      wheelCovers.push(wheel.cover);
       wheels.push({ steer, roll, front: x > 0 });
     }
   const wheelRoots = new Set(wheels.map((w) => w.steer));
@@ -473,13 +441,50 @@ export function createCybercab() {
         '/models/cybercab-body.glb',
       );
       asset.scene.updateMatrixWorld(true);
+      const cabinMaterials = await createCabinMaterials();
+      if (!isCancelled())
+        group.traverse((o) => {
+          if (o.name.startsWith('legacy_')) o.visible = false;
+        });
       asset.scene.traverse((o) => {
         if (o instanceof T.Mesh) {
           const target = group.getObjectByName(o.name);
-          if (target instanceof T.Mesh && !isCancelled()) {
+          if (!isCancelled()) {
             const refined = o.geometry.clone().applyMatrix4(o.matrixWorld);
-            target.geometry.dispose();
-            target.geometry = refined;
+            if (target instanceof T.Mesh) {
+              target.geometry.dispose();
+              target.geometry = refined;
+            } else if (o.name.startsWith('detail_')) {
+              const source =
+                (
+                  {
+                    paint: gold,
+                    glass,
+                    trim: black,
+                    headlamp: white,
+                    taillamp: red,
+                    ...cabinMaterials,
+                  } as Record<string, T.Material>
+                )[o.userData.surface] ?? black;
+              let m = cloneCache.get(source);
+              if (!m) {
+                m = source.clone();
+                cloneCache.set(source, m);
+                faded.push(m);
+              }
+              const mesh = new T.Mesh(refined, m);
+              mesh.name = o.name;
+              mesh.castShadow = true;
+              mesh.receiveShadow = true;
+              const parent = o.userData.assembly?.startsWith('door_')
+                ? (group.getObjectByName(o.userData.assembly) ?? group)
+                : group;
+              parent.add(mesh);
+              if (parent === group) {
+                bodyRoots.push(mesh);
+                bodyBase.push(new T.Vector3());
+              }
+            } else refined.dispose();
           }
           o.geometry.dispose();
           (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) =>
@@ -507,7 +512,7 @@ export function createCybercab() {
     },
     update(distance: number, steering: number, opening: number) {
       for (const w of wheels) {
-        w.roll.rotation.z = -distance / 0.382;
+        w.roll.rotation.z = -distance / WHEEL_RADIUS;
         w.steer.rotation.y = w.front ? -steering : 0;
       }
       for (const d of doors) {

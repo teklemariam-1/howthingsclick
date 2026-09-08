@@ -531,12 +531,27 @@ export default function SelfDrivingLab() {
                 <i />
                 {shownEngineering
                   ? 'CYBERCAB · ' + activeSystem.short.toUpperCase()
-                  : shownCamera === 'vehicle'
-                    ? 'CYBERCAB · VEHICLE STUDY'
-                    : SCENARIOS.find((s) => s.id === shownSettings.scenario)
-                        ?.tag}
+                  : shownCamera === 'cabin'
+                    ? 'CYBERCAB · INTERIOR'
+                    : shownCamera === 'vehicle'
+                      ? 'CYBERCAB · VEHICLE STUDY'
+                      : SCENARIOS.find((s) => s.id === shownSettings.scenario)
+                          ?.tag}
               </div>
               <div className="sd-camera-tools" aria-label="View controls">
+                <button
+                  title="Inspect cabin"
+                  aria-label="Inspect Cybercab interior"
+                  disabled={!ready || recording || tour}
+                  onClick={() => {
+                    setEngineering(false);
+                    setCamera('cabin');
+                    setPlaying(false);
+                    setDoors(true);
+                  }}
+                >
+                  <Eye size={16} />
+                </button>
                 <button
                   title="Reset camera"
                   aria-label="Reset camera"
@@ -767,6 +782,7 @@ export default function SelfDrivingLab() {
                     ['overhead', 'Top view'],
                     ['bumper', 'On board'],
                     ['vehicle', 'Cybercab'],
+                    ['cabin', 'Interior'],
                   ] as const
                 ).map(([id, label]) => (
                   <button
@@ -774,7 +790,8 @@ export default function SelfDrivingLab() {
                     aria-pressed={camera === id}
                     onClick={() => {
                       setCamera(id);
-                      if (id === 'vehicle') setPlaying(false);
+                      if (id === 'vehicle' || id === 'cabin') setPlaying(false);
+                      if (id === 'cabin') setDoors(true);
                     }}
                   >
                     {label}
@@ -789,7 +806,7 @@ export default function SelfDrivingLab() {
                   {night ? <Moon size={16} /> : <Sun size={16} />}{' '}
                   {night ? 'Night lighting' : 'Day lighting'}
                 </button>
-                {camera === 'vehicle' && (
+                {(camera === 'vehicle' || camera === 'cabin') && (
                   <button
                     aria-pressed={doors}
                     onClick={() => setDoors((d) => !d)}

@@ -1,6 +1,6 @@
 export type Scenario = 'crossing' | 'signal' | 'roadworks';
 export type View = 'street' | 'vision' | 'prediction' | 'planning';
-export type CameraView = 'follow' | 'overhead' | 'bumper' | 'vehicle';
+export type CameraView = 'follow' | 'overhead' | 'bumper' | 'vehicle' | 'cabin';
 export interface Settings {
   scenario: Scenario;
   speedKph: number;
