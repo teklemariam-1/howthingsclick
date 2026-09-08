@@ -20,7 +20,19 @@ const timestamp = (s) =>
   Math.floor(s % 60)
     .toString()
     .padStart(2, '0');
-const precise = (s) => timestamp(s) + '.' + Math.round((s % 1) * 10);
+const precise = (seconds) => {
+  const ms = Math.round(seconds * 1000);
+  return (
+    String(Math.floor(ms / 3600000)).padStart(2, '0') +
+    ':' +
+    String(Math.floor(ms / 60000) % 60).padStart(2, '0') +
+    ':' +
+    String(Math.floor(ms / 1000) % 60).padStart(2, '0') +
+    ',' +
+    String(ms % 1000).padStart(3, '0')
+  );
+};
+const secondsText = (seconds) => seconds.toFixed(1) + ' seconds';
 const cues = TOUR.map((s, i) => ({
   chapter: i + 1,
   title: s.title,
@@ -33,7 +45,7 @@ const cues = TOUR.map((s, i) => ({
 }));
 const direction = [
   'HOW THINGS CLICK — HOW DOES A SELF-DRIVING CAR WORK?',
-  'MASTER TOUR: 4:30 / 1920 x 1080 / 13 shots',
+  `MASTER TOUR: ${timestamp(TOUR_DURATION)} / 1920 x 1080 / ${TOUR.length} shots`,
   '',
   'VOICE DIRECTION',
   'Warm, curious and precise. Talk to one interested viewer. Let the opening questions breathe.',
@@ -43,10 +55,13 @@ const direction = [
   'The colored lines and hardware placements are educational illustrations. Do not imply that this is Tesla source code or a validated autonomy system.',
   '',
   'TIMING',
-  'Each VO window is an absolute position in the 4:30 timeline. Generate/read each chapter separately.',
-  'Place that reading at its VO IN point in Shotcut or another editor. Leave the gaps as silence.',
+  'All timestamps are absolute positions on the demo timeline: HOURS:MINUTES:SECONDS,MILLISECONDS.',
+  'SCENE marks the animation chapter. NARRATION marks when the voice starts and finishes within that scene.',
+  'Generate/read each chapter separately. Read only the narration paragraph, never the timestamps or directions.',
+  'Place each reading at its NARRATION IN point in Shotcut or another editor. Preserve the before/after silence.',
   'If a reading exceeds its VO OUT, re-record slightly faster or tighten pauses. Do not silently truncate it.',
   'Export one exactly 4:30 WAV or MP3 master; upload it with Add narration in the lab.',
+  'Timestamps are editing cues, not automatic TTS commands. Assemble the audio to these timings before uploading.',
   'Pasting the entire voice-only text into TTS does NOT preserve these chapter timings by itself.',
   'No burned narration captions. The export retains branding and technical labels.',
   '',
@@ -59,20 +74,35 @@ const timed =
         '\n' +
         String(s.chapter).padStart(2, '0') +
         ' | ' +
-        timestamp(s.at) +
-        '–' +
-        timestamp(s.end) +
-        ' | ' +
         s.title +
-        '\nVO ' +
+        '\nSCENE [' +
+        precise(s.at) +
+        ' – ' +
+        precise(s.end) +
+        ']' +
+        '\nSILENCE BEFORE [' +
+        precise(s.at) +
+        ' – ' +
         precise(s.voiceAt) +
-        ' → ' +
+        '] · ' +
+        secondsText(s.voiceAt - s.at) +
+        '\nNARRATION IN/OUT [' +
+        precise(s.voiceAt) +
+        ' – ' +
         precise(s.voiceEnd) +
-        ' (' +
+        '] · ' +
+        secondsText(s.voiceEnd - s.voiceAt) +
+        ' · ' +
         s.words +
-        ' words)' +
+        ' words' +
         '\n' +
         s.narration +
+        '\nSILENCE AFTER [' +
+        precise(s.voiceEnd) +
+        ' – ' +
+        precise(s.end) +
+        '] · ' +
+        secondsText(s.end - s.voiceEnd) +
         '\n',
     )
     .join('') +
@@ -105,7 +135,8 @@ ${chapters}
 
 ## Narration and edit
 
-- Use self-driving-narration.txt for the timed readings. self-driving-voice-only.txt contains only spoken text.
+- Use self-driving-narration.txt for the timestamped script: each scene has an exact narration start, finish, and silence before/after. These times come directly from the demo timeline.
+- self-driving-voice-only.txt contains only spoken text, without timestamps. TTS does not automatically follow the demo; assemble each reading at its marked time before uploading.
 - self-driving-cues.json gives exact absolute voice-in/out times for editing.
 - Generate each chapter in the same voice and style, then place it at the specified time. Fill the gaps with silence and export a 4:30 master.
 - Keep narration clear and forward. If adding music, start around 20–26 dB quieter than the voice, then check audibility on speakers and headphones. Avoid music under the opening question if it weakens the hook.

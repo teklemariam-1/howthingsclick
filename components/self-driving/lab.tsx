@@ -993,6 +993,11 @@ export default function SelfDrivingLab() {
             channel logo and website, with no narration captions. Audio stays
             off until you start the tour.
           </p>
+          <p>
+            Use the timestamped script to match each scene. Place each voice-over
+            passage at its marked start time, keep the pauses, and export one
+            4:30 audio file before adding narration.
+          </p>
           <div className="sd-studio-actions">
             <label className="sd-file">
               <Upload size={16} />
@@ -1026,10 +1031,10 @@ export default function SelfDrivingLab() {
               {recording ? 'Stop and save' : 'Record tour'}
             </button>
             <PageLink href="/tours/self-driving-narration.txt" download>
-              <Download size={16} /> Timed narration
+              <Download size={16} /> Timestamped script (4:30)
             </PageLink>
             <PageLink href="/tours/self-driving-voice-only.txt" download>
-              <Download size={16} /> Voice-only text
+              <Download size={16} /> Plain text (no timestamps)
             </PageLink>
             <PageLink href="/tours/self-driving-production.md" download>
               <Download size={16} /> YouTube recording guide

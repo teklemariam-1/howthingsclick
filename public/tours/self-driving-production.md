@@ -37,7 +37,8 @@ This is an educational model. Hardware placement and driving behavior are simpli
 
 ## Narration and edit
 
-- Use self-driving-narration.txt for the timed readings. self-driving-voice-only.txt contains only spoken text.
+- Use self-driving-narration.txt for the timestamped script: each scene has an exact narration start, finish, and silence before/after. These times come directly from the demo timeline.
+- self-driving-voice-only.txt contains only spoken text, without timestamps. TTS does not automatically follow the demo; assemble each reading at its marked time before uploading.
 - self-driving-cues.json gives exact absolute voice-in/out times for editing.
 - Generate each chapter in the same voice and style, then place it at the specified time. Fill the gaps with silence and export a 4:30 master.
 - Keep narration clear and forward. If adding music, start around 20–26 dB quieter than the voice, then check audibility on speakers and headphones. Avoid music under the opening question if it weakens the hook.
