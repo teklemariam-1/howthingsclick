@@ -21,10 +21,14 @@ export function createRouteRibbon() {
     const position = new T.BufferAttribute(new Float32Array(count * 6), 3);
     position.setUsage(T.DynamicDrawUsage);
     geometry.setAttribute('position', position);
+    const colors = new T.BufferAttribute(new Float32Array(count * 8), 4);
+    colors.setUsage(T.DynamicDrawUsage);
+    geometry.setAttribute('color', colors);
     geometry.setIndex(indices);
     const material = new T.MeshBasicMaterial({
       color: '#4294ff',
       transparent: true,
+      vertexColors: true,
       opacity,
       depthWrite: false,
       side: T.DoubleSide,
@@ -37,6 +41,7 @@ export function createRouteRibbon() {
       halfWidth,
       geometry,
       position,
+      colors,
       material,
       height: 0.033 + index * 0.001,
     };
@@ -56,8 +61,10 @@ export function createRouteRibbon() {
               points[points.length - 1].x,
               p.x + p.nx * band.halfWidth * side,
             );
+            const vertex = i * 2 + (side === 1 ? 1 : 0);
+            band.colors.setXYZW(vertex, 1, 1, 1, p.opacity);
             band.position.setXYZ(
-              i * 2 + (side === 1 ? 1 : 0),
+              vertex,
               x,
               band.height,
               p.z + p.nz * band.halfWidth * side,
@@ -65,6 +72,7 @@ export function createRouteRibbon() {
           }
         });
         band.position.needsUpdate = true;
+        band.colors.needsUpdate = true;
         band.geometry.computeBoundingSphere();
       }
     },

@@ -290,15 +290,17 @@ function drawMap(
       });
     }
     ctx.closePath();
-    ctx.fillStyle = routeColor;
-    ctx.globalAlpha = 0.35;
-    ctx.fill();
-    ctx.globalAlpha = 1;
-    stroke(
-      samples.map((p) => [p.x, p.z]),
-      routeColor,
-      1.2 * u,
+    const first = point(samples[0].x, samples[0].z);
+    const last = point(
+      samples[samples.length - 1].x,
+      samples[samples.length - 1].z,
     );
+    const fade = ctx.createLinearGradient(...first, ...last);
+    fade.addColorStop(0, routeColor + '70');
+    fade.addColorStop(0.68, routeColor + '70');
+    fade.addColorStop(1, routeColor + '00');
+    ctx.fillStyle = fade;
+    ctx.fill();
   }
   if (f.yielding)
     stroke(

@@ -60,7 +60,7 @@ export function decisionCheckpoints(
     add(
       'turn',
       'Turn out',
-      frames.find((f) => f.x >= -8),
+      frames.find((f) => f.x >= -11),
     );
     add(
       'passing',
@@ -70,7 +70,7 @@ export function decisionCheckpoints(
     add(
       'return',
       'Return',
-      frames.find((f) => f.x >= 11),
+      frames.find((f) => f.x >= 11.5),
     );
   }
   return points.sort((a, b) => a.time - b.time);

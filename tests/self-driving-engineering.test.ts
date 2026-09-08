@@ -28,9 +28,29 @@ async function run() {
   assert(steeringAt(-9.5, 'roadworks') < 0);
   assert(steeringAt(-2.5, 'roadworks') > 0);
   assert(
-    Math.abs(steeringAt(-6, 'roadworks')) < 0.001,
+    Math.abs(steeringAt(-8, 'roadworks')) < 0.001,
     'straight slope has zero curvature; heading is not steering angle',
   );
+  for (const boundary of [-14, -2, 9, 19]) {
+    for (const dx of [-0.001, 0, 0.001])
+      assert(
+        Math.abs(steeringAt(boundary + dx, 'roadworks')) < 0.025,
+        'wheels should approach straight at every lane-change join',
+      );
+  }
+  const road = simulate({
+    ...DEFAULT_SETTINGS,
+    scenario: 'roadworks',
+    speedKph: 35,
+  });
+  for (let i = 1; i < road.length; i++)
+    assert(
+      Math.abs(
+        steeringAt(road[i].x, 'roadworks') -
+          steeringAt(road[i - 1].x, 'roadworks'),
+      ) < 0.06,
+      'road wheels must turn gradually rather than snap between frames',
+    );
   const a = stoppingExperiment(36, 0, 5),
     b = stoppingExperiment(36, 500, 5),
     c = stoppingExperiment(72, 0, 5);

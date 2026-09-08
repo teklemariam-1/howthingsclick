@@ -94,9 +94,17 @@ export const smooth = (v: number) => {
   const x = clamp(v, 0, 1);
   return x * x * (3 - 2 * x);
 };
+// Zero slope and curvature at each end keep wheel angle continuous where a
+// lane change joins a straight. Longer transitions reduce steering effort.
+function laneTransition(v: number) {
+  const t = clamp(v, 0, 1);
+  return t * t * t * (10 + t * (-15 + 6 * t));
+}
 export function laneAt(x: number, scenario: Scenario) {
   return scenario === 'roadworks'
-    ? 1.7 - 3.4 * smooth((x + 10) / 8) + 3.4 * smooth((x - 9) / 8)
+    ? 1.7 -
+        3.4 * laneTransition((x + 14) / 12) +
+        3.4 * laneTransition((x - 9) / 10)
     : 1.7;
 }
 // Segment/rectangle occlusion in the horizontal plane. This van is tall enough
