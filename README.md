@@ -1,6 +1,6 @@
 # How Things Click
 
-Interactive 3D explainers for curious minds. A browsable homepage leads into a four-stroke engine lab and an explorable Corolla.
+Interactive 3D explainers for curious minds. A browsable homepage leads into a four-stroke engine lab, an explorable Corolla, and a self-driving engineering lab.
 
 ## Run locally
 Use Node.js 22.13 or newer.
@@ -13,6 +13,7 @@ npm run dev
 - `/`: homepage, search, and experience categories
 - `/engine`: engine simulation, disassembly, systems, guided tour, and local video recording
 - `/car`: whole-car exploration and an embedded engine lab
+- `/self-driving`: Cybercab-inspired engineering, road experiments, a guided tour, and local video recording
 
 The models are illustrative educational reconstructions, not manufacturer CAD.
 
@@ -24,7 +25,7 @@ The committed `vercel.json` sets:
 - Build command: `npm run build:vercel`
 - Output directory: `dist/client`
 
-If the Vercel project has existing dashboard overrides, match these settings. No environment variables or API keys are needed for the current features. The static build prerenders all three pages; WebGL, controls, audio, and recording run in the visitor's browser. Uploaded narration stays on the device.
+If the Vercel project has existing dashboard overrides, match these settings. No environment variables or API keys are needed for the current features. The static build prerenders all four pages; WebGL, controls, audio, and recording run in the visitor's browser. Uploaded narration stays on the device.
 
 To verify locally:
 ```sh

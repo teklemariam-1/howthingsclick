@@ -441,11 +441,11 @@ export default function SelfDrivingLab() {
         );
       };
       media.current = recorder;
-      recorder.onstart = () => {
-        startTour();
-        api.current?.update(firstDisplay, 0);
-      };
       recorder.start(1000);
+      // Some encoders emit "start" only after receiving audio samples.
+      // Start playback now so narration and encoder cannot wait on each other.
+      startTour();
+      api.current?.update(firstDisplay, 0);
       setRecording(true);
       setDownload(null);
       setNotice(
