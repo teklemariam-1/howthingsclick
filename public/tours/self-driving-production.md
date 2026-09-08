@@ -57,6 +57,8 @@ This is an educational model. Hardware placement and driving behavior are simpli
 
 The saved video contains the channel logo, website address and technical scene labels, but no narration captions. The browser chooses MP4 or WebM based on support. Shotcut can convert either to H.264 MP4 for delivery. The recorder saves locally; it does not upload to YouTube.
 
+The two road chapters show the street and the car’s interpretation together, including visibility, route and physical response. These technical annotations use the same simulation frame as the scene. The narration script and all voice windows remain unchanged.
+
 ## Engineering references
 
 - Tesla AI: https://www.tesla.com/AI

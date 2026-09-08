@@ -887,3 +887,147 @@
     margin-top: 18px;
   }
 }
+
+.sd-stage.sd-capturing .sd-canvas-wrap { height: auto; aspect-ratio: 16 / 9; }
+.sd-capturing .sd-scene-tag, .sd-capturing .sd-orbit-hint { display: none; }
+.sd-capturing .sd-camera-tools { top: 8px; right: 8px; }
+.sd-canvas-wrap.sd-linked {
+  height: clamp(550px, 68vh, 740px);
+}
+.sd-linked .sd-camera-tools {
+  right: calc(36% + 14px);
+}
+.sd-linked .sd-orbit-hint {
+  right: calc(36% + 14px);
+  left: 16px;
+  font-size: 12px;
+}
+.sd-view-tabs > [data-slot='tabs-list'] {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.sd-view-tabs [data-slot='tabs-trigger'] {
+  flex-shrink: 0;
+}
+.sd-decision-explorer {
+  padding: 18px 20px;
+  border-top: 1px solid var(--sd-line);
+}
+.sd-checkpoint-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  align-items: baseline;
+  margin-bottom: 13px;
+}
+.sd-checkpoint-heading strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+.sd-checkpoint-heading > span {
+  color: var(--sd-muted);
+  font-size: 13px;
+}
+.sd-checkpoints {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.sd-checkpoints button {
+  padding: 10px;
+  min-height: 61px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 5px 8px;
+  text-align: left;
+  border: 1px solid #36505a;
+  border-radius: 6px;
+  background: #10232c;
+}
+.sd-checkpoints button > span {
+  color: #71dceb;
+  font:
+    12px Consolas,
+    monospace;
+}
+.sd-checkpoints button > strong {
+  font-size: 14px;
+  font-weight: 500;
+}
+.sd-checkpoints button > small {
+  grid-column: 2;
+  color: var(--sd-muted);
+  font:
+    12px Consolas,
+    monospace;
+}
+.sd-checkpoints button:hover {
+  background: #203942;
+}
+.sd-checkpoints button[aria-pressed='true'] {
+  border-color: #71dceb;
+  background: #1a3841;
+}
+.sd-live-chain {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+}
+.sd-live-chain li {
+  border-top: 2px solid #71dceb;
+  padding-top: 9px;
+  min-width: 0;
+}
+.sd-live-chain li:nth-child(2) {
+  border-color: #d5ef78;
+}
+.sd-live-chain li:nth-child(3) {
+  border-color: #f08c81;
+}
+.sd-live-chain small {
+  font-size: 12px;
+  color: var(--sd-muted);
+  display: block;
+  margin-bottom: 5px;
+}
+.sd-live-chain strong {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  display: block;
+}
+@container driving-stage (max-width: 699px) {
+  .sd-stage.sd-capturing .sd-canvas-wrap { height: auto; aspect-ratio: 16 / 9; }
+.sd-capturing .sd-scene-tag, .sd-capturing .sd-orbit-hint { display: none; }
+.sd-capturing .sd-camera-tools { top: 8px; right: 8px; }
+.sd-canvas-wrap.sd-linked {
+    height: 760px;
+  }
+  .sd-linked .sd-camera-tools {
+    right: 14px;
+  }
+  .sd-linked .sd-orbit-hint {
+    bottom: 48%;
+    right: 14px;
+  }
+}
+.sd-stage {
+  container-type: inline-size;
+  container-name: driving-stage;
+}
+@media (max-width: 480px) {
+  .sd-checkpoints {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .sd-live-chain {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .sd-decision-explorer {
+    padding: 16px;
+  }
+}

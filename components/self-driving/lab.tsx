@@ -41,6 +41,7 @@ import { PlaybackClock } from '@/lib/self-driving/playback';
 import { steeringExperimentAt } from '@/lib/self-driving/steering';
 import type { ControlDetail } from '@/lib/self-driving/motor-driver';
 import EngineeringPanel, { EngineeringSteps } from './engineering-panel';
+import DecisionPanel from './decision-panel';
 import {
   systemInfo,
   type SystemId,
@@ -96,7 +97,7 @@ export default function SelfDrivingLab() {
     shell = useRef<HTMLDivElement>(null),
     api = useRef<DrivingScene | null>(null);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS),
-    [view, setView] = useState<View>('street'),
+    [view, setView] = useState<View>('linked'),
     [camera, setCamera] = useState<CameraView>('follow');
   const [engineering, setEngineering] = useState(true),
     [system, setSystem] = useState<SystemId>('overview'),
@@ -400,7 +401,7 @@ export default function SelfDrivingLab() {
       if (!mime) throw new Error('Unsupported recording format');
       const recorder = new MediaRecorder(stream, {
           mimeType: mime,
-          videoBitsPerSecond: 12_000_000,
+          videoBitsPerSecond: 8_000_000,
         }),
         chunks: Blob[] = [];
       recorder.ondataavailable = (e) => {
@@ -422,6 +423,7 @@ export default function SelfDrivingLab() {
           return;
         }
         const blob = new Blob(chunks, { type: mime });
+        chunks.length = 0;
         if (downloadUrl.current) URL.revokeObjectURL(downloadUrl.current);
         const url = URL.createObjectURL(blob);
         downloadUrl.current = url;
@@ -536,7 +538,7 @@ export default function SelfDrivingLab() {
         </button>
       </div>
       <main className="sd-layout">
-        <section className="sd-stage" aria-label="Interactive driving scene">
+        <section className={'sd-stage' + (recording ? ' sd-capturing' : '')} aria-label="Interactive driving scene">
           <div className="sd-mode-switch" aria-label="Lab workspace">
             <button
               aria-pressed={shownEngineering}
@@ -590,6 +592,7 @@ export default function SelfDrivingLab() {
             >
               {(
                 [
+                  ['linked', 'Decision view', ScanLine],
                   ['street', 'Street', Camera],
                   ['vision', 'Vision', ScanLine],
                   ['prediction', 'Prediction', Eye],
@@ -602,7 +605,17 @@ export default function SelfDrivingLab() {
                 </TabsTrigger>
               ))}
             </TabsList>
-            <div className="sd-canvas-wrap">
+            <div
+              className={
+                'sd-canvas-wrap' +
+                (!shownEngineering &&
+                shownView === 'linked' &&
+                shownCamera !== 'vehicle' &&
+                shownCamera !== 'cabin'
+                  ? ' sd-linked'
+                  : '')
+              }
+            >
               <div className="sd-canvas" ref={host} />
               {!ready && (
                 <output className="sd-loading">
@@ -666,7 +679,8 @@ export default function SelfDrivingLab() {
               <div
                 className="sd-telemetry"
                 style={
-                  shownEngineering && shownSystem === 'control'
+                  (shownEngineering && shownSystem === 'control') ||
+                  (!shownEngineering && shownView === 'linked')
                     ? { display: 'none' }
                     : undefined
                 }
@@ -763,6 +777,23 @@ export default function SelfDrivingLab() {
               {tour ? '1' : rate}×
             </button>
           </div>
+          {!shownEngineering &&
+            !tour &&
+            shownView === 'linked' &&
+            shownCamera !== 'vehicle' &&
+            shownCamera !== 'cabin' && (
+              <DecisionPanel
+                frame={frame}
+                frames={frames}
+                settings={settings}
+                disabled={!ready || recording}
+                onSeek={(moment) => {
+                  setPlayback(false);
+                  seek(moment);
+                  api.current?.resetCamera();
+                }}
+              />
+            )}
         </section>
         <aside className="sd-sidebar">
           {tour ? (
@@ -819,11 +850,7 @@ export default function SelfDrivingLab() {
               onSettings={changeSettings}
               onRoad={() => {
                 setEngineering(false);
-                setView(
-                  system === 'sensors' || system === 'perception'
-                    ? 'vision'
-                    : 'planning',
-                );
+                setView('linked');
                 setCamera('follow');
               }}
             />

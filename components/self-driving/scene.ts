@@ -6,6 +6,8 @@ import type { TourPose } from '@/lib/self-driving/tour';
 import type { SteeringSample } from '@/lib/self-driving/steering';
 import type { ControlDetail } from '@/lib/self-driving/motor-driver';
 import { drawSteeringReadout } from './steering-readout';
+import { drawDecisionReadout } from './decision-readout';
+import { decisionLayout } from '@/lib/self-driving/decision';
 import { createPedestrian } from './pedestrian';
 import {
   laneAt,
@@ -456,6 +458,12 @@ export function createDrivingScene(
   });
   host.appendChild(hud);
   const hudContext = hud.getContext('2d')!;
+  const isLinked = (d: Display | null) =>
+    !!d &&
+    !d.engineering &&
+    d.view === 'linked' &&
+    d.camera !== 'vehicle' &&
+    d.camera !== 'cabin';
   function resize() {
     if (dead) return;
     const w = recording ? 1920 : Math.max(1, host.clientWidth),
@@ -463,10 +471,13 @@ export function createDrivingScene(
     renderer.setPixelRatio(
       recording ? 1 : Math.min(window.devicePixelRatio, 1.7),
     );
-    renderer.setSize(w, h, false);
+    const road = isLinked(lastDisplay) ? decisionLayout(w, h).road : { w, h };
+    renderer.setSize(road.w, road.h, false);
+    renderer.domElement.style.width = (100 * road.w) / w + '%';
+    renderer.domElement.style.height = (100 * road.h) / h + '%';
     hud.width = w;
     hud.height = h;
-    camera.aspect = w / h;
+    camera.aspect = road.w / road.h;
     camera.updateProjectionMatrix();
     focusKey = '';
   }
@@ -474,7 +485,10 @@ export function createDrivingScene(
   observer.observe(host);
   resize();
   function update(d: Display, delta = 0.016) {
+    const wasLinked = isLinked(lastDisplay);
     lastDisplay = d;
+    const linked = isLinked(d);
+    if (linked !== wasLinked) resize();
     const engineering = !!d.engineering,
       id = d.system ?? 'overview',
       assembly = d.assembly ?? 'cutaway';
@@ -582,14 +596,14 @@ export function createDrivingScene(
     }
     trail.visible =
       !inspect &&
-      (d.view === 'prediction' || d.view === 'planning') &&
+      (d.view === 'prediction' || d.view === 'planning' || linked) &&
       f.visible &&
       f.pedestrianZ < 4.2;
     trail.children.forEach((o, i) =>
       o.position.set(5, 0.04, f.pedestrianZ + (i + 1) * 0.16),
     );
     path.visible =
-      !inspect && (d.view === 'planning' || d.view === 'prediction');
+      !inspect && (d.view === 'planning' || d.view === 'prediction' || linked);
     const end = f.yielding
       ? d.settings.scenario === 'signal'
         ? 2
@@ -609,10 +623,15 @@ export function createDrivingScene(
     }
     path.instanceMatrix.needsUpdate = true;
     path.computeBoundingSphere();
-    stop.visible = !inspect && d.view === 'planning' && f.yielding;
+    stop.visible = !inspect && (d.view === 'planning' || linked) && f.yielding;
     stop.position.x = d.settings.scenario === 'signal' ? 2 : 3.4;
     if (!d.tourPose) {
-      target.set(f.x + (inspect ? 0 : 3), inspect ? 0.7 : 0.55, f.z);
+      target.set(
+        f.x +
+          (inspect ? 0 : linked ? Math.min(9, Math.max(3, (5 - f.x) / 2)) : 3),
+        inspect ? 0.7 : 0.55,
+        f.z,
+      );
       const nextFocus = engineering
         ? id + '-' + assembly + '-' + d.controlDetail
         : d.camera === 'cabin'
@@ -635,6 +654,7 @@ export function createDrivingScene(
         else if (d.camera === 'overhead')
           cameraGoal.set(f.x + 1, 22, f.z + 0.1);
         else if (d.camera === 'bumper') cameraGoal.set(f.x + 1.62, 1.08, f.z);
+        else if (linked) cameraGoal.set(target.x + 7, 12, f.z + 19);
         else cameraGoal.set(f.x + 11, 8.5, f.z + 14);
         if (!engineering) {
           camera.position.copy(cameraGoal);
@@ -727,6 +747,14 @@ export function createDrivingScene(
     sun.position.set(f.x - 12, 25, 16);
     renderer.render(scene, camera);
     hudContext.clearRect(0, 0, hud.width, hud.height);
+    if (linked)
+      drawDecisionReadout(
+        hudContext,
+        d.frame,
+        d.settings,
+        hud.width,
+        hud.height,
+      );
     if (d.steering)
       drawSteeringReadout(
         hudContext,
@@ -739,7 +767,11 @@ export function createDrivingScene(
     if (recording) {
       out.fillStyle = '#10191f';
       out.fillRect(0, 0, 1920, 1080);
-      out.drawImage(renderer.domElement, 0, 0, 1920, 1080);
+      const road = linked
+        ? decisionLayout(1920, 1080).road
+        : { x: 0, y: 0, w: 1920, h: 1080 };
+      out.drawImage(renderer.domElement, road.x, road.y, road.w, road.h);
+      if (linked) drawDecisionReadout(out, d.frame, d.settings, 1920, 1080);
       drawRecordingBrand(out);
       if (d.steering)
         drawSteeringReadout(

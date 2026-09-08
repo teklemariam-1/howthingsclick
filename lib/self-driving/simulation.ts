@@ -1,5 +1,5 @@
 export type Scenario = 'crossing' | 'signal' | 'roadworks';
-export type View = 'street' | 'vision' | 'prediction' | 'planning';
+export type View = 'linked' | 'street' | 'vision' | 'prediction' | 'planning';
 export type CameraView = 'follow' | 'overhead' | 'bumper' | 'vehicle' | 'cabin';
 export interface Settings {
   scenario: Scenario;
@@ -57,6 +57,12 @@ export const VIEW_INFO: Record<
   View,
   { title: string; description: string; color: string }
 > = {
+  linked: {
+    title: 'One moment. The whole decision.',
+    description:
+      'Compare the 3D road with the observed world, planned route and wheel response. Gray space is unknown.',
+    color: '#71dceb',
+  },
   street: {
     title: 'The world around the car',
     description:
@@ -223,7 +229,13 @@ export function simulate(input: Settings): Frame[] {
   return frames;
 }
 export function frameAt(frames: Frame[], time: number): Frame {
-  const index = clamp(time, 0, DURATION) / STEP,
+  const rawIndex = clamp(time, 0, DURATION) / STEP;
+  // A checkpoint time comes from an exact simulation step. Avoid selecting the
+  // previous discrete observation because multiplication/division lost an ulp.
+  const index =
+      Math.abs(rawIndex - Math.round(rawIndex)) < 1e-7
+        ? Math.round(rawIndex)
+        : rawIndex,
     a = frames[Math.floor(index)],
     b = frames[Math.min(frames.length - 1, Math.ceil(index))],
     t = index - Math.floor(index);

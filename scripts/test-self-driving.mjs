@@ -8,6 +8,7 @@ for (const test of [
   'self-driving-tour',
   'self-driving-mechanisms',
   'self-driving-pedestrian',
+  'self-driving-decision',
 ]) {
   const outfile = 'work/test-' + test + '.cjs';
   await build({
