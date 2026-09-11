@@ -607,6 +607,7 @@ export default function StarlinkLab() {
                 <div className="sl-control-label">
                   Assembly
                   <Slider
+                    thumbLabel="Assembly separation"
                     aria-label="Assembly separation"
                     min={0}
                     max={1}
@@ -624,6 +625,7 @@ export default function StarlinkLab() {
               <div className="sl-control-label">
                 Beam {Math.round(shownAngle)}°
                 <Slider
+                  thumbLabel="Beam steering angle"
                   aria-label="Beam steering angle"
                   min={-45}
                   max={45}
@@ -696,6 +698,7 @@ export default function StarlinkLab() {
           <div className="sl-timeline">
             <Slider
               disabled={recording}
+              thumbLabel="Tour timeline"
               aria-label="Tour timeline"
               min={0}
               max={durationFor(format)}
