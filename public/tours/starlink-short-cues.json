@@ -1,0 +1,75 @@
+{
+  "format": "short",
+  "duration": 60,
+  "resolution": [
+    1080,
+    1920
+  ],
+  "captions": false,
+  "chapters": [
+    {
+      "chapter": 1,
+      "id": "hook",
+      "start": 0,
+      "end": 5,
+      "title": "How does THIS give you internet?",
+      "narration": "Your next click could go to space. Here is how Starlink makes that happen."
+    },
+    {
+      "chapter": 2,
+      "id": "terminal",
+      "start": 5,
+      "end": 12,
+      "title": "First stop: your terminal.",
+      "narration": "Your router sends the request to this flat outdoor terminal. Its radio beam reaches a satellite moving overhead."
+    },
+    {
+      "chapter": 3,
+      "id": "beam",
+      "start": 12,
+      "end": 22,
+      "title": "Steer the waves. Not the dish.",
+      "narration": "Under the surface, antenna elements shift their timing. Their waves combine into a beam that follows a satellite, while the panel stays still."
+    },
+    {
+      "chapter": 4,
+      "id": "satellite",
+      "start": 22,
+      "end": 31,
+      "title": "A router in orbit.",
+      "narration": "A few hundred kilometres up, the satellite receives and routes your data. Solar arrays power its electronics. Optical terminals reach other satellites."
+    },
+    {
+      "chapter": 5,
+      "id": "lasers",
+      "start": 31,
+      "end": 40,
+      "title": "Across space by laser.",
+      "narration": "Some traffic crosses oceans and remote regions through laser links. Radio then carries it down to a ground gateway."
+    },
+    {
+      "chapter": 6,
+      "id": "gateway",
+      "start": 40,
+      "end": 47,
+      "title": "Back to the internet.",
+      "narration": "The gateway connects to networks on Earth. Your reply travels back through the system."
+    },
+    {
+      "chapter": 7,
+      "id": "handoff",
+      "start": 47,
+      "end": 55,
+      "title": "Moving satellites. Changing links.",
+      "narration": "Satellites keep moving, so your connection changes between them. Clear sky at the terminal still matters."
+    },
+    {
+      "chapter": 8,
+      "id": "explore",
+      "start": 55,
+      "end": 60,
+      "title": "Try the interactive version.",
+      "narration": "Open the satellite and steer the beam yourself at How Things Click."
+    }
+  ]
+}

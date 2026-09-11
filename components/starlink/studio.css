@@ -1,0 +1,209 @@
+.sl-film {
+  min-height: 620px;
+}
+.sl-film .sl-canvas {
+  inset: auto;
+  left: 0;
+  top: 50%;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16/9;
+  transform: translateY(-50%);
+}
+.sl-portrait {
+  min-height: 720px;
+}
+.sl-portrait .sl-canvas {
+  left: 50%;
+  width: min(100%, 405px);
+  aspect-ratio: 9/16;
+  transform: translate(-50%, -50%);
+}
+.sl-film .sl-legend {
+  display: none;
+}
+.sl-film .sl-stage-top {
+  top: auto;
+  bottom: 18px;
+}
+.sl-studio {
+  padding: 27px 28px;
+  margin-top: 26px;
+  background: #0c1b28;
+  border: 1px solid #243b4b;
+  border-radius: 14px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px 26px;
+}
+.sl-studio h3 {
+  font-weight: 500;
+  font-size: 22px;
+  margin: 8px 0;
+}
+.sl-studio p {
+  font-size: 13px;
+  color: #8faabc;
+  line-height: 1.6;
+  margin: 7px 0;
+}
+.sl-studio-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sl-studio button,
+.sl-upload,
+.sl-export a,
+.sl-script-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #314959;
+  border-radius: 8px;
+  background: #132938;
+  padding: 11px 13px;
+  color: #c6dfec;
+  font-size: 13px;
+  text-decoration: none;
+}
+.sl-studio .sl-record {
+  color: #0c231d;
+  background: #d5ef78;
+  border-color: #d5ef78;
+  font-weight: 600;
+}
+.sl-studio .sl-record.active {
+  background: #fbad87;
+  border-color: #fbad87;
+}
+.sl-upload {
+  cursor: pointer;
+  position: relative;
+}
+.sl-upload input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.sl-upload:focus-within {
+  outline: 2px solid #d5ef78;
+}
+.sl-voice,
+.sl-record-status,
+.sl-export,
+.sl-script {
+  grid-column: 1/-1;
+}
+.sl-studio .sl-record-status {
+  color: #c5dcb3;
+  min-height: 20px;
+}
+.sl-export {
+  display: flex;
+  align-items: start;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 15px 0;
+}
+.sl-export video {
+  max-height: 280px;
+  max-width: 100%;
+  width: 360px;
+  border-radius: 8px;
+  background: #02080e;
+}
+.sl-script {
+  font-size: 13px;
+  color: #9fbbce;
+  border-top: 1px solid #203949;
+  padding-top: 16px;
+}
+.sl-script summary {
+  cursor: pointer;
+}
+.sl-chapters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin: 16px 0;
+}
+.sl-chapters button {
+  text-align: left;
+  background: #0c202d;
+  font-size: 12px;
+}
+.sl-chapters span {
+  color: #d5ef78;
+  font-variant-numeric: tabular-nums;
+  min-width: 35px;
+}
+.sl-script-links {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.sl-script-links a {
+  color: #d5ef78;
+}
+@media (max-width: 1100px) {
+  .sl-studio {
+    grid-template-columns: 1fr;
+  }
+  .sl-chapters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 720px) {
+  .sl-studio {
+    padding: 20px 16px;
+  }
+  .sl-chapters {
+    grid-template-columns: 1fr;
+  }
+  .sl-film:not(.sl-portrait) {
+    min-height: 260px;
+  }
+  .sl-portrait {
+    min-height: 680px;
+  }
+  .sl-portrait .sl-canvas {
+    width: min(100%, 382px);
+  }
+  .sl-legend {
+    bottom: 12px;
+  }
+  .sl-film .sl-stage-top {
+    bottom: 8px;
+  }
+  .sl-stage-caption {
+    bottom: 65px;
+  }
+  .sl-controls .sl-transport > span {
+    display: inline;
+    font-size: 11px;
+  }
+}
+@media (max-width: 720px) {
+  .sl-tour {
+    flex-wrap: wrap;
+    width: 100%;
+    margin-left: 0;
+  }
+  .sl-tour select {
+    flex: 1;
+  }
+  .sl-transport {
+    width: 100%;
+  }
+}
+.sl-studio output {
+  display: block;
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 7px 0;
+}

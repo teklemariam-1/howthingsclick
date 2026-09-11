@@ -51,17 +51,19 @@ export default function Collection() {
       >
         <div className="collection-tools">
           <TabsList aria-label="Experience categories">
-            {['All', 'Engines', 'Vehicles'].map((value) => (
-              <TabsTrigger value={value} key={value}>
-                {value === 'All' ? 'All experiences' : value}
-                <span>
-                  {value === 'All'
-                    ? experiences.length
-                    : experiences.filter((item) => item.category === value)
-                        .length}
-                </span>
-              </TabsTrigger>
-            ))}
+            {['All', ...new Set(experiences.map((item) => item.category))].map(
+              (value) => (
+                <TabsTrigger value={value} key={value}>
+                  {value === 'All' ? 'All experiences' : value}
+                  <span>
+                    {value === 'All'
+                      ? experiences.length
+                      : experiences.filter((item) => item.category === value)
+                          .length}
+                  </span>
+                </TabsTrigger>
+              ),
+            )}
           </TabsList>
           <div className="collection-search">
             <Search size={16} />

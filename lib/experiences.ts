@@ -1,5 +1,19 @@
 export const experiences = [
   {
+    id: 'starlink',
+    number: '04',
+    category: 'Space',
+    title: 'How Starlink actually works',
+    description:
+      'Steer a radio beam. Open the satellite. Follow your data across space and back to Earth.',
+    detail: 'Phased arrays · Laser links · Handoffs',
+    image: '/images/starlink-preview.webp',
+    alt: 'Original 3D Starlink satellite with two solar wings above a photographic Earth',
+    href: '/starlink',
+    keywords:
+      'space starlink spacex satellite internet laser orbit phased array antenna communication radio gateway beam broadband',
+  },
+  {
     id: 'self-driving',
     number: '03',
     category: 'Vehicles',

@@ -1,0 +1,15 @@
+Your next click could go to space. Here is how Starlink makes that happen.
+
+Your router sends the request to this flat outdoor terminal. Its radio beam reaches a satellite moving overhead.
+
+Under the surface, antenna elements shift their timing. Their waves combine into a beam that follows a satellite, while the panel stays still.
+
+A few hundred kilometres up, the satellite receives and routes your data. Solar arrays power its electronics. Optical terminals reach other satellites.
+
+Some traffic crosses oceans and remote regions through laser links. Radio then carries it down to a ground gateway.
+
+The gateway connects to networks on Earth. Your reply travels back through the system.
+
+Satellites keep moving, so your connection changes between them. Clear sky at the terminal still matters.
+
+Open the satellite and steer the beam yourself at How Things Click.

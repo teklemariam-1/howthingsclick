@@ -1,0 +1,37 @@
+HOW THINGS CLICK — HOW STARLINK ACTUALLY WORKS
+150 seconds / landscape 1920 × 1080
+
+VOICE DIRECTION: Curious, confident and conversational. Keep the energy moving; do not rush the explanations. Record each chapter separately. Place it at the exact start below, finishing at least 0.4 seconds before the next chapter. These are edit cues, not automatically aligned speech. No narration captions are burned into the recording.
+
+00:00:00,000 → 00:00:09,000 | Your internet. In orbit.
+Tap play in the middle of nowhere. Your request can leave Earth, cross space, and come back before you notice. Here is the journey.
+
+00:00:09,000 → 00:00:21,000 | It starts with this flat panel.
+Your device talks to a Wi-Fi router. A cable connects that router to the outdoor Starlink terminal. The flat panel uses radio waves to reach a satellite moving overhead.
+
+00:00:21,000 → 00:00:38,000 | The beam moves. The dish stays still.
+The clever part is hidden under the surface: a phased array. Many small antenna elements transmit with carefully shifted timing. Their waves reinforce each other in a chosen direction. Change that timing, and the beam follows the satellite without physically turning the panel.
+
+00:00:38,000 → 00:00:50,000 | Closer to Earth. Less distance to travel.
+Starlink operates in low Earth orbit. These satellites move at roughly seven and a half kilometres per second. Shorter signal paths help reduce delay, but routing, congestion and processing also matter.
+
+00:00:50,000 → 00:01:06,000 | A flying network node.
+On the satellite, antennas receive the radio signal. Onboard electronics process and route the traffic. Solar arrays provide electrical power. Optical terminals can send data to other satellites using tightly pointed laser links.
+
+00:01:06,000 → 00:01:22,000 | Some packets take the space route.
+Traffic can head down to a gateway, or travel across laser links first. That is especially useful over oceans and remote regions. These glowing lines show the route; the real radio and laser beams are invisible to your eyes.
+
+00:01:22,000 → 00:01:35,000 | The internet is still on Earth.
+A ground gateway connects the satellite network to terrestrial networks. Fiber carries the request onward to an internet service. The reply comes back through the network to your terminal, router and device.
+
+00:01:35,000 → 00:01:52,000 | A new satellite takes over.
+One satellite does not hover above your house. As the sky changes, the network must move your connection between satellites and radio resources. Watch the incoming link take over. This is an illustrative handoff, not a view of Starlink’s private control software.
+
+00:01:52,000 → 00:02:08,000 | A tree can break the first link.
+Now put a tree in the signal path. A blocked terminal can lose connectivity even when the satellites and laser network are working. Another visible satellite may help, but clear sky, installation, weather and network conditions all affect service.
+
+00:02:08,000 → 00:02:20,000 | Radio. Lasers. Fiber. And back.
+That is the complete idea: steer a radio beam, route a packet through moving satellites, reach the internet on Earth, and return the response. A coordinated network makes all those moving pieces useful.
+
+00:02:20,000 → 00:02:30,000 | Now you control the connection.
+Try it yourself at How Things Click. Open the satellite, steer the beam, and test what happens when you block the sky.

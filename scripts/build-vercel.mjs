@@ -12,7 +12,7 @@ const result = spawnSync(
 );
 if (result.error) throw result.error;
 if (result.status !== 0) process.exit(result.status ?? 1);
-for (const route of ['', 'engine', 'car', 'self-driving']) {
+for (const route of ['', 'engine', 'car', 'self-driving', 'starlink']) {
   const html = route
     ? [`dist/client/${route}.html`, `dist/client/${route}/index.html`]
     : ['dist/client/index.html'];
@@ -20,5 +20,5 @@ for (const route of ['', 'engine', 'car', 'self-driving']) {
     throw new Error(`Static export is missing /${route}`);
 }
 console.log(
-  'Vercel static build ready: homepage, engine, car, and self-driving.',
+  'Vercel static build ready: homepage, engine, car, self-driving, and Starlink.',
 );

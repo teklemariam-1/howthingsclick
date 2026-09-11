@@ -1,0 +1,28 @@
+HOW THINGS CLICK — HOW STARLINK ACTUALLY WORKS
+60 seconds / portrait 1080 × 1920
+
+VOICE DIRECTION: Curious, confident and conversational. Keep the energy moving; do not rush the explanations. Record each chapter separately. Place it at the exact start below, finishing at least 0.4 seconds before the next chapter. These are edit cues, not automatically aligned speech. No narration captions are burned into the recording.
+
+00:00:00,000 → 00:00:05,000 | How does THIS give you internet?
+Your next click could go to space. Here is how Starlink makes that happen.
+
+00:00:05,000 → 00:00:12,000 | First stop: your terminal.
+Your router sends the request to this flat outdoor terminal. Its radio beam reaches a satellite moving overhead.
+
+00:00:12,000 → 00:00:22,000 | Steer the waves. Not the dish.
+Under the surface, antenna elements shift their timing. Their waves combine into a beam that follows a satellite, while the panel stays still.
+
+00:00:22,000 → 00:00:31,000 | A router in orbit.
+A few hundred kilometres up, the satellite receives and routes your data. Solar arrays power its electronics. Optical terminals reach other satellites.
+
+00:00:31,000 → 00:00:40,000 | Across space by laser.
+Some traffic crosses oceans and remote regions through laser links. Radio then carries it down to a ground gateway.
+
+00:00:40,000 → 00:00:47,000 | Back to the internet.
+The gateway connects to networks on Earth. Your reply travels back through the system.
+
+00:00:47,000 → 00:00:55,000 | Moving satellites. Changing links.
+Satellites keep moving, so your connection changes between them. Clear sky at the terminal still matters.
+
+00:00:55,000 → 00:01:00,000 | Try the interactive version.
+Open the satellite and steer the beam yourself at How Things Click.

@@ -1,0 +1,589 @@
+.starlink-lab {
+  --brand-accent: #d5ef78;
+  --primary: #d5ef78;
+  --muted: #203343;
+  --input: #26394b;
+  background: #07111b;
+  color: #edf4f7;
+  min-height: 100vh;
+  font-family: Arial, sans-serif;
+  color-scheme: dark;
+}
+.starlink-lab * {
+  box-sizing: border-box;
+}
+.starlink-lab button,
+.starlink-lab select {
+  font: inherit;
+}
+.starlink-lab button {
+  cursor: pointer;
+}
+.starlink-lab button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.starlink-lab button:focus-visible,
+.starlink-lab a:focus-visible,
+.starlink-lab select:focus-visible {
+  outline: 2px solid #d5ef78;
+  outline-offset: 4px;
+}
+.sl-header {
+  height: 88px;
+  max-width: 1560px;
+  margin: auto;
+  padding: 0 40px;
+  display: flex;
+  align-items: center;
+  gap: 42px;
+  border-bottom: 1px solid #1d2a38;
+}
+.sl-header a {
+  color: inherit;
+  text-decoration: none;
+}
+.sl-header .htc-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 23px;
+  letter-spacing: -1px;
+}
+.sl-header .htc-brand svg {
+  width: 37px;
+  height: 37px;
+}
+.sl-back {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #adc1ce !important;
+}
+.sl-edition {
+  margin-left: auto;
+  font-size: 12px;
+  letter-spacing: 1.3px;
+  color: #d5ef78;
+}
+.sl-edition span {
+  margin-left: 24px;
+  color: #89a3b6;
+}
+.sl-main {
+  max-width: 1560px;
+  margin: auto;
+  padding: 0 40px;
+}
+.sl-intro {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  padding: 34px 0 28px;
+  gap: 24px;
+}
+.sl-eyebrow {
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #9eb4c4;
+  margin: 0 0 10px;
+}
+.sl-intro h1 {
+  font-size: clamp(28px, 3vw, 44px);
+  letter-spacing: -1.8px;
+  font-weight: 500;
+  line-height: 1.12;
+  margin: 0;
+}
+.sl-intro h1 em {
+  font-style: normal;
+  color: #cde89c;
+}
+.sl-intro > p {
+  color: #94adbe;
+  line-height: 1.6;
+  font-size: 15px;
+  margin: 0;
+}
+.sl-workspace {
+  display: grid;
+  grid-template-columns: 224px minmax(0, 1fr);
+  border: 1px solid #263646;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #091724;
+  min-height: 610px;
+}
+.sl-nav {
+  padding: 16px 10px;
+  background: #0b1723;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-right: 1px solid #22313e;
+}
+.sl-nav button {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  border: 0;
+  padding: 15px 12px;
+  color: #a8bdca;
+  background: transparent;
+  border-radius: 8px;
+  text-align: left;
+  font-size: 14px;
+}
+.sl-nav button > svg:last-child {
+  margin-left: auto;
+  opacity: 0;
+}
+.sl-nav button[aria-pressed='true'] {
+  color: #e4f5c3;
+  background: #1b302d;
+}
+.sl-nav button[aria-pressed='true'] > svg:last-child {
+  opacity: 1;
+}
+.sl-nav button:hover {
+  background: #172a37;
+}
+.sl-nav-note {
+  margin-top: auto;
+  padding: 28px 14px 10px;
+  color: #7691a5;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.sl-nav-note span {
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  color: #7894a8;
+}
+.sl-stage {
+  min-width: 0;
+  position: relative;
+  min-height: 610px;
+  background: #030914;
+  overflow: hidden;
+}
+.sl-stage:fullscreen {
+  height: 100vh;
+  min-height: 100vh;
+  width: 100vw;
+}
+.sl-canvas {
+  position: absolute;
+  inset: 0;
+}
+.sl-canvas canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+.sl-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.sl-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #07121bef;
+  font-size: 15px;
+  color: #c4d9e6;
+  z-index: 5;
+}
+.sl-stage-top {
+  position: absolute;
+  right: 22px;
+  top: 18px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.sl-stage-top button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  background: #0b1b29b8;
+  border: 1px solid #284151;
+  border-radius: 8px;
+  color: #c4d9e6;
+}
+.sl-live {
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  background: #091827b0;
+  border: 1px solid #2e4858;
+  padding: 10px;
+  border-radius: 7px;
+  color: #acd2e7;
+  margin-right: 8px;
+}
+.sl-stage-caption {
+  position: absolute;
+  left: 28px;
+  bottom: 55px;
+  pointer-events: none;
+  text-shadow: 0 1px 16px #000;
+}
+.sl-stage-caption > span {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: #aac7d8;
+}
+.sl-stage-caption h2 {
+  font-size: 28px;
+  letter-spacing: -0.7px;
+  font-weight: 500;
+  margin: 10px 0;
+}
+.sl-stage-caption p {
+  font-size: 14px;
+  color: #a8c5d7;
+  margin: 0;
+}
+.sl-legend {
+  position: absolute;
+  bottom: 18px;
+  right: 24px;
+  display: flex;
+  gap: 15px;
+  font-size: 11px;
+  color: #91aabd;
+  pointer-events: none;
+}
+.sl-legend span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sl-legend i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+.sl-controls {
+  display: flex;
+  gap: 22px;
+  align-items: center;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #243443;
+  padding: 20px 0;
+}
+.sl-controls button,
+.sl-controls select,
+.sl-timeline button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #bcd0de;
+  border: 1px solid #2b4050;
+  border-radius: 8px;
+  padding: 10px 14px;
+  background: #101f2d;
+  font-size: 14px;
+}
+.sl-transport {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.sl-transport .sl-play {
+  background: #d5ef78;
+  color: #1d2a1e;
+  border-color: #d5ef78;
+}
+.sl-transport > span {
+  font-size: 12px;
+  color: #8ea9bc;
+  min-width: 55px;
+  font-variant-numeric: tabular-nums;
+}
+.sl-experiment {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex: 1;
+}
+.sl-experiment .sl-control-label {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  color: #a8c0ce;
+  font-size: 13px;
+  min-width: 150px;
+}
+.sl-experiment .sl-control-label > [data-slot='slider'] {
+  width: 110px;
+}
+.sl-tour {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+.sl-controls .sl-primary {
+  background: #d5ef78;
+  color: #182417;
+  border-color: #d5ef78;
+  font-weight: 600;
+}
+.sl-timeline {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 0;
+}
+.sl-timeline > [data-slot='slider'] {
+  flex: 1;
+}
+.sl-below {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 80px;
+  padding: 44px 0;
+}
+.sl-below h3 {
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.5px;
+  margin: 12px 0;
+}
+.sl-below p:not(.sl-eyebrow) {
+  color: #90aabb;
+  font-size: 15px;
+  line-height: 1.75;
+  max-width: 650px;
+}
+.sl-facts {
+  display: flex;
+  gap: 34px;
+  padding-top: 18px;
+}
+.sl-facts span {
+  font-size: 11px;
+  color: #7190a4;
+  max-width: 150px;
+  line-height: 1.7;
+}
+.sl-facts strong {
+  display: block;
+  font-size: 19px;
+  font-weight: 500;
+  color: #d8e7ef;
+  margin-bottom: 4px;
+}
+.sl-below aside {
+  border-left: 1px solid #263644;
+  padding-left: 42px;
+}
+.sl-below a {
+  font-size: 14px;
+  color: #d5ef78;
+  text-decoration: none;
+  display: inline-block;
+  margin-top: 14px;
+}
+.sl-sources {
+  border-top: 1px solid #243443;
+  padding: 24px 0;
+  color: #7c98ab;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.sl-sources summary {
+  cursor: pointer;
+  color: #9ab2c2;
+}
+.sl-sources a {
+  color: #a4c6d9;
+  margin-right: 24px;
+  display: inline-block;
+}
+.sl-footer {
+  max-width: 1480px;
+  margin: auto;
+  padding: 25px 0 40px;
+  border-top: 1px solid #243443;
+  display: flex;
+  justify-content: space-between;
+  color: #5e7b90;
+  font-size: 11px;
+  letter-spacing: 2px;
+}
+.sl-footer span {
+  letter-spacing: 0;
+}
+.starlink-lab [data-slot='slider-track'] {
+  background: #274455;
+}
+.starlink-lab [data-slot='slider-range'] {
+  background: #d5ef78;
+}
+.starlink-lab [data-slot='slider-thumb'] {
+  background: #d5ef78;
+  border-color: #d5ef78;
+}
+@media (max-width: 1100px) {
+  .sl-main {
+    padding: 0 24px;
+  }
+  .sl-header {
+    padding: 0 24px;
+  }
+  .sl-workspace {
+    grid-template-columns: 190px minmax(0, 1fr);
+    min-height: 550px;
+  }
+  .sl-stage {
+    min-height: 550px;
+  }
+  .sl-nav button {
+    font-size: 12px;
+    padding: 14px 8px;
+  }
+  .sl-intro > p {
+    display: none;
+  }
+  .sl-edition span {
+    display: none;
+  }
+  .sl-below {
+    gap: 32px;
+  }
+  .sl-facts {
+    gap: 18px;
+  }
+  .sl-experiment {
+    order: 3;
+    width: 100%;
+    flex-basis: 100%;
+  }
+}
+@media (max-width: 720px) {
+  .sl-header {
+    height: 72px;
+    padding: 0 18px;
+    gap: 18px;
+  }
+  .sl-header .htc-brand {
+    font-size: 20px;
+  }
+  .sl-header .htc-brand svg {
+    width: 30px;
+    height: 30px;
+  }
+  .sl-back {
+    margin-left: auto;
+  }
+  .sl-edition {
+    display: none;
+  }
+  .sl-main {
+    padding: 0 14px;
+  }
+  .sl-intro {
+    padding: 25px 4px 20px;
+  }
+  .sl-intro h1 {
+    letter-spacing: -1px;
+  }
+  .sl-eyebrow {
+    font-size: 10px;
+  }
+  .sl-workspace {
+    display: flex;
+    flex-direction: column;
+  }
+  .sl-nav {
+    flex-direction: row;
+    overflow: auto;
+    padding: 8px;
+    gap: 5px;
+    border-right: 0;
+    border-bottom: 1px solid #243443;
+  }
+  .sl-nav button {
+    flex: 0 0 auto;
+    gap: 7px;
+    padding: 10px;
+    font-size: 12px;
+  }
+  .sl-nav button > svg:last-child,
+  .sl-nav-note {
+    display: none;
+  }
+  .sl-stage {
+    min-height: 590px;
+  }
+  .sl-stage-top {
+    right: 12px;
+    top: 12px;
+  }
+  .sl-live {
+    display: none;
+  }
+  .sl-stage-caption {
+    left: 18px;
+    bottom: 66px;
+    max-width: 80%;
+  }
+  .sl-stage-caption h2 {
+    font-size: 25px;
+  }
+  .sl-stage-caption p {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .sl-legend {
+    right: 18px;
+    font-size: 10px;
+    gap: 10px;
+  }
+  .sl-controls {
+    gap: 12px;
+    padding: 15px 0;
+  }
+  .sl-controls button,
+  .sl-controls select {
+    font-size: 12px;
+    padding: 9px 11px;
+  }
+  .sl-tour {
+    gap: 7px;
+  }
+  .sl-transport > span {
+    display: none;
+  }
+  .sl-experiment {
+    flex-wrap: wrap;
+  }
+  .sl-below {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding: 32px 5px;
+  }
+  .sl-below aside {
+    border-left: 0;
+    border-top: 1px solid #243443;
+    padding: 28px 0 0;
+  }
+  .sl-facts {
+    gap: 20px;
+  }
+  .sl-facts strong {
+    font-size: 17px;
+  }
+  .sl-footer {
+    margin: 0 18px;
+    font-size: 10px;
+  }
+  .sl-footer span {
+    display: none;
+  }
+}
