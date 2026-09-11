@@ -1,0 +1,24 @@
+# Starlink thumbnail generation prompts
+
+Generated using the built-in image generation tool, with the animation still as a reference. Both outputs were visually inspected for headline spelling, hierarchy, recognizable spacecraft, and consistent branding.
+
+## Full video
+
+Use case: ads-marketing.
+Asset: a premium 16:9 YouTube thumbnail for the 2 minute 30 second How Things Click film "How Starlink Actually Works". Deliver one landscape image, ideally 3840 x 2160.
+Reference image role: the supplied frame is our actual animation and branding reference. Turn it into a striking polished promotional composition; preserve the recognizable flat white satellite body, two opposing rectangular deep-blue solar wings, and small optical terminals. Do not use the old frame's composition or tiny footer.
+Primary image: a spectacular physically believable CGI close view of this Starlink-inspired satellite in orbit. Sculpted realistic aluminum edges, white thermal panels, fine blue solar cells and restrained metallic reflections. Three-quarter view, satellite dominates the right two thirds. Slightly lift one central white cover to reveal a small glimpse of electronics beneath; all other geometry coherent and restrained, no engine, thrusters firing or sci-fi spacecraft. Earth curves across the lower background with rich ocean blue, detailed clouds and thin cyan atmosphere. Deep almost-black navy space behind headline.
+Composition: large readable type in left upper third. A smaller recognizable flat rectangular white ground terminal on a dark simple roof at lower left, linked to satellite by one luminous cyan illustrative signal path. Only three focal elements: headline, satellite, terminal/beam. Perspective is educational montage, clean and intentional. No busy diagram or decorative dashboard.
+Exact headline in very bold contemporary condensed sans serif: "STARLINK" on first line, "EXPLAINED" on second. STARLINK white, EXPLAINED bright pale lime. Very large lettering readable at mobile thumbnail size. Small discreet brand at top left: "how things click." matching our reference. No other words, no time badge.
+Lighting: cinematic hard sunlight plus cool Earth bounce, outstanding material detail, crisp silhouettes and local contrast without overdone bloom. Sophisticated science channel identity in navy, white, cyan and pale lime.
+Keep all text within comfortable margins, no text overlapping satellite, leave bottom-right corner free for YouTube duration. Avoid people, shocked faces, false NASA/SpaceX endorsements, official logos, watermarks, rocket launches, cartoon graphics and grids. Final should instantly communicate real engineering behind internet from space.
+
+## Short
+
+Use case: ads-marketing.
+Create a new companion VERTICAL 9:16 YouTube Shorts cover, ideally 2160 x 3840, by re-composing the attached landscape thumbnail. It must be a purpose-designed portrait cover, not a crop.
+Input image is a brand, material, spacecraft and design reference. Keep the same "how things click." identity, cinematic photorealistic 3D satellite materials, blue Earth and navy/cyan/lime palette. Preserve the Starlink-inspired broad flat white bus and TWO opposed dark blue solar wings.
+Exact typography: the large hook reads "INTERNET" on line one, "FROM SPACE?" on line two or on two additional lines if necessary. White INTERNET, luminous pale lime FROM SPACE? Bold condensed sans serif, extremely readable in a tiny mobile feed. Below the headline, a small restrained label reads "STARLINK". Tiny brand "how things click." at top. No other words, no duration badge.
+Portrait composition: brand in the top 7%, huge hook across roughly 10-28% of the image. The satellite dominates the central 30-65%, tilted diagonally to show both wings and detailed flat-panel body; leave visible negative space around it. Photographic blue Earth curves through the bottom half. At bottom left, below the satellite, a simple small white flat rectangular Starlink terminal on a house roof is linked up to the satellite by ONE clear cyan illustrative signal path with a few traveling light dots. An immediate visual answer to the headline. Explicit editorial montage, not literal scale.
+Keep the satellite's primary body, full headline and terminal safely within the inner 80% of width; leave the outer right 12% in the lower half quiet for Shorts interface controls, and the bottom 15% quiet for app overlays. Small optical terminals, crisp material detail, restrained specular sunlight and cyan atmosphere. Big focal shapes, clean silhouette, a feeling of discovery. Avoid clutter, giant rocket engines, humanoids, reaction faces, extra spacecraft, heavy lens flare, excessive stars, official SpaceX/NASA branding, footnotes and watermarks. Deliver one exceptionally polished cohesive portrait image.
+

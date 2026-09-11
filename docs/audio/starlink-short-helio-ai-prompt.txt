@@ -1,0 +1,104 @@
+HELIO AUDIO AI PRODUCTION PROMPT
+60-SECOND YOUTUBE SHORT / VERTICAL 1080 x 1920
+
+You are the audio producer for How Things Click, an interactive engineering channel. Produce the narration for the matching supplied Starlink video.
+
+VOICE
+Use the existing HELIO character/voice selected in the audio platform. Keep the same Helio voice identity throughout both videos. If Helio is unavailable, report that instead of silently selecting a different character. Speak clear, natural English; retain Helio's established accent.
+
+CREATIVE GOAL
+Make viewers curious immediately and keep the explanation rewarding all the way through. Aim for strong audience retention and shareability; do not promise virality. Sound like an excited, knowledgeable friend pointing out an amazing mechanism. Use warmth, confidence, curiosity and occasional surprise. Make each reveal feel earned. No trailer-announcer voice, shouting, fake laughter, exaggerated gasps or monotonous lecture delivery.
+
+Begin speaking immediately: no greeting, channel introduction, logo sting or long inhale. Give the opening sentence a compelling lift. Vary emphasis and melody as the scene changes. Make technical words easy to understand, then land the plain-language payoff. Let the final invitation feel like the natural next thing the viewer wants to do. Do not insert a like-and-subscribe speech.
+
+SCRIPT RULES
+Speak ONLY the text following "NARRATION:" in each segment, word for word. Do not speak timestamps, headings, notes, target finish times, filenames or these instructions. Do not add claims, filler or extra sentences. Say "How Things Click" as three clear words. Pronounce Starlink as "STAR-link", Wi-Fi as "WHY-fye", and phased array as "fayzd uh-RAY".
+
+SYNCHRONIZATION
+Generate and assemble the segments separately. Start each at its listed start time. Finish the spoken line by the listed latest finish time, leaving 0.4 seconds before the next scene. The last 0.4 seconds is also unvoiced.
+These timestamps are edit instructions, not a guarantee from text-to-speech. Measure the rendered clips, then trim leading silence and regenerate delivery as needed. Do not solve timing by cutting words, using extreme time stretching, dragging out syllables or rushing the explanation. Do not move the scene boundaries.
+If you cannot edit or verify timings, return the separate clips with measured durations and clearly state that alignment is still needed. Do not claim the audio is synchronized without checking it against the supplied video.
+
+BACKGROUND MUSIC BRIEF — SHORT
+Style: upbeat cinematic electronic / space-tech instrumental.
+Tempo: approximately 112 BPM, steady 4/4.
+Mood: curiosity, discovery, forward motion and a little wonder.
+Palette: a clean repeating synth arpeggio, rounded bass pulse, light tight percussion, airy stereo pads and a few restrained sparkling accents. A simple memorable motif; sparse enough for narration. Avoid slow ambient drift, epic trailer drums, alarm-like sounds, huge EDM drops and sentimental piano.
+00:00-00:05 — A soft pulse and immediate hint of the motif support the spoken hook. No loud impact over the first words.
+00:05-00:12 — Add a light rhythmic layer as the request reaches the terminal.
+00:12-00:22 — Give the phased-array reveal a subtle upward synth movement; keep the explanation unobscured.
+00:22-00:31 — Open the stereo space slightly for the satellite reveal.
+00:31-00:40 — A brighter arpeggio variation supports the laser route, without increasing speech masking.
+00:40-00:47 — Briefly simplify the arrangement as the route returns to Earth.
+00:47-00:55 — Restore the rhythmic pulse for the satellite handoff.
+00:55-01:00 — Resolve the motif beneath the invitation, duck under the brand name and fade smoothly to silence by 01:00.
+
+MUSIC AND MIX RULES
+Compose an original instrumental underscore, or use a track with documented permission for monetized YouTube use. Keep the same small melodic motif and sound palette across both edits so they feel like one How Things Click series. No vocals, chants, spoken samples or recognizable borrowed melodies.
+Helio must remain clearly intelligible on phone speakers. Keep the music restrained under speech: as an initial mix reference, try the bed about 18-24 dB below the voice, then adjust by ear. Use smooth ducking when Helio speaks and gentle recovery in gaps; no audible pumping. Avoid dense synths in the voice's frequency range, heavy sub-bass, sharp hi-hats and abrupt volume spikes.
+Music starts quietly with the first frame; do not delay the spoken hook for a musical introduction. Changes should support the visual reveals without forcing a hit on every cut. Keep the original narration timestamps unchanged. End the music cleanly within the exact video length, with no extra outro seconds.
+Deliver a separate stereo music stem and a separate stereo voice-plus-music mix, both at 48 kHz / 24-bit if supported, in addition to the clean Helio voice master. The mix should sound consistent and unclipped; aim around -16 to -14 LUFS integrated with true peaks no higher than -1 dBTP, checking clarity rather than merely chasing a loudness number.
+Do not add captions. If music creation or mixing is unavailable, provide this composition brief and disclose which audio outputs still need producing. Do not claim a generated or licensed track exists without supplying it and its applicable rights information.
+
+DELIVERY
+Return:
+1. One synchronized voice-only WAV master, 48 kHz, 24-bit, mono, with the exact total length specified below, including any unvoiced gaps and final tail.
+2. One separate stereo music-only WAV stem and one finished stereo voice-plus-music WAV mix, each matching that exact duration.
+3. An MP3 preview of the finished mix if supported.
+4. Numbered individual voice clips and a timing report: intended start, actual voiced duration and final placement.
+5. Music source and usage permission details, or the music-generation service and applicable usage terms.
+Keep the voice clean and consistent, without clipping, excessive compression, reverb or background hiss. Keep the clean voice master free of music and sound effects; combine voice and music only in the separate finished mix. Do not burn captions into the supplied video. If any requested output format is unsupported, disclose that and provide the closest supported audio format.
+
+Short delivery: lively, crisp and immediately engaging. Aim for roughly 155-185 words per minute during speech where the cue allows. Timing and comprehension take priority. Avoid long pauses; leave room only for a quick reveal or natural breath.
+
+Exact master duration: 60.000 seconds.
+Source video: HowThingsClick-Starlink-Short.mp4
+Voice master filename: HowThingsClick-Starlink-Short-Helio-Voice.wav
+
+SEGMENT 01 | 00:00.000 to 00:05.000 | How does THIS give you internet?
+Start: 00:00.000. Latest spoken finish: 00:04.600.
+Performance note (do not speak): Hook: bright, immediate curiosity. Emphasize "next click" and "space"; no dramatic pause after the first word.
+NARRATION:
+Your next click could go to space. Here is how Starlink makes that happen.
+
+SEGMENT 02 | 00:05.000 to 00:12.000 | First stop: your terminal.
+Start: 00:05.000. Latest spoken finish: 00:11.600.
+Performance note (do not speak): Follow the moving request. Keep a nimble, conversational pace; lightly stress "flat outdoor terminal".
+NARRATION:
+Your router sends the request to this flat outdoor terminal. Its radio beam reaches a satellite moving overhead.
+
+SEGMENT 03 | 00:12.000 to 00:22.000 | Steer the waves. Not the dish.
+Start: 00:12.000. Latest spoken finish: 00:21.600.
+Performance note (do not speak): The main aha: give "shift their timing" clarity and land "the panel stays still" with a small lift of surprise.
+NARRATION:
+Under the surface, antenna elements shift their timing. Their waves combine into a beam that follows a satellite, while the panel stays still.
+
+SEGMENT 04 | 00:22.000 to 00:31.000 | A router in orbit.
+Start: 00:22.000. Latest spoken finish: 00:30.600.
+Performance note (do not speak): Match the satellite reveal with confident momentum. Distinguish receiving, routing and powering without a list-reading cadence.
+NARRATION:
+A few hundred kilometres up, the satellite receives and routes your data. Solar arrays power its electronics. Optical terminals reach other satellites.
+
+SEGMENT 05 | 00:31.000 to 00:40.000 | Across space by laser.
+Start: 00:31.000. Latest spoken finish: 00:39.600.
+Performance note (do not speak): Slightly widen the sense of scale on "oceans" and "laser links", then move straight into the return to Earth.
+NARRATION:
+Some traffic crosses oceans and remote regions through laser links. Radio then carries it down to a ground gateway.
+
+SEGMENT 06 | 00:40.000 to 00:47.000 | Back to the internet.
+Start: 00:40.000. Latest spoken finish: 00:46.600.
+Performance note (do not speak): A quick, satisfying explanation of where the data goes. Give "back" a light emphasis.
+NARRATION:
+The gateway connects to networks on Earth. Your reply travels back through the system.
+
+SEGMENT 07 | 00:47.000 to 00:55.000 | Moving satellites. Changing links.
+Start: 00:47.000. Latest spoken finish: 00:54.600.
+Performance note (do not speak): Keep the handoff flowing. A small stress on "keep moving" explains why the switch is necessary.
+NARRATION:
+Satellites keep moving, so your connection changes between them. Clear sky at the terminal still matters.
+
+SEGMENT 08 | 00:55.000 to 01:00.000 | Try the interactive version.
+Start: 00:55.000. Latest spoken finish: 00:59.600.
+Performance note (do not speak): Friendly and energized: "yourself" is the payoff. Say the brand clearly and finish within the allotted window.
+NARRATION:
+Open the satellite and steer the beam yourself at How Things Click.

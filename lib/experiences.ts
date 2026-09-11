@@ -7,8 +7,8 @@ export const experiences = [
     description:
       'Steer a radio beam. Open the satellite. Follow your data across space and back to Earth.',
     detail: 'Phased arrays · Laser links · Handoffs',
-    image: '/images/starlink-preview.webp',
-    alt: 'Original 3D Starlink satellite with two solar wings above a photographic Earth',
+    image: '/images/starlink-thumbnail-v1.webp',
+    alt: 'Starlink explained: a satellite above Earth connected to a home terminal by a glowing signal path.',
     href: '/starlink',
     keywords:
       'space starlink spacex satellite internet laser orbit phased array antenna communication radio gateway beam broadband',
