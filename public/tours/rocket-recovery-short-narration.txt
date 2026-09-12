@@ -1,0 +1,26 @@
+HOW THINGS CLICK — ROCKET RECOVERY
+60 seconds / 1080 × 1920 / 30 fps
+
+00:00 → 00:05 | Catch a falling rocket
+This tower just caught a rocket. How does it avoid disaster?
+
+00:05 → 00:12 | First, remove the speed
+Coming home means killing speed. Fire too late, and even full thrust cannot save the landing.
+
+00:12 → 00:20 | Steer through the air
+These grid fins bite into the air. Sensors track every movement, and the computer keeps correcting the path.
+
+00:20 → 00:29 | Point the thrust
+Near the ground, the engine tilts. Its thrust pushes the booster sideways as the landing burn bleeds off speed.
+
+00:29 → 00:37 | Four legs. One landing.
+Falcon Nine unfolds four legs. The engine does the braking. Only after touchdown do the legs carry the rocket.
+
+00:37 → 00:47 | The tower takes the load
+Super Heavy takes a different route. The tower supports two dedicated catch points, not the grid fins. The engines shut down. The tower takes the weight.
+
+00:47 → 00:55 | Try changing the timing
+A little more wind. A later ignition. Suddenly, that perfect return becomes a missed landing. Can you get the timing right?
+
+00:55 → 01:00 | Your turn to land it
+Land it yourself. Try the interactive lab at How Things Click dot com.

@@ -1,0 +1,36 @@
+Create an exact 60-second YouTube Short audio mix for How Things Click. Use the HELIO character/voice.
+
+VOICE: Curious, confident, conversational; precise consonants and a smile in the final invitation. Start the first word at 0.1 seconds. The opening should feel like witnessing an impossible feat, then pull the viewer into the engineering answer. Build tension before touchdown, briefly release it at the catch, and challenge the viewer at the end. Keep forward momentum without shouting, hype or a drawn-out intro. Say Falcon Nine, Super Heavy, and How Things Click dot com naturally.
+
+TIMING: Render each cue separately. Start at the indicated time and finish 0.25 seconds before its end. Do not read timestamps or titles. Leave intentional small breaths. Do not invent extra dialogue. The visual edit is fixed; do not shift cue boundaries. If necessary, reread the cue rather than aggressively time-stretching it.
+
+MUSIC: Original or commercially licensed instrumental cinematic electronic / aerospace pulse, 118–124 BPM. Deep restrained bass, light rhythmic ticks, airy synth texture, subtle rising energy before the catch. No vocals. No long intro, no huge trailer booms. Duck music clearly under speech (roughly 18–24 dB quieter than the voice). Use a restrained ignition swell near 8s, a short mechanical accent on leg deployment near 31s, and a low load-transfer impact near 43s. Briefly thin the music just before the catch; bring the pulse back for the failed-timing challenge. No cartoon sound effects. The atmosphere should feel cinematic and dramatic while every spoken word stays clear. End with a clean, short resolve at 60s.
+
+MIX: Aim near -16 LUFS integrated, true peak at or below -1 dBTP, clear voice, no clipping. Return 48kHz WAV voice stem, music stem and final 60-second mix; MP3 listening copy optional. Do not claim or promise virality. Optimize for clear explanations, curiosity and a satisfying payoff.
+
+HOW THINGS CLICK — ROCKET RECOVERY
+60 seconds / 1080 × 1920 / 30 fps
+
+00:00 → 00:05 | Catch a falling rocket
+This tower just caught a rocket. How does it avoid disaster?
+
+00:05 → 00:12 | First, remove the speed
+Coming home means killing speed. Fire too late, and even full thrust cannot save the landing.
+
+00:12 → 00:20 | Steer through the air
+These grid fins bite into the air. Sensors track every movement, and the computer keeps correcting the path.
+
+00:20 → 00:29 | Point the thrust
+Near the ground, the engine tilts. Its thrust pushes the booster sideways as the landing burn bleeds off speed.
+
+00:29 → 00:37 | Four legs. One landing.
+Falcon Nine unfolds four legs. The engine does the braking. Only after touchdown do the legs carry the rocket.
+
+00:37 → 00:47 | The tower takes the load
+Super Heavy takes a different route. The tower supports two dedicated catch points, not the grid fins. The engines shut down. The tower takes the weight.
+
+00:47 → 00:55 | Try changing the timing
+A little more wind. A later ignition. Suddenly, that perfect return becomes a missed landing. Can you get the timing right?
+
+00:55 → 01:00 | Your turn to land it
+Land it yourself. Try the interactive lab at How Things Click dot com.

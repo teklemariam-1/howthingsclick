@@ -1,0 +1,78 @@
+{
+  "duration": 60,
+  "fps": 30,
+  "cues": [
+    {
+      "id": "hook",
+      "start": 0,
+      "end": 5,
+      "vehicle": "superheavy",
+      "view": "recovery",
+      "label": "Catch a falling rocket",
+      "voice": "This tower just caught a rocket. How does it avoid disaster?"
+    },
+    {
+      "id": "fall",
+      "start": 5,
+      "end": 12,
+      "vehicle": "falcon9",
+      "view": "recovery",
+      "label": "First, remove the speed",
+      "voice": "Coming home means killing speed. Fire too late, and even full thrust cannot save the landing."
+    },
+    {
+      "id": "fins",
+      "start": 12,
+      "end": 20,
+      "vehicle": "falcon9",
+      "view": "fins",
+      "label": "Steer through the air",
+      "voice": "These grid fins bite into the air. Sensors track every movement, and the computer keeps correcting the path."
+    },
+    {
+      "id": "engines",
+      "start": 20,
+      "end": 29,
+      "vehicle": "falcon9",
+      "view": "engines",
+      "label": "Point the thrust",
+      "voice": "Near the ground, the engine tilts. Its thrust pushes the booster sideways as the landing burn bleeds off speed."
+    },
+    {
+      "id": "legs",
+      "start": 29,
+      "end": 37,
+      "vehicle": "falcon9",
+      "view": "hardware",
+      "label": "Four legs. One landing.",
+      "voice": "Falcon Nine unfolds four legs. The engine does the braking. Only after touchdown do the legs carry the rocket."
+    },
+    {
+      "id": "catch",
+      "start": 37,
+      "end": 47,
+      "vehicle": "superheavy",
+      "view": "hardware",
+      "label": "The tower takes the load",
+      "voice": "Super Heavy takes a different route. The tower supports two dedicated catch points, not the grid fins. The engines shut down. The tower takes the weight."
+    },
+    {
+      "id": "challenge",
+      "start": 47,
+      "end": 55,
+      "vehicle": "falcon9",
+      "view": "recovery",
+      "label": "Try changing the timing",
+      "voice": "A little more wind. A later ignition. Suddenly, that perfect return becomes a missed landing. Can you get the timing right?"
+    },
+    {
+      "id": "explore",
+      "start": 55,
+      "end": 60,
+      "vehicle": "superheavy",
+      "view": "recovery",
+      "label": "Your turn to land it",
+      "voice": "Land it yourself. Try the interactive lab at How Things Click dot com."
+    }
+  ]
+}

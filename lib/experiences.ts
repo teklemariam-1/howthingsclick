@@ -1,5 +1,19 @@
 export const experiences = [
   {
+    id: 'rocket-recovery',
+    number: '05',
+    category: 'Space',
+    title: 'How rockets land—and get caught',
+    description:
+      'Deploy four landing legs. Steer the engines. Bring a booster home through changing wind.',
+    detail: 'Landing burns · Grid fins · Tower catch',
+    image: '/images/rocket-recovery-preview.png',
+    alt: 'Super Heavy at a detailed catch tower above the Boca Chica coastline.',
+    href: '/rocket-recovery',
+    keywords:
+      'spacex falcon 9 starship super heavy booster tower catch landing legs grid fins rocket recovery starbase',
+  },
+  {
     id: 'starlink',
     number: '04',
     category: 'Space',
